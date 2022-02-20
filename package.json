@@ -1,0 +1,36 @@
+{
+  "name": "bqnpad",
+  "version": "1.0.0",
+  "description": "Collaborative array programming with BQN",
+  "scripts": {
+    "dev": "asap serve",
+    "build": "asap build --env production",
+    "start": "asap serve --env production"
+  },
+  "author": "Andrey Popp <me@andreypopp.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^3.2.0",
+    "@tsconfig/strictest": "^1.0.0",
+    "@types/debug": "^4.1.7",
+    "@types/ws": "^8.2.3",
+    "eslint": "^8.9.0",
+    "prettier": "^2.5.1",
+    "typescript": "^4.5.5",
+    "typescript-language-server": "^0.9.6"
+  },
+  "dependencies": {
+    "@codemirror/collab": "^0.19.0",
+    "@codemirror/commands": "^0.19.8",
+    "@codemirror/state": "^0.19.9",
+    "@codemirror/view": "^0.19.44",
+    "@github/stable-socket": "^1.1.0",
+    "@mechanize/asap": "^0.0.4",
+    "@types/react": "^17.0.39",
+    "@types/react-dom": "^17.0.11",
+    "debug": "^4.3.3",
+    "react": "^18.0.0-rc.0",
+    "react-dom": "^18.0.0-rc.0",
+    "ws": "^8.5.0"
+  }
+}
