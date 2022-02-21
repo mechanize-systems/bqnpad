@@ -2,7 +2,7 @@ import * as ASAP from "@mechanize/asap";
 import * as React from "react";
 
 import { useDocumentConnection } from "./DocumentConnection";
-import { Editor } from "./Editor";
+import { Surface } from "./Editor";
 
 export let routes = {
   index: ASAP.route("/", async () => ({ default: Index })),
@@ -15,7 +15,7 @@ function Index() {
   return (
     <div>
       <React.Suspense fallback={<div>Loading...</div>}>
-        <Editor conn={conn} />
+        <Surface conn={conn} />
       </React.Suspense>
     </div>
   );
