@@ -1,21 +1,19 @@
 import {
-  Update,
   collab,
   getSyncedVersion,
   receiveUpdates,
   sendableUpdates,
 } from "@codemirror/collab";
 import { defaultKeymap } from "@codemirror/commands";
-import { ChangeSet, EditorState, Text } from "@codemirror/state";
+import { EditorState, Text } from "@codemirror/state";
 import { EditorView, ViewPlugin, ViewUpdate, keymap } from "@codemirror/view";
 import * as React from "react";
 
-import * as Connection from "./Connection";
+import type { DocumentConnection } from "./DocumentConnection";
 import BQN, { fmt } from "./bqn";
 
 export type EditorProps = {
-  doc: Text;
-  version: number;
+  conn: DocumentConnection;
 };
 
 function evalBQNFromText(text: Text) {
@@ -27,7 +25,8 @@ function evalBQNFromText(text: Text) {
   }
 }
 
-export function Editor({ doc, version }: EditorProps) {
+export function Editor({ conn }: EditorProps) {
+  let { doc, version } = conn.initialDocument().getOrSuspend();
   let ref = React.useRef<null | HTMLDivElement>(null);
   let view = React.useRef<null | EditorView>(null);
   let [output, setOutput] = React.useState<null | string>(() =>
@@ -39,7 +38,11 @@ export function Editor({ doc, version }: EditorProps) {
     });
     let startState = EditorState.create({
       doc,
-      extensions: [keymap.of(defaultKeymap), peerExtension(version), listener],
+      extensions: [
+        keymap.of(defaultKeymap),
+        peerExtension(conn, version),
+        listener,
+      ],
     });
     view.current = new EditorView({
       state: startState,
@@ -59,7 +62,7 @@ export function Editor({ doc, version }: EditorProps) {
   );
 }
 
-function peerExtension(startVersion: number) {
+function peerExtension(conn: DocumentConnection, startVersion: number) {
   let plugin = ViewPlugin.fromClass(
     class {
       private pushing = false;
@@ -78,7 +81,7 @@ function peerExtension(startVersion: number) {
         if (this.pushing || !updates.length) return;
         this.pushing = true;
         let version = getSyncedVersion(this.view.state);
-        await pushUpdates(version, updates);
+        await conn.pushUpdates(version, updates);
         this.pushing = false;
         // Regardless of whether the push failed or new updates came in
         // while it was running, try again if there's updates remaining
@@ -89,7 +92,7 @@ function peerExtension(startVersion: number) {
       async pull() {
         while (!this.done) {
           let version = getSyncedVersion(this.view.state);
-          let updates = await pullUpdates(version);
+          let updates = await conn.pullUpdates(version);
           this.view.dispatch(receiveUpdates(this.view.state, updates));
         }
       }
@@ -100,43 +103,4 @@ function peerExtension(startVersion: number) {
     },
   );
   return [collab({ startVersion }), plugin];
-}
-
-function pushUpdates(
-  version: number,
-  fullUpdates: readonly Update[],
-): Promise<boolean> {
-  // Strip off transaction data
-  let updates = fullUpdates.map((u) => ({
-    clientID: u.clientID,
-    changes: u.changes.toJSON(),
-  }));
-  return Connection.request<boolean>({ type: "pushUpdates", version, updates })
-    .promise;
-}
-
-async function pullUpdates(version: number): Promise<readonly Update[]> {
-  let updates = await Connection.request<
-    { changes: unknown; clientID: string }[]
-  >({
-    type: "pullUpdates",
-    version,
-  });
-  return updates.map((u) => ({
-    changes: ChangeSet.fromJSON(u.changes),
-    clientID: u.clientID,
-  }));
-}
-
-export async function getDocument(): Promise<{
-  version: number;
-  doc: Text;
-}> {
-  let data = await Connection.request<{ version: number; doc: string }>({
-    type: "getDocument",
-  });
-  return {
-    version: data.version,
-    doc: Text.of(data.doc.split("\n")),
-  };
 }

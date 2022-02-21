@@ -85,6 +85,14 @@ export function deferred<T>(): Deferred<T> {
   return new Deferred<T>();
 }
 
-export function suspendable<T>(promise: T | PromiseLike<T>): Suspendable<T> {
-  return Deferred.ofPromise(promise);
+export function suspendable<T>(
+  f: () => T | PromiseLike<T>,
+): () => Suspendable<T> {
+  let deferred: Deferred<T> | null = null;
+  return () => {
+    if (deferred == null) {
+      deferred = Deferred.ofPromise(f());
+    }
+    return deferred;
+  };
 }

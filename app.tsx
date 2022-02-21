@@ -1,8 +1,8 @@
 import * as ASAP from "@mechanize/asap";
 import * as React from "react";
 
-import { Editor, getDocument } from "./Editor";
-import { suspendable } from "./PromiseUtil";
+import { useDocumentConnection } from "./DocumentConnection";
+import { Editor } from "./Editor";
 
 export let routes = {
   index: ASAP.route("/", async () => ({ default: Index })),
@@ -10,13 +10,13 @@ export let routes = {
 
 ASAP.boot({ routes });
 
-let docLoading = suspendable(getDocument());
-
 function Index() {
-  let { doc, version } = docLoading.getOrSuspend();
+  let conn = useDocumentConnection();
   return (
     <div>
-      <Editor doc={doc} version={version} />
+      <React.Suspense fallback={<div>Loading...</div>}>
+        <Editor conn={conn} />
+      </React.Suspense>
     </div>
   );
 }
