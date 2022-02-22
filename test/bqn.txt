@@ -1,0 +1,296 @@
+# number
+
+42
+¯9
+π
+∞
+1.1
+42e10
+
+==>
+
+PROGRAM(
+  EXPR(NUMBER),
+  EXPR(NUMBER),
+  EXPR(NUMBER),
+  EXPR(NUMBER),
+  EXPR(NUMBER),
+  EXPR(NUMBER)
+)
+
+# string
+
+"hello"
+"some
+ string"
+
+==>
+
+PROGRAM(EXPR(STRING),EXPR(STRING))
+
+# char
+
+@
+'a'
+'⍉'
+
+==>
+
+PROGRAM(EXPR(NULL),EXPR(CHAR),EXPR(CHAR))
+
+# layout (,)
+
+1,2
+
+==>
+
+PROGRAM(EXPR(NUMBER),EXPR(NUMBER))
+
+# layout (leading ,)
+
+,1,2
+
+==>
+
+PROGRAM(EXPR(NUMBER),EXPR(NUMBER))
+
+# layout (trailing ,)
+
+1,2,
+
+==>
+
+PROGRAM(EXPR(NUMBER),EXPR(NUMBER))
+
+# layout (⋄)
+
+1⋄2
+
+==>
+
+PROGRAM(EXPR(NUMBER),EXPR(NUMBER))
+
+# layout (leading ⋄)
+
+⋄1⋄2
+
+==>
+
+PROGRAM(EXPR(NUMBER),EXPR(NUMBER))
+
+# layout (trailing ⋄)
+
+1⋄2⋄
+
+==>
+
+PROGRAM(EXPR(NUMBER),EXPR(NUMBER))
+
+# layout (newline)
+
+1
+2
+
+==>
+
+PROGRAM(EXPR(NUMBER),EXPR(NUMBER))
+
+# val
+
+a
+aA
+a_a
+
+==>
+
+PROGRAM(EXPR(VAL),EXPR(VAL),EXPR(VAL))
+
+# fun
+
+A
+Aa
+A_a
+
+==>
+
+PROGRAM(EXPR(FUN),EXPR(FUN),EXPR(FUN))
+
+# mod1
+
+_mod
+_moD
+_m_d
+
+==>
+
+PROGRAM(EXPR(MOD1),EXPR(MOD1),EXPR(MOD1))
+
+# mod2
+
+_mod_
+_moD_
+_m_d_
+
+==>
+
+PROGRAM(EXPR(MOD2),EXPR(MOD2),EXPR(MOD2))
+
+# sysval
+
+•a
+•aA
+•a_a
+
+==>
+
+PROGRAM(EXPR(SYSVAL),EXPR(SYSVAL),EXPR(SYSVAL))
+
+# fun
+
+•A
+•Aa
+•A_a
+
+==>
+
+PROGRAM(EXPR(SYSFUN),EXPR(SYSFUN),EXPR(SYSFUN))
+
+# mod1
+
+•_mod
+•_moD
+•_m_d
+
+==>
+
+PROGRAM(EXPR(SYSMOD1),EXPR(SYSMOD1),EXPR(SYSMOD1))
+
+# mod2
+
+•_mod_
+•_moD_
+•_m_d_
+
+==>
+
+PROGRAM(EXPR(SYSMOD2),EXPR(SYSMOD2),EXPR(SYSMOD2))
+
+# list
+
+⟨⟩
+⟨1⟩
+⟨1,2⟩
+⟨,1,2,⟩
+⟨1⋄2⟩
+⟨⋄1⋄2⋄⟩
+⟨1
+ 2⟩
+⟨
+ 1
+ 2
+  ⟩
+
+==>
+
+PROGRAM(
+  EXPR(LIST),
+  EXPR(LIST(EXPR(NUMBER))),
+  EXPR(LIST(EXPR(NUMBER),EXPR(NUMBER))),
+  EXPR(LIST(EXPR(NUMBER),EXPR(NUMBER))),
+  EXPR(LIST(EXPR(NUMBER),EXPR(NUMBER))),
+  EXPR(LIST(EXPR(NUMBER),EXPR(NUMBER))),
+  EXPR(LIST(EXPR(NUMBER),EXPR(NUMBER))),
+  EXPR(LIST(EXPR(NUMBER),EXPR(NUMBER)))
+)
+
+# stride
+
+1‿2
+1‿(2‿3)
+
+==>
+
+PROGRAM(
+  EXPR(STRIDE(NUMBER,NUMBER)),
+  EXPR(STRIDE(NUMBER,PAREN(EXPR(STRIDE(NUMBER,NUMBER)))))
+)
+
+# nothing
+
+·
+·+1
+
+==>
+
+PROGRAM(EXPR(NOTHING),EXPR(NOTHING,PRIMFUN,NUMBER))
+
+# lookup
+
+a.b
+a.Fun
+a._mod1
+a._mod2_
+•sys.val
+a.b.c
+(some).b
+{some}.b
+⟨some⟩.b
+
+==>
+
+PROGRAM(
+  EXPR(LOOKUP(VAL,VAL)),
+  EXPR(LOOKUP(VAL,FUN)),
+  EXPR(LOOKUP(VAL,MOD1)),
+  EXPR(LOOKUP(VAL,MOD2)),
+  EXPR(LOOKUP(SYSVAL,VAL))
+  EXPR(LOOKUP(VAL,VAL,VAL))
+  EXPR(LOOKUP(PAREN(EXPR(VAL)),VAL))
+  EXPR(LOOKUP(BLOCK(EXPR(VAL)),VAL))
+  EXPR(LOOKUP(LIST(EXPR(VAL)),VAL))
+)
+
+# assign
+
+a←1
+a‿b←1‿2
+
+==>
+
+PROGRAM(
+  ASSIGN(VAL,EXPR(NUMBER)),
+  ASSIGN(STRIDE(VAL,VAL),EXPR(STRIDE(NUMBER,NUMBER)))
+)
+
+# reassign
+
+a↩1
+a‿b↩1‿2
+
+==>
+
+PROGRAM(
+  EXPR(VAL,REASSIGN,NUMBER),
+  EXPR(STRIDE(VAL,VAL),REASSIGN,STRIDE(NUMBER,NUMBER))
+)
+
+# export
+
+a⇐1
+a‿b⇐1‿2
+
+==>
+
+PROGRAM(
+  EXPORT(VAL,EXPR(NUMBER)),
+  EXPORT(STRIDE(VAL,VAL),EXPR(STRIDE(NUMBER,NUMBER)))
+)
+
+# sme
+
+1{𝕨+𝕩}2‿3‿4
+
+==>
+
+PROGRAM(EXPR(NUMBER,BLOCK(EXPR(SPECVAL,PRIMFUN,SPECVAL)),STRIDE(NUMBER,NUMBER,NUMBER)))
+

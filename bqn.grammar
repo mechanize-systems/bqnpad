@@ -1,0 +1,92 @@
+@top PROGRAM {
+  exprM
+}
+
+@skip {
+  space | comment
+}
+
+del {
+  "⋄" | "," | newline
+}
+
+exprM {
+  del* stmt (del+ stmt)* del*
+}
+
+stmt {
+    EXPR { expr0+ }
+  | ASSIGN { expr0+ "←" stmt }
+  | EXPORT { expr0* "⇐" stmt? }
+}
+
+expr0 {
+    atom
+  | STRIDE { atom ("‿" atom)+ }
+}
+
+atom {
+    simpleAtom
+  | PRIMFUN { primfun }
+  | PRIMMOD1 { primmod1 }
+  | PRIMMOD2 { primmod2 }
+  | PUNCT { punct }
+  | REASSIGN { reassign }
+  | NOTHING { nothing }
+  | LOOKUP { simpleAtom (dot name)+ }
+}
+
+simpleAtom {
+    name
+  | NUMBER { number }
+  | STRING { string }
+  | CHAR { char }
+  | NULL { null }
+  | SPECVAL { specval }
+  | SPECFUN { specfun }
+  | SPECMOD2 { specmod2 }
+  | SYSVAL { sys val }
+  | SYSFUN { sys fun }
+  | SYSMOD1 { sys mod1 }
+  | SYSMOD2 { sys mod2 }
+  | LIST { "⟨" exprM? "⟩" }
+  | BLOCK { "{" exprM "}" }
+  | PAREN { "(" exprM ")" }
+}
+
+name {
+    VAL { val }
+  | FUN { fun }
+  | MOD1 { mod1 }
+  | MOD2 { mod2 }
+}
+
+@tokens {
+  space[@export] { $[\u0009 \u000b\u00a0\u1680\u2000-\u200a\u202f\u205f\u3000\ufeff]+ }
+  newline[@export] { $[\r\n\u2028\u2029] }
+  number    { "¯"? ( "∞" | mantissa ( ( "e" | "E" ) exponent )? ) }
+  exponent  { "¯"? digit+ }
+  mantissa  { "π" | digit+ ( "." digit+ )? }
+  digit     { "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" }
+  string    { '"' (!["])* '"'? }
+  char      { "'" (!['])* "'"? }
+  null      { "@" }
+  nothing   { "·" }
+  dot       { "." }
+  sys       { "•" }
+  reassign  { "↩" }
+  primfun   { "+" | "-" | "×" | "÷" | "⋆" | "√" | "⌊" | "⌈" | "|" | "¬" | "∧" | "∨" | "<" | ">" | "≠" | "=" | "≤" | "≥" | "≡" | "≢" | "⊣" | "⊢" | "⥊" | "∾" | "≍" | "⋈" | "↑" | "↓" | "↕" | "«" | "»" | "⌽" | "⍉" | "/" | "⍋" | "⍒" | "⊏" | "⊑" | "⊐" | "⊒" | "∊" | "⍷" | "⊔" | "!" }
+  primmod1  { "˙" | "˜" | "˘" | "¨" | "⌜" | "⁼" | "´" | "˝" | "`" }
+  primmod2  { "∘" | "○" | "⊸" | "⟜" | "⌾" | "⊘" | "◶" | "⎉" | "⚇" | "⍟" | "⎊" }
+  specfun   { "𝕎" | "𝕏" | "𝔽" | "𝔾" | "𝕊" }
+  specval   { "𝕨" | "𝕩" | "𝕗" | "𝕘" | "𝕤" }
+  specmod2  { "_" "𝕣" "_" | "𝕣" }
+  punct     { ";" | ":" | "?" }
+  val       { $[a-z]$[a-zA-Z0-9_]* }
+  fun       { $[A-Z]$[a-zA-Z0-9_]* }
+  mod1      { "_" $[a-zA-Z0-9_]+ }
+  mod2      { "_" $[a-zA-Z0-9_]+ "_" }
+  comment   { "#" ![\n]* }
+
+  @precedence { mod2, mod1 }
+}

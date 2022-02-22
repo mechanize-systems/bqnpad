@@ -1,1 +1,3 @@
 node_modules
+/bqn.grammar.js
+/bqn.grammar.terms.js
