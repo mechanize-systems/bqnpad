@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { useDocumentConnection } from "./DocumentConnection";
 import { Surface } from "./Editor";
+import "./app.css";
 
 export let routes = {
   index: ASAP.route("/", async () => ({ default: Index })),

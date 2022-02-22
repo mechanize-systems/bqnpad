@@ -1,10 +1,13 @@
 import * as Collab from "@codemirror/collab";
 import * as Commands from "@codemirror/commands";
+import * as Highlight from "@codemirror/highlight";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
+import * as Vim from "@replit/codemirror-vim";
 import * as React from "react";
 
 import type { DocumentConnection } from "./DocumentConnection";
+import { bqn } from "./LangBQN";
 import { useDebouncedCallback } from "./ReactUtil";
 import * as UI from "./UI";
 import BQN, { fmt } from "./bqn";
@@ -53,8 +56,8 @@ export function Surface({ conn }: SurfaceProps) {
 function Output({ output }: { output: string }) {
   let styles = UI.useStyles({
     root: {
-      fontFamily: `Menlo, Monaco, monospace`,
-      fontSize: "16px",
+      fontFamily: `BQN386, "BQN386 Unicode", Menlo, Monaco, monospace`,
+      fontSize: "18px",
     },
   });
   return <pre className={styles.root}>{output}</pre>;
@@ -87,9 +90,12 @@ export function Editor({ doc, onDoc, keybindings, extensions }: EditorProps) {
     let startState = State.EditorState.create({
       doc,
       extensions: [
+        Vim.vim(),
         View.keymap.of(Commands.defaultKeymap),
         onDocExt,
         keybindingsExt,
+        bqn(),
+        //Highlight.defaultHighlightStyle,
         ...(extensions ?? []),
       ],
     });
@@ -108,7 +114,10 @@ export function Editor({ doc, onDoc, keybindings, extensions }: EditorProps) {
       position: "relative",
       width: "100%",
       display: "flex",
-      "& .cm-content": { fontFamily: `Menlo, Monaco, monospace` },
+      "& .cm-content": {
+        fontFamily: `BQN386, "BQN386 Unicode", Menlo, Monaco, monospace`,
+        fontSize: "18px",
+      },
       "& .cm-editor": { width: "100%" },
       "& .cm-editor.cm-focused": {},
       "& .cm-editor .cm-activeLine": {},

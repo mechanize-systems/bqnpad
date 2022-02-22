@@ -1,0 +1,9 @@
+@font-face {
+  font-family: "BQN386";
+  src: url("./BQN386.ttf");
+}
+
+body {
+  background: #e3e7e7;
+  font-family: "BQN386", "BQN386 Unicode";
+}
