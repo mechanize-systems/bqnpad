@@ -6,3 +6,4 @@ export type SysArgs = { readonly __tag: unique symbol };
 export let sysargs: SysArgs;
 export type REPL = (code: string) => Value;
 export function makerepl(sysargs: SysArgs, depth: number): REPL;
+export function allowSideEffect(allow: boolean): void;

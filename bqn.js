@@ -46,7 +46,19 @@ let listkeys = x => {
 
 let getv= (a,i) => { let v=a[i]; if (v===null) throw Error("Runtime: Variable referenced before definition"); return v; }
 let get = x => x.e ? getv(x.e,x.p) : arr(x.map(c=>get(c)), x.sh);
+let allowSideEffect = true;
+let allowSideEffectLocally = (fn) => {
+  let orig = allowSideEffect;
+  allowSideEffect = true;
+  try {
+    return fn();
+  } finally {
+    allowSideEffect = orig;
+  }
+}
 let set = (d, id, v) => {
+  if (!allowSideEffect)
+    throw {kind: 'sideEffect', message: 'side effects are not allowed'};
   let eq = (a,b) => a.length===b.length && a.every((e,i)=>e===b[i]);
   if (id.e) {
     if (!d && id.e[id.p]===null) throw Error("↩: Variable modified before definition");
@@ -472,7 +484,10 @@ let compgen = sys => {
 }
 let sysargs = {runtime, glyphs:glyphs.map(str)};
 let compile = compgen(sysargs)(sysargs);
-let bqn = src => run(...compile(src));
+let bqn = src => {
+  let c = allowSideEffectLocally(() => compile(src));
+  return run(...c);
+}
 runtime[43] = rtAssert;
 
 // Formatter
@@ -584,13 +599,16 @@ let rerepl = (repl, cmp, state) => {
   let vars = [], names = [], redef = [];
   state.addrt = [names,redef];
   return (x,w) => {
-    names.sh=redef.sh=[names.length];
-    let c = cmp(x,w);
-    let pnames = c[5][2][0];
-    let newv = c[3][0][2].slice(vars.length);
-    names.push(...newv.map(i=>pnames[i]));
-    redef.push(...newv.map(i=>rd));
-    vars .push(...newv.map(i=>null));
+    let c = allowSideEffectLocally(() => {
+      names.sh=redef.sh=[names.length];
+      let c = cmp(x,w);
+      let pnames = c[5][2][0];
+      let newv = c[3][0][2].slice(vars.length);
+      names.push(...newv.map(i=>pnames[i]));
+      redef.push(...newv.map(i=>rd));
+      vars .push(...newv.map(i=>null));
+      return c;
+    });
     return run(...c, vars);
   }
 }
@@ -717,5 +735,6 @@ if (typeof module!=='undefined') {  // Node.js
   bqn.makerepl=(st,repl)=>rerepl(repl, makebqn(x=>x,r=>r)(st), st);
   bqn.util={has,list,str,unstr,dynsys,req1str,makens};
   bqn.setexec = (u,p) => { update_state=u; push_state=p; }
+  bqn.allowSideEffect = (is) => allowSideEffect = is;
   module.exports=bqn;
 }
