@@ -9,12 +9,11 @@ import * as React from "react";
 
 import * as LangBQN from "./LangBQN";
 import * as UI from "./UI";
-import type { Cell, WorkspaceConnection } from "./WorkspaceConnection";
-import * as BQN from "./bqn";
+import type { WorkspaceConnection } from "./WorkspaceConnection";
 
 export type EditorProps = {
   doc: State.Text;
-  onDoc?: (doc: State.Text) => void;
+  onDoc?: (doc: State.Text, state: State.EditorState) => void;
   keybindings?: View.KeyBinding[];
   extensions?: State.Extension[];
   keymap?: "default" | "vim";
@@ -35,7 +34,9 @@ export function Editor({
   let onDocExt = useStateCompartment(
     () =>
       View.EditorView.updateListener.of((update) => {
-        if (update.docChanged && onDoc != null) onDoc(update.state.doc);
+        if (update.docChanged && onDoc != null) {
+          onDoc(update.state.doc, update.state);
+        }
       }),
     [onDoc],
   );

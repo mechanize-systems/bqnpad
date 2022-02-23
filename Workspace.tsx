@@ -1,17 +1,21 @@
+import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as React from "react";
 
 import { Editor, highlight, peerExtension } from "./Editor";
 import * as LangBQN from "./LangBQN";
+import { useDebouncedCallback } from "./ReactUtil";
 import * as UI from "./UI";
 import type { WorkspaceConnection } from "./WorkspaceConnection";
-import type { Workspace, WorkspaceCell } from "./api";
+import type * as API from "./api";
 import * as BQN from "./bqn";
 
 type BQNResult =
   | { type: "ok"; ok: null | string }
   | { type: "error"; error: string };
+
+type BQNPreview = BQNResult | { type: "notice"; notice: string };
 
 export type WorkspaceProps = {
   conn: WorkspaceConnection;
@@ -28,14 +32,58 @@ export function Workspace({ conn }: WorkspaceProps) {
       let codeString = typeof code === "string" ? code : code.sliceString(0);
       if (codeString.trim().length === 0) return { type: "ok", ok: null };
       try {
-        return { type: "ok", ok: BQN.fmt(repl(codeString)) };
+        let value = repl(codeString);
+        return { type: "ok", ok: BQN.fmt(value) };
       } catch (e) {
         return { type: "error", error: BQN.fmtErr(e) };
       }
     },
     [repl],
   );
-  let [workspace, setWorkspace] = React.useState<Workspace>(() => workspace0);
+  let previewBQN = React.useCallback(
+    (code: State.Text | string): BQNPreview => {
+      let codeString = typeof code === "string" ? code : code.sliceString(0);
+      if (codeString.trim().length === 0) return { type: "ok", ok: null };
+      try {
+        BQN.allowSideEffect(false);
+        let value = repl(codeString);
+        BQN.allowSideEffect(true);
+        return { type: "ok", ok: BQN.fmt(value) };
+      } catch (e) {
+        if (e.kind === "sideEffect")
+          return {
+            type: "notice",
+            notice:
+              "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
+          };
+        return { type: "error", error: BQN.fmtErr(e) };
+      } finally {
+        BQN.allowSideEffect(true);
+      }
+    },
+    [repl],
+  );
+  let [workspace, setWorkspace] = React.useState<API.Workspace>(
+    () => workspace0,
+  );
+  let [preview, setPreview] = React.useState<BQNPreview>(() => evalBQN(doc));
+  let [onDoc, _onDocFinalize, onDocCancel] = useDebouncedCallback(
+    500,
+    (doc: State.Text, state: State.EditorState) => {
+      let tree = Language.syntaxTree(state);
+      let c = tree.cursor();
+      if (c.lastChild() && c.node.type.name === "ASSIGN" && c.firstChild()) {
+        let from = c.from;
+        if (c.nextSibling()) {
+          let to = c.from;
+          let ws = State.Text.of([new Array(to - from).fill(" ").join()]);
+          doc = doc.replace(from, to, ws);
+        }
+      }
+      setPreview(previewBQN(doc));
+    },
+    [setPreview, evalBQN],
+  );
   let editor = React.useRef<null | View.EditorView>(null);
   let extensions = React.useMemo(
     () => [peerExtension(conn, version)],
@@ -62,6 +110,8 @@ export function Workspace({ conn }: WorkspaceProps) {
           conn.pushWorkspaceUpdates([
             { type: "AddCell", cell, clientID: conn.clientID },
           ]);
+          setPreview({ type: "ok", ok: null });
+          onDocCancel();
           view.dispatch({
             changes: { from: 0, to: code.length, insert: "" },
           });
@@ -79,9 +129,11 @@ export function Workspace({ conn }: WorkspaceProps) {
       <Editor
         api={editor}
         doc={doc}
+        onDoc={onDoc}
         extensions={extensions}
         keybindings={keybindings}
       />
+      <Output output={preview} />
     </div>
   );
 }
@@ -90,7 +142,7 @@ function RenderCell({
   cell,
   evalBQN,
 }: {
-  cell: WorkspaceCell;
+  cell: API.WorkspaceCell;
   evalBQN: (code: string) => BQNResult;
 }) {
   let result = React.useMemo(() => evalBQN(cell.code), [evalBQN, cell.code]);
@@ -111,7 +163,7 @@ function RenderCell({
   );
 }
 
-function Output({ output }: { output: BQNResult }) {
+function Output({ output }: { output: BQNPreview }) {
   let styles = UI.useStyles({
     root: {
       fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
@@ -128,13 +180,27 @@ function Output({ output }: { output: BQNResult }) {
     hasError: {
       color: "red",
     },
+    hasNotice: {
+      color: "#888888",
+      whiteSpace: "pre-wrap",
+    },
   });
-  let children = output.type === "ok" ? output.ok : `ERROR: ${output.error}`;
+  let children = null;
+  if (output.type === "ok") {
+    children = output.ok;
+  } else if (output.type === "error") {
+    children = output.error;
+  } else if (output.type === "notice") {
+    children = output.notice;
+  } else {
+    let _: never = output;
+  }
   return (
     <pre
       className={UI.cx(
         styles.root,
         output.type === "error" && styles.hasError,
+        output.type === "notice" && styles.hasNotice,
       )}
     >
       {children}
