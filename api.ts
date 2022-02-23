@@ -9,8 +9,13 @@ let log = debug("bqnpad:api");
 
 let wss = new ws.Server({ noServer: true });
 
+const INITIAL_DOC = `
+# Hello, this is collaborative BQN REPL
+"Hello, "∾<⟜'a'⊸/ "Big Questions Notation"
+`.trim();
+
 let updates: Update[] = [];
-let doc = Text.of(["10+↕10"]);
+let doc = Text.of(INITIAL_DOC.split("\n"));
 let pending: ((value: any) => void)[] = [];
 
 export let routes = [

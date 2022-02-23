@@ -9,15 +9,32 @@ export let routes = {
   index: ASAP.route("/", async () => ({ default: Index })),
 };
 
-ASAP.boot({ routes });
+ASAP.boot({ routes, AppLoading });
 
 function Index() {
   let conn = useDocumentConnection();
   return (
-    <div>
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <Surface conn={conn} />
-      </React.Suspense>
+    <React.Suspense fallback={<AppLoading />}>
+      <Surface conn={conn} />
+    </React.Suspense>
+  );
+}
+
+function AppLoading(_props: ASAP.AppLoadingProps) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      Loading...
     </div>
   );
 }

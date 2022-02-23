@@ -1,9 +1,5 @@
-@font-face {
-  font-family: "BQN386";
-  src: url("./BQN386.ttf");
-}
-
+@import "./iosevka/index.css";
 body {
   background: #e3e7e7;
-  font-family: "BQN386", "BQN386 Unicode";
+  font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
 }

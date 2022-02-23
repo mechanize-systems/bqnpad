@@ -1,4 +1,4 @@
-import { makeStyles as vanillaMakeStyles } from "@griffel/core";
+import { mergeClasses, makeStyles as vanillaMakeStyles } from "@griffel/core";
 import type { GriffelStyle } from "@griffel/core";
 import { useRenderer } from "@griffel/react/RendererContext.esm";
 import { useTextDirection } from "@griffel/react/TextDirectionContext.esm";
@@ -15,3 +15,5 @@ export function useStyles<S extends Record<string, GriffelStyle>>(
     return getStyles({ dir, renderer });
   }, deps) as { [K in keyof S]: string };
 }
+
+export let cx = mergeClasses;

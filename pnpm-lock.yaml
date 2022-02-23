@@ -18,7 +18,7 @@ specifiers:
   '@lezer/common': ^0.15.11
   '@lezer/generator': ^0.15.4
   '@lezer/lr': ^0.15.8
-  '@mechanize/asap': ^0.0.4
+  '@mechanize/asap': ^0.0.5
   '@replit/codemirror-vim': ^0.19.0
   '@trivago/prettier-plugin-sort-imports': ^3.2.0
   '@tsconfig/strictest': ^1.0.0
@@ -53,7 +53,7 @@ dependencies:
   '@griffel/react': 1.0.0_react@18.0.0-rc.0
   '@lezer/common': 0.15.11
   '@lezer/lr': 0.15.8
-  '@mechanize/asap': 0.0.4
+  '@mechanize/asap': 0.0.5
   '@replit/codemirror-vim': 0.19.0_f54841750456b37e0397171326d30bfc
   '@types/react': 17.0.39
   '@types/react-dom': 17.0.11
@@ -518,8 +518,8 @@ packages:
     dependencies:
       '@lezer/common': 0.15.11
 
-  /@mechanize/asap/0.0.4:
-    resolution: {integrity: sha512-TzQ4AoIeKdzYlEGWxHRE8ui/6g53sNi2gDr9Rt4XM5gkDB/NGywdBNVtr84lWvplNsB/vBdsnRZjmFdne97qYg==}
+  /@mechanize/asap/0.0.5:
+    resolution: {integrity: sha512-a6N+5dHgTiFgUquILsXixRc3lnXJQDyOdwYeU2nbVueShBT4IPTa1OF8NF6Im5YZCOZVgP19CuTv1YJaxOrjAA==}
     hasBin: true
     dependencies:
       esbuild: 0.14.23

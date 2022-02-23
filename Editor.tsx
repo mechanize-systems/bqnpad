@@ -1,6 +1,5 @@
 import * as Collab from "@codemirror/collab";
 import * as Commands from "@codemirror/commands";
-import * as Highlight from "@codemirror/highlight";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as Vim from "@replit/codemirror-vim";
@@ -12,12 +11,23 @@ import { useDebouncedCallback } from "./ReactUtil";
 import * as UI from "./UI";
 import BQN, { fmt } from "./bqn";
 
-function evalBQNFromText(text: State.Text) {
+type BQNResult = { type: "ok"; ok: string } | { type: "error"; error: string };
+
+function evalBQN(text: State.Text): BQNResult {
   let bqn = text.sliceString(0);
   try {
-    return fmt(BQN(bqn));
-  } catch {
-    return "oops";
+    return { type: "ok", ok: fmt(BQN(bqn)) };
+  } catch (e) {
+    let s = Array.from(bqn);
+    let w = e.message;
+    let is;
+    while (
+      w &&
+      (w.loc || (e.kind !== "!" && w.sh && w.sh[0] === 2)) &&
+      w.src.join("") === s.join("")
+    )
+      [is, w] = w;
+    return { type: "error", error: w.join("") };
   }
 }
 
@@ -27,12 +37,10 @@ export type SurfaceProps = {
 
 export function Surface({ conn }: SurfaceProps) {
   let { doc, version } = conn.initialDocument().getOrSuspend();
-  let [output, setOutput] = React.useState<null | string>(() =>
-    evalBQNFromText(doc),
-  );
+  let [output, setOutput] = React.useState<BQNResult>(() => evalBQN(doc));
   let [onDoc] = useDebouncedCallback(
     400,
-    (doc: State.Text) => setOutput(evalBQNFromText(doc)),
+    (doc: State.Text) => setOutput(evalBQN(doc)),
     [setOutput],
   );
   let extensions = React.useMemo(
@@ -53,14 +61,35 @@ export function Surface({ conn }: SurfaceProps) {
   );
 }
 
-function Output({ output }: { output: string }) {
+function Output({ output }: { output: BQNResult }) {
   let styles = UI.useStyles({
     root: {
-      fontFamily: `BQN386, "BQN386 Unicode", Menlo, Monaco, monospace`,
-      fontSize: "18px",
+      fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
+      fontSize: "20px",
+      overflowY: "hidden",
+      overflowX: "hidden",
+      marginTop: "0px",
+      marginBottom: "0px",
+      marginLeft: "0px",
+      marginRight: "0px",
+      paddingLeft: "35px",
+      textOverflow: "ellipsis",
+    },
+    hasError: {
+      color: "red",
     },
   });
-  return <pre className={styles.root}>{output}</pre>;
+  let children = output.type === "ok" ? output.ok : `ERROR: ${output.error}`;
+  return (
+    <pre
+      className={UI.cx(
+        styles.root,
+        output.type === "error" && styles.hasError,
+      )}
+    >
+      {children}
+    </pre>
+  );
 }
 
 export type EditorProps = {
@@ -68,9 +97,16 @@ export type EditorProps = {
   onDoc: (doc: State.Text) => void;
   keybindings?: View.KeyBinding[];
   extensions?: State.Extension[];
+  keymap?: "default" | "vim";
 };
 
-export function Editor({ doc, onDoc, keybindings, extensions }: EditorProps) {
+export function Editor({
+  doc,
+  onDoc,
+  keymap = "default",
+  keybindings,
+  extensions,
+}: EditorProps) {
   let ref = React.useRef<null | HTMLDivElement>(null);
   let view = React.useRef<null | View.EditorView>(null);
 
@@ -87,17 +123,17 @@ export function Editor({ doc, onDoc, keybindings, extensions }: EditorProps) {
   );
 
   React.useEffect(() => {
+    let extensions0 = [
+      keymap === "vim" && Vim.vim(),
+      View.keymap.of(Commands.defaultKeymap),
+      onDocExt,
+      keybindingsExt,
+      bqn(),
+      ...(extensions ?? []),
+    ];
     let startState = State.EditorState.create({
       doc,
-      extensions: [
-        Vim.vim(),
-        View.keymap.of(Commands.defaultKeymap),
-        onDocExt,
-        keybindingsExt,
-        bqn(),
-        //Highlight.defaultHighlightStyle,
-        ...(extensions ?? []),
-      ],
+      extensions: extensions0.filter(Boolean),
     });
     view.current = new View.EditorView({
       state: startState,
@@ -108,15 +144,15 @@ export function Editor({ doc, onDoc, keybindings, extensions }: EditorProps) {
       view.current?.destroy();
       view.current = null;
     };
-  }, [onDocExt, keybindingsExt, extensions]);
+  }, [keymap, onDocExt, keybindingsExt, extensions]);
   let styles = UI.useStyles({
     root: {
       position: "relative",
       width: "100%",
       display: "flex",
       "& .cm-content": {
-        fontFamily: `BQN386, "BQN386 Unicode", Menlo, Monaco, monospace`,
-        fontSize: "18px",
+        fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
+        fontSize: "20px",
       },
       "& .cm-editor": { width: "100%" },
       "& .cm-editor.cm-focused": {},
