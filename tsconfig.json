@@ -4,8 +4,11 @@
     "moduleResolution": "node",
     "target": "es2020",
     "jsx": "react",
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@bqnpad/*": ["./*"]
+    }
   },
-  "include": ["*.ts", "*.d.ts"],
+  "include": ["**/*.ts", "**/*.d.ts", "**/*.tsx"],
   "exclude": ["bqn.grammar.js"]
 }

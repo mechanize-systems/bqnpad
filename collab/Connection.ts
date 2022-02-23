@@ -2,10 +2,9 @@
  * Connection class implements request-response protocol on top of a WebSocket
  * transport.
  */
+import { deferred } from "@bqnpad/lib/PromiseUtil";
+import type { Deferred } from "@bqnpad/lib/PromiseUtil";
 import * as StableSocket from "@github/stable-socket";
-
-import { deferred } from "./PromiseUtil";
-import type { Deferred } from "./PromiseUtil";
 
 export class Connection {
   private _requests: Map<number, Deferred<any>>;

@@ -1,3 +1,6 @@
+.PHONY: all
+all: grammar/bqn.grammar.js grammar/bqn.grammar.terms.js
+
 .PHONY: start
 start:
 	pnpm asap serve
@@ -10,9 +13,6 @@ check:
 fmt:
 	prettier -w '*.ts' '*.d.ts' '*.json'
 
-bqn.grammar.js bqn.grammar.terms.js: bqn.grammar
-	pnpm lezer-generator $(<) --names --cjs --output $(@)
-
 .PHONY: clean
 clean:
 	rm -f bqn.grammar.js bqn.grammar.terms.js
@@ -20,4 +20,7 @@ clean:
 
 .PHONY: test
 test:
-	mocha test/test-bqn-grammar.mjs
+	mocha grammar/test/test-bqn-grammar.mjs
+
+grammar/bqn.grammar.js grammar/bqn.grammar.terms.js: grammar/bqn.grammar
+	pnpm lezer-generator $(<) --names --cjs --output $(@)

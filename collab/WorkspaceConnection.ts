@@ -1,13 +1,13 @@
+import { suspendable } from "@bqnpad/lib/PromiseUtil";
+import type { Suspendable } from "@bqnpad/lib/PromiseUtil";
 import type { Update } from "@codemirror/collab";
 import { ChangeSet, Text } from "@codemirror/state";
 import { nanoid } from "nanoid";
 import * as React from "react";
 
+import type { Workspace } from "../Workspace";
+import type { WorkspaceUpdate } from "../api";
 import { Connection } from "./Connection";
-import { suspendable } from "./PromiseUtil";
-import type { Suspendable } from "./PromiseUtil";
-import type { Workspace } from "./Workspace";
-import type { WorkspaceUpdate } from "./api";
 
 class WorkspaceConnection {
   clientID: string;

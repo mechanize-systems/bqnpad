@@ -35,7 +35,7 @@ export type WorkspaceUpdate = {
 };
 
 let workspace: Sync<Workspace.Workspace, WorkspaceUpdate> = {
-  value: { cells: [], current: "" },
+  value: { cells: [], current: Text.of([""]) },
   updates: [],
   pending: [],
 };

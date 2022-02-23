@@ -1,8 +1,7 @@
+import { parser } from "@bqnpad/grammar";
 import { HighlightStyle, Tag, styleTags } from "@codemirror/highlight";
 import { LRLanguage, LanguageSupport } from "@codemirror/language";
 import type { Extension } from "@codemirror/state";
-
-import { parser } from "./bqn.grammar.js";
 
 let tags = {
   BQNstring: Tag.define(),

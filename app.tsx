@@ -1,14 +1,16 @@
+import { suspendable } from "@bqnpad/lib/PromiseUtil";
+import {
+  NO_VALUE,
+  jsonCodec,
+  usePersistentState,
+} from "@bqnpad/lib/ReactUtil";
+import type { Codec } from "@bqnpad/lib/ReactUtil";
 import * as State from "@codemirror/state";
 import * as ASAP from "@mechanize/asap";
 import * as React from "react";
 
-import { suspendable } from "./PromiseUtil";
-import { NO_VALUE, jsonCodec, usePersistentState } from "./ReactUtil";
-import type { Codec } from "./ReactUtil";
 import { Workspace } from "./Workspace";
 import type { WorkspaceManager } from "./Workspace";
-import { useWorkspaceConnection } from "./WorkspaceConnection";
-import type { WorkspaceConnection } from "./WorkspaceConnection";
 import "./app.css";
 
 export let routes = {
@@ -34,12 +36,21 @@ let workspaceCodec: Codec<Workspace> = {
   },
 };
 
+const INITIAL_DOC = State.Text.of(
+  `
+# Hello, this is collaborative BQN REPL
+"Hello, "∾<⟜'a'⊸/ "Big Questions Notation"
+  `
+    .trim()
+    .split("\n"),
+);
+
 function useLocalWorkspaceManager(): WorkspaceManager {
   let [workspace, setWorkspace] = usePersistentState<Workspace>(
     "bqn-workspace",
     () => ({
       cells: [],
-      current: State.Text.of([""]),
+      current: INITIAL_DOC,
     }),
     workspaceCodec,
   );

@@ -1,16 +1,14 @@
-import * as Collab from "@codemirror/collab";
+import type { Suspendable } from "@bqnpad/lib/PromiseUtil";
+import { useDebouncedCallback } from "@bqnpad/lib/ReactUtil";
 import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
-import * as View from "@codemirror/view";
+import type * as View from "@codemirror/view";
 import * as React from "react";
 
 import { Editor, highlight } from "./Editor";
 import type { EditorProps } from "./Editor";
-import * as LangBQN from "./LangBQN";
-import type { Suspendable } from "./PromiseUtil";
-import { useDebouncedCallback } from "./ReactUtil";
+import * as EditorBQN from "./EditorBQN";
 import * as UI from "./UI";
-import type { WorkspaceConnection } from "./WorkspaceConnection";
 import * as BQN from "./bqn";
 
 type BQNResult =
@@ -116,7 +114,7 @@ export function Workspace({ manager }: WorkspaceProps) {
     [manager, updatePreview],
   );
   let editor = React.useRef<null | View.EditorView>(null);
-  let extensions = React.useMemo(() => [LangBQN.bqn()], []);
+  let extensions = React.useMemo(() => [EditorBQN.bqn()], []);
   let styles = UI.useStyles({
     root: {
       display: "flex",
@@ -163,7 +161,7 @@ export function Workspace({ manager }: WorkspaceProps) {
 
 function Cell({ cell }: { cell: WorkspaceCell }) {
   let code = React.useMemo(
-    () => highlight(cell.code, LangBQN.language, LangBQN.highlight),
+    () => highlight(cell.code, EditorBQN.language, EditorBQN.highlight),
     [cell.code],
   );
   let styles = UI.useStyles({
@@ -240,50 +238,4 @@ function Code({ code }: { code: string }) {
   return (
     <pre className={styles.root} dangerouslySetInnerHTML={{ __html: code }} />
   );
-}
-
-export function peerExtension(
-  conn: WorkspaceConnection,
-  startVersion: number,
-) {
-  let plugin = View.ViewPlugin.fromClass(
-    class {
-      private pushing = false;
-      private done = false;
-
-      constructor(private view: View.EditorView) {
-        this.pull();
-      }
-
-      update(update: View.ViewUpdate) {
-        if (update.docChanged) this.push();
-      }
-
-      async push() {
-        let updates = Collab.sendableUpdates(this.view.state);
-        if (this.pushing || !updates.length) return;
-        this.pushing = true;
-        let version = Collab.getSyncedVersion(this.view.state);
-        await conn.pushUpdates(version, updates);
-        this.pushing = false;
-        // Regardless of whether the push failed or new updates came in
-        // while it was running, try again if there's updates remaining
-        if (Collab.sendableUpdates(this.view.state).length)
-          setTimeout(() => this.push(), 100);
-      }
-
-      async pull() {
-        while (!this.done) {
-          let version = Collab.getSyncedVersion(this.view.state);
-          let updates = await conn.pullUpdates(version);
-          this.view.dispatch(Collab.receiveUpdates(this.view.state, updates));
-        }
-      }
-
-      destroy() {
-        this.done = true;
-      }
-    },
-  );
-  return [Collab.collab({ startVersion, clientID: conn.clientID }), plugin];
 }
