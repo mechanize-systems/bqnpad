@@ -79,3 +79,53 @@ export function useDebouncedCallback<T extends Callback>(
 
   return [cbd, flush, cancel] as const;
 }
+
+export type Codec<V> = {
+  encode: (v: V) => string;
+  decode: (s: string) => V;
+};
+
+export let NO_VALUE = {};
+
+export let jsonCodec: Codec<any> = {
+  encode(v) {
+    return JSON.stringify({ v: v });
+  },
+  decode(s) {
+    let v;
+    try {
+      v = JSON.parse(s);
+    } catch (_err) {
+      return NO_VALUE;
+    }
+
+    if (v == null || !("v" in v)) return NO_VALUE;
+    return v.v;
+  },
+};
+
+/**
+ * Works like React.useState but persists state in a localStorage.
+ *
+ * Note that the state value stored in a state should be JSON-serializable.
+ */
+export function usePersistentState<V>(
+  id: string,
+  init: () => V,
+  codec: Codec<V> = jsonCodec,
+) {
+  let [v, setv] = React.useState<V>(() => {
+    let s: string | null = localStorage.getItem(id);
+    if (s == null) return init();
+    let v = codec.decode(s);
+    if (v !== NO_VALUE) return v;
+    else return init();
+  });
+
+  // Persist committed state to localStorage
+  React.useEffect(() => {
+    localStorage.setItem(id, codec.encode(v));
+  }, [v, id]);
+
+  return [v, setv] as const;
+}

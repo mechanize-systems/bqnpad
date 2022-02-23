@@ -6,5 +6,6 @@
     "jsx": "react",
     "noEmit": true
   },
-  "include": ["*.ts", "*.d.ts"]
+  "include": ["*.ts", "*.d.ts"],
+  "exclude": ["bqn.grammar.js"]
 }

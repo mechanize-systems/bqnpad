@@ -6,7 +6,8 @@ import * as React from "react";
 import { Connection } from "./Connection";
 import { suspendable } from "./PromiseUtil";
 import type { Suspendable } from "./PromiseUtil";
-import type { Workspace, WorkspaceUpdate } from "./api";
+import type { Workspace } from "./Workspace";
+import type { WorkspaceUpdate } from "./api";
 
 class WorkspaceConnection {
   clientID: string;

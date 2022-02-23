@@ -1,14 +1,16 @@
+import * as Collab from "@codemirror/collab";
 import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as React from "react";
 
-import { Editor, highlight, peerExtension } from "./Editor";
+import { Editor, highlight } from "./Editor";
+import type { EditorProps } from "./Editor";
 import * as LangBQN from "./LangBQN";
+import type { Suspendable } from "./PromiseUtil";
 import { useDebouncedCallback } from "./ReactUtil";
 import * as UI from "./UI";
 import type { WorkspaceConnection } from "./WorkspaceConnection";
-import type * as API from "./api";
 import * as BQN from "./bqn";
 
 type BQNResult =
@@ -17,57 +19,63 @@ type BQNResult =
 
 type BQNPreview = BQNResult | { type: "notice"; notice: string };
 
-export type WorkspaceProps = {
-  conn: WorkspaceConnection;
+export type Workspace = {
+  cells: WorkspaceCell[];
+  current: State.Text;
 };
 
-export function Workspace({ conn }: WorkspaceProps) {
-  let {
-    doc: { doc, version },
-    workspace: { workspace: workspace0 },
-  } = conn.initial().getOrSuspend();
-  let repl = React.useMemo(() => BQN.makerepl(BQN.sysargs, 1), []);
-  let evalBQN = React.useCallback(
-    (code: State.Text | string): BQNResult => {
-      let codeString = typeof code === "string" ? code : code.sliceString(0);
-      if (codeString.trim().length === 0) return { type: "ok", ok: null };
-      try {
-        let value = repl(codeString);
-        return { type: "ok", ok: BQN.fmt(value) };
-      } catch (e) {
-        return { type: "error", error: BQN.fmtErr(e) };
-      }
-    },
-    [repl],
-  );
-  let previewBQN = React.useCallback(
-    (code: State.Text | string): BQNPreview => {
-      let codeString = typeof code === "string" ? code : code.sliceString(0);
-      if (codeString.trim().length === 0) return { type: "ok", ok: null };
-      try {
-        BQN.allowSideEffect(false);
-        let value = repl(codeString);
-        BQN.allowSideEffect(true);
-        return { type: "ok", ok: BQN.fmt(value) };
-      } catch (e) {
-        if (e.kind === "sideEffect")
-          return {
-            type: "notice",
-            notice:
-              "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
-          };
-        return { type: "error", error: BQN.fmtErr(e) };
-      } finally {
-        BQN.allowSideEffect(true);
-      }
-    },
-    [repl],
-  );
-  let [workspace, setWorkspace] = React.useState<API.Workspace>(
-    () => workspace0,
-  );
-  let [preview, setPreview] = React.useState<BQNPreview>(() => evalBQN(doc));
-  let [onDoc, _onDocFinalize, onDocCancel] = useDebouncedCallback(
+export type WorkspaceCell = {
+  code: string;
+  result?: BQNResult | null;
+};
+
+export type WorkspaceManager = {
+  load: () => Suspendable<Workspace>;
+  store(fn: (workspace: Workspace) => Workspace): void;
+};
+
+class REPL {
+  private repl: BQN.REPL;
+  constructor() {
+    this.repl = BQN.makerepl(BQN.sysargs, 1);
+  }
+
+  eval(code: State.Text | string): BQNResult {
+    let codeString = typeof code === "string" ? code : code.sliceString(0);
+    if (codeString.trim().length === 0) return { type: "ok", ok: null };
+    try {
+      let value = this.repl(codeString);
+      return { type: "ok", ok: BQN.fmt(value) };
+    } catch (e) {
+      return { type: "error", error: BQN.fmtErr(e as any) };
+    }
+  }
+
+  preview(code: State.Text | string): BQNPreview {
+    let codeString = typeof code === "string" ? code : code.sliceString(0);
+    if (codeString.trim().length === 0) return { type: "ok", ok: null };
+    try {
+      BQN.allowSideEffect(false);
+      let value = this.repl(codeString);
+      BQN.allowSideEffect(true);
+      return { type: "ok", ok: BQN.fmt(value) };
+    } catch (e) {
+      if ((e as any).kind === "sideEffect")
+        return {
+          type: "notice",
+          notice:
+            "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
+        };
+      return { type: "error", error: BQN.fmtErr(e as any) };
+    } finally {
+      BQN.allowSideEffect(true);
+    }
+  }
+}
+
+function usePreview(repl: REPL) {
+  let [preview, setPreview] = React.useState<null | BQNPreview>(null);
+  let [updatePreview, _onDocFinalize, onDocCancel] = useDebouncedCallback(
     500,
     (doc: State.Text, state: State.EditorState) => {
       let tree = Language.syntaxTree(state);
@@ -80,15 +88,35 @@ export function Workspace({ conn }: WorkspaceProps) {
           doc = doc.replace(from, to, ws);
         }
       }
-      setPreview(previewBQN(doc));
+      setPreview(repl.preview(doc));
     },
-    [setPreview, evalBQN],
+    [setPreview, repl],
+  );
+  let resetPreview = () => {
+    onDocCancel();
+    setPreview({ type: "ok", ok: null });
+  };
+  return [preview, updatePreview, resetPreview] as const;
+}
+
+export type WorkspaceProps = {
+  manager: WorkspaceManager;
+};
+
+export function Workspace({ manager }: WorkspaceProps) {
+  let workspace0 = manager.load().getOrSuspend();
+  let repl = React.useMemo(() => new REPL(), []);
+  let [workspace, setWorkspace] = React.useState<Workspace>(() => workspace0);
+  let [preview, updatePreview, resetPreview] = usePreview(repl);
+  let onDoc: EditorProps["onDoc"] = React.useCallback(
+    (doc, state) => {
+      updatePreview(doc, state);
+      manager.store((workspace) => ({ ...workspace, current: doc }));
+    },
+    [manager, updatePreview],
   );
   let editor = React.useRef<null | View.EditorView>(null);
-  let extensions = React.useMemo(
-    () => [peerExtension(conn, version)],
-    [conn, version],
-  );
+  let extensions = React.useMemo(() => [LangBQN.bqn()], []);
   let styles = UI.useStyles({
     root: {
       display: "flex",
@@ -105,47 +133,35 @@ export function Workspace({ conn }: WorkspaceProps) {
         run: (view) => {
           let text = view.state.doc;
           let code = text.sliceString(0);
-          let cell = { code };
-          setWorkspace((w) => ({ cells: w.cells.concat(cell) }));
-          conn.pushWorkspaceUpdates([
-            { type: "AddCell", cell, clientID: conn.clientID },
-          ]);
-          setPreview({ type: "ok", ok: null });
-          onDocCancel();
-          view.dispatch({
-            changes: { from: 0, to: code.length, insert: "" },
-          });
+          let cell = { code, result: repl.eval(code) };
+          setWorkspace((w) => ({ ...w, cells: w.cells.concat(cell) }));
+          manager.store((w) => ({ ...w, cells: w.cells.concat(cell) }));
+          resetPreview();
+          view.dispatch({ changes: { from: 0, to: code.length, insert: "" } });
           return true;
         },
       },
     ],
-    [setWorkspace],
+    [setWorkspace, repl],
   );
   return (
     <div className={styles.root}>
       {workspace.cells.map((cell, idx) => (
-        <RenderCell key={idx} cell={cell} evalBQN={evalBQN} />
+        <Cell key={idx} cell={cell} />
       ))}
       <Editor
         api={editor}
-        doc={doc}
+        doc={workspace.current}
         onDoc={onDoc}
         extensions={extensions}
         keybindings={keybindings}
       />
-      <Output output={preview} />
+      <Output output={preview ?? repl.preview(workspace.current)} />
     </div>
   );
 }
 
-function RenderCell({
-  cell,
-  evalBQN,
-}: {
-  cell: API.WorkspaceCell;
-  evalBQN: (code: string) => BQNResult;
-}) {
-  let result = React.useMemo(() => evalBQN(cell.code), [evalBQN, cell.code]);
+function Cell({ cell }: { cell: WorkspaceCell }) {
   let code = React.useMemo(
     () => highlight(cell.code, LangBQN.language, LangBQN.highlight),
     [cell.code],
@@ -158,7 +174,7 @@ function RenderCell({
   return (
     <div className={styles.root}>
       <Code code={code} />
-      <Output output={result} />
+      <Output output={cell.result ?? { type: "ok", ok: null }} />
     </div>
   );
 }
@@ -192,8 +208,6 @@ function Output({ output }: { output: BQNPreview }) {
     children = output.error;
   } else if (output.type === "notice") {
     children = output.notice;
-  } else {
-    let _: never = output;
   }
   return (
     <pre
@@ -226,4 +240,50 @@ function Code({ code }: { code: string }) {
   return (
     <pre className={styles.root} dangerouslySetInnerHTML={{ __html: code }} />
   );
+}
+
+export function peerExtension(
+  conn: WorkspaceConnection,
+  startVersion: number,
+) {
+  let plugin = View.ViewPlugin.fromClass(
+    class {
+      private pushing = false;
+      private done = false;
+
+      constructor(private view: View.EditorView) {
+        this.pull();
+      }
+
+      update(update: View.ViewUpdate) {
+        if (update.docChanged) this.push();
+      }
+
+      async push() {
+        let updates = Collab.sendableUpdates(this.view.state);
+        if (this.pushing || !updates.length) return;
+        this.pushing = true;
+        let version = Collab.getSyncedVersion(this.view.state);
+        await conn.pushUpdates(version, updates);
+        this.pushing = false;
+        // Regardless of whether the push failed or new updates came in
+        // while it was running, try again if there's updates remaining
+        if (Collab.sendableUpdates(this.view.state).length)
+          setTimeout(() => this.push(), 100);
+      }
+
+      async pull() {
+        while (!this.done) {
+          let version = Collab.getSyncedVersion(this.view.state);
+          let updates = await conn.pullUpdates(version);
+          this.view.dispatch(Collab.receiveUpdates(this.view.state, updates));
+        }
+      }
+
+      destroy() {
+        this.done = true;
+      }
+    },
+  );
+  return [Collab.collab({ startVersion, clientID: conn.clientID }), plugin];
 }

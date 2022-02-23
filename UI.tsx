@@ -1,6 +1,8 @@
 import { mergeClasses, makeStyles as vanillaMakeStyles } from "@griffel/core";
 import type { GriffelStyle } from "@griffel/core";
+// @ts-ignore
 import { useRenderer } from "@griffel/react/RendererContext.esm";
+// @ts-ignore
 import { useTextDirection } from "@griffel/react/TextDirectionContext.esm";
 import * as React from "react";
 
