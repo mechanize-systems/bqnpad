@@ -24,3 +24,7 @@ test:
 
 grammar/bqn.grammar.js grammar/bqn.grammar.terms.js: grammar/bqn.grammar
 	pnpm lezer-generator $(<) --names --cjs --output $(@)
+
+.PHONY: deploy
+deploy:
+	flyctl --app bqnpad deploy .
