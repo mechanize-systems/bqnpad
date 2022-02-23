@@ -29,6 +29,7 @@ specifiers:
   debug: ^4.3.3
   eslint: ^8.9.0
   mocha: ^9.2.1
+  nanoid: ^3.3.1
   prettier: ^2.5.1
   react: ^18.0.0-rc.0
   react-dom: ^18.0.0-rc.0
@@ -58,6 +59,7 @@ dependencies:
   '@types/react': 17.0.39
   '@types/react-dom': 17.0.11
   debug: 4.3.3
+  nanoid: 3.3.1
   react: 18.0.0-rc.0
   react-dom: 18.0.0-rc.0_react@18.0.0-rc.0
   ws: 8.5.0
@@ -1715,6 +1717,12 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
     dev: true
+
+  /nanoid/3.3.1:
+    resolution: {integrity: sha512-n6Vs/3KGyxPQd6uO0eH4Bv0ojGSUvuLlIHtC3Y0kEO23YRge8H9x1GCzLn28YX0H66pMkxuaeESFq4tKISKwdw==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+    dev: false
 
   /natural-compare/1.4.0:
     resolution: {integrity: sha1-Sr6/7tdUHywnrPspvbvRXI1bpPc=}

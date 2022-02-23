@@ -1,8 +1,8 @@
 import * as ASAP from "@mechanize/asap";
 import * as React from "react";
 
-import { useDocumentConnection } from "./DocumentConnection";
-import { Surface } from "./Editor";
+import { Workspace } from "./Workspace";
+import { useWorkspaceConnection } from "./WorkspaceConnection";
 import "./app.css";
 
 export let routes = {
@@ -12,10 +12,10 @@ export let routes = {
 ASAP.boot({ routes, AppLoading });
 
 function Index() {
-  let conn = useDocumentConnection();
+  let conn = useWorkspaceConnection();
   return (
     <React.Suspense fallback={<AppLoading />}>
-      <Surface conn={conn} />
+      <Workspace conn={conn} />
     </React.Suspense>
   );
 }

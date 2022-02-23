@@ -18,7 +18,7 @@ let tags = {
   BQNcomment: Tag.define(),
 };
 
-let highlight = HighlightStyle.define([
+export let highlight = HighlightStyle.define([
   { tag: tags.BQNstring, color: "#3e99ab" },
   { tag: tags.BQNnumber, color: "#a73227" },
   { tag: tags.BQNnothing, color: "#a73227" },
@@ -57,7 +57,7 @@ let bqnStyleTags = styleTags({
   SPECMOD2: tags.BQNmod2,
 });
 
-let language = LRLanguage.define({
+export let language = LRLanguage.define({
   parser: parser.configure({
     props: [bqnStyleTags],
   }),

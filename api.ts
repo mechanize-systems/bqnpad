@@ -14,9 +14,35 @@ const INITIAL_DOC = `
 "Hello, "∾<⟜'a'⊸/ "Big Questions Notation"
 `.trim();
 
-let updates: Update[] = [];
-let doc = Text.of(INITIAL_DOC.split("\n"));
-let pending: ((value: any) => void)[] = [];
+type Sync<V, U> = {
+  value: V;
+  updates: U[];
+  pending: ((value: any) => void)[];
+};
+
+let doc: Sync<Text, Update> = {
+  value: Text.of(INITIAL_DOC.split("\n")),
+  updates: [],
+  pending: [],
+};
+
+export type Workspace = {
+  cells: WorkspaceCell[];
+};
+
+export type WorkspaceCell = { code: string };
+
+export type WorkspaceUpdate = {
+  type: "AddCell";
+  clientID: string;
+  cell: WorkspaceCell;
+};
+
+let workspace: Sync<Workspace, WorkspaceUpdate> = {
+  value: { cells: [] },
+  updates: [],
+  pending: [],
+};
 
 export let routes = [
   API.route("GET", "/doc", async (req, _res) => {
@@ -30,25 +56,53 @@ export let routes = [
       let { data, reqID } = JSON.parse(event.data.toString());
       let resp = (value: any) => conn.send(JSON.stringify({ reqID, value }));
       if (data.type == "pullUpdates") {
-        if (data.version < updates.length) resp(updates.slice(data.version));
-        else pending.push(resp);
+        if (data.version < doc.updates.length)
+          resp(doc.updates.slice(data.version));
+        else doc.pending.push(resp);
       } else if (data.type == "pushUpdates") {
-        if (data.version != updates.length) {
+        if (data.version != doc.updates.length) {
           resp(false);
         } else {
           for (let update of data.updates) {
             // Convert the JSON representation to an actual ChangeSet
             // instance
             let changes = ChangeSet.fromJSON(update.changes);
-            updates.push({ changes, clientID: update.clientID });
-            doc = changes.apply(doc);
+            doc.updates.push({ changes, clientID: update.clientID });
+            doc.value = changes.apply(doc.value);
           }
           resp(true);
           // Notify pending requests
-          while (pending.length) pending.pop()!(data.updates);
+          while (doc.pending.length) doc.pending.pop()!(data.updates);
         }
-      } else if (data.type == "getDocument") {
-        resp({ version: updates.length, doc: doc.toString() });
+      } else if (data.type == "pullWorkspaceUpdates") {
+        if (data.version < workspace.updates.length)
+          resp(workspace.updates.slice(data.version));
+        else workspace.pending.push(resp);
+      } else if (data.type == "pushWorkspaceUpdates") {
+        if (data.version != doc.updates.length) {
+          resp(false);
+        } else {
+          for (let update of data.updates) {
+            workspace.value.cells.push(update.cell);
+            workspace.updates.push(update);
+          }
+          resp(true);
+          while (workspace.pending.length)
+            workspace.pending.pop()!(data.updates);
+        }
+      } else if (data.type == "initial") {
+        resp({
+          doc: {
+            version: doc.updates.length,
+            doc: doc.value.toString(),
+          },
+          workspace: {
+            version: doc.updates.length,
+            workspace: workspace.value,
+          },
+        });
+      } else {
+        log(`unknown message: ${data.type}`);
       }
     };
   }),

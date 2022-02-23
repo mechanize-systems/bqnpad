@@ -1,103 +1,24 @@
 import * as Collab from "@codemirror/collab";
 import * as Commands from "@codemirror/commands";
+import * as Highlight from "@codemirror/highlight";
+import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as Vim from "@replit/codemirror-vim";
 import * as React from "react";
 
-import type { DocumentConnection } from "./DocumentConnection";
-import { bqn } from "./LangBQN";
-import { useDebouncedCallback } from "./ReactUtil";
+import * as LangBQN from "./LangBQN";
 import * as UI from "./UI";
-import BQN, { fmt } from "./bqn";
-
-type BQNResult = { type: "ok"; ok: string } | { type: "error"; error: string };
-
-function evalBQN(text: State.Text): BQNResult {
-  let bqn = text.sliceString(0);
-  try {
-    return { type: "ok", ok: fmt(BQN(bqn)) };
-  } catch (e) {
-    let s = Array.from(bqn);
-    let w = e.message;
-    let is;
-    while (
-      w &&
-      (w.loc || (e.kind !== "!" && w.sh && w.sh[0] === 2)) &&
-      w.src.join("") === s.join("")
-    )
-      [is, w] = w;
-    return { type: "error", error: w.join("") };
-  }
-}
-
-export type SurfaceProps = {
-  conn: DocumentConnection;
-};
-
-export function Surface({ conn }: SurfaceProps) {
-  let { doc, version } = conn.initialDocument().getOrSuspend();
-  let [output, setOutput] = React.useState<BQNResult>(() => evalBQN(doc));
-  let [onDoc] = useDebouncedCallback(
-    400,
-    (doc: State.Text) => setOutput(evalBQN(doc)),
-    [setOutput],
-  );
-  let extensions = React.useMemo(
-    () => [peerExtension(conn, version)],
-    [conn, version],
-  );
-  let styles = UI.useStyles({
-    root: {
-      display: "flex",
-      flexDirection: "column",
-    },
-  });
-  return (
-    <div className={styles.root}>
-      <Editor doc={doc} onDoc={onDoc} extensions={extensions} />
-      <Output output={output} />
-    </div>
-  );
-}
-
-function Output({ output }: { output: BQNResult }) {
-  let styles = UI.useStyles({
-    root: {
-      fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
-      fontSize: "20px",
-      overflowY: "hidden",
-      overflowX: "hidden",
-      marginTop: "0px",
-      marginBottom: "0px",
-      marginLeft: "0px",
-      marginRight: "0px",
-      paddingLeft: "35px",
-      textOverflow: "ellipsis",
-    },
-    hasError: {
-      color: "red",
-    },
-  });
-  let children = output.type === "ok" ? output.ok : `ERROR: ${output.error}`;
-  return (
-    <pre
-      className={UI.cx(
-        styles.root,
-        output.type === "error" && styles.hasError,
-      )}
-    >
-      {children}
-    </pre>
-  );
-}
+import type { Cell, WorkspaceConnection } from "./WorkspaceConnection";
+import * as BQN from "./bqn";
 
 export type EditorProps = {
   doc: State.Text;
-  onDoc: (doc: State.Text) => void;
+  onDoc?: (doc: State.Text) => void;
   keybindings?: View.KeyBinding[];
   extensions?: State.Extension[];
   keymap?: "default" | "vim";
+  api?: React.MutableRefObject<null | View.EditorView>;
 };
 
 export function Editor({
@@ -106,6 +27,7 @@ export function Editor({
   keymap = "default",
   keybindings,
   extensions,
+  api,
 }: EditorProps) {
   let ref = React.useRef<null | HTMLDivElement>(null);
   let view = React.useRef<null | View.EditorView>(null);
@@ -113,7 +35,7 @@ export function Editor({
   let onDocExt = useStateCompartment(
     () =>
       View.EditorView.updateListener.of((update) => {
-        if (update.docChanged) onDoc(update.state.doc);
+        if (update.docChanged && onDoc != null) onDoc(update.state.doc);
       }),
     [onDoc],
   );
@@ -128,21 +50,20 @@ export function Editor({
       View.keymap.of(Commands.defaultKeymap),
       onDocExt,
       keybindingsExt,
-      bqn(),
+      LangBQN.bqn(),
       ...(extensions ?? []),
     ];
     let startState = State.EditorState.create({
       doc,
       extensions: extensions0.filter(Boolean),
     });
-    view.current = new View.EditorView({
+    view.current = api.current = new View.EditorView({
       state: startState,
       parent: ref.current,
     });
-
     return () => {
       view.current?.destroy();
-      view.current = null;
+      view.current = api.current = null;
     };
   }, [keymap, onDocExt, keybindingsExt, extensions]);
   let styles = UI.useStyles({
@@ -153,18 +74,22 @@ export function Editor({
       "& .cm-content": {
         fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
         fontSize: "20px",
+        padding: 0,
       },
       "& .cm-editor": { width: "100%" },
       "& .cm-editor.cm-focused": {},
       "& .cm-editor .cm-activeLine": {},
       "& .cm-editor.cm-focused .cm-activeLine": {},
-      "& .cm-line": {},
+      "& .cm-line": { padding: 0 },
     },
   });
   return <div className={styles.root} ref={ref} />;
 }
 
-function peerExtension(conn: DocumentConnection, startVersion: number) {
+export function peerExtension(
+  conn: WorkspaceConnection,
+  startVersion: number,
+) {
   let plugin = View.ViewPlugin.fromClass(
     class {
       private pushing = false;
@@ -204,7 +129,7 @@ function peerExtension(conn: DocumentConnection, startVersion: number) {
       }
     },
   );
-  return [Collab.collab({ startVersion }), plugin];
+  return [Collab.collab({ startVersion, clientID: conn.clientID }), plugin];
 }
 
 /**
@@ -226,4 +151,30 @@ function useStateCompartment(
     compartment.reconfigure(configure());
   }, deps); // eslint-disable-line
   return extension;
+}
+
+export function highlight(
+  textContent: string,
+  language: Language.Language,
+  highlight: Highlight.HighlightStyle,
+) {
+  let chunks = [];
+  let callback = (
+    text: string,
+    style: string,
+    from: number,
+    to: number,
+  ): void => {
+    chunks.push(`<span class="${style ?? ""}">${text}</span>`);
+  };
+  const tree = language.parser.parse(textContent);
+  let pos = 0;
+  Highlight.highlightTree(tree, highlight.match, (from, to, classes) => {
+    from > pos && callback(textContent.slice(pos, from), null, pos, from);
+    callback(textContent.slice(from, to), classes, from, to);
+    pos = to;
+  });
+  pos != tree.length &&
+    callback(textContent.slice(pos, tree.length), null, pos, tree.length);
+  return chunks.join("");
 }
