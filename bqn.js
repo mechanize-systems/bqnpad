@@ -56,9 +56,14 @@ let allowSideEffectLocally = (fn) => {
     allowSideEffect = orig;
   }
 }
-let set = (d, id, v) => {
+
+let setc = (d, id, v) => {
   if (!allowSideEffect)
     throw {kind: 'sideEffect', message: 'side effects are not allowed'};
+  return set(d, id, v);
+}
+
+let set = (d, id, v) => {
   let eq = (a,b) => a.length===b.length && a.every((e,i)=>e===b[i]);
   if (id.e) {
     if (!d && id.e[id.p]===null) throw Error("↩: Variable modified before definition");
@@ -90,6 +95,7 @@ let chkM = (v,m) => { if (m.m!==v) throw Error("Runtime: Only a "+v+"-modifier c
 let genjs = (B, p, L) => { // Bytecode -> Javascript compiler
   let rD = 0;
   let r = L?"let l=0;try{":"";
+  let set = L?"setc":"set"
   let fin = L?"}catch(er){let s=L.map(p=>p[l]);s.sh=[1,2];let m=[s,er.message];m.loc=1;m.src=e.vid.src;m.sh=[2];er.message=m;throw er;}":"";
   let szM = 1;
   let rV = n => { szM=Math.max(szM,n+1); return 'v'+n; };
@@ -119,11 +125,11 @@ let genjs = (B, p, L) => { // Bytecode -> Javascript compiler
       case 42:         { let p=rG(); r+="if(1!=="+p+"){if(0!=="+p+")throw Error('Predicate value must be 0 or 1');break;}";   break; }
       case 43:         { let m=rG(); r+=rP("{match:1,v:"+m+"}");                                                              break; }
       case 44:         {             r+=rP("{match:1}");                                                                      break; }
-      case 47:         { let i=rG(),       v=rG(); r+="try{set(1,"+i+","+v+");}catch(e){break;}";                             break; }
-      case 48:         { let i=rG(),       v=rG(); r+=rP("set(1,"+i+","+v                       +")");                        break; }
-      case 49:         { let i=rG(),       v=rG(); r+=rP("set(0,"+i+","+v                       +")");                        break; }
-      case 50:         { let i=rG(),f=rG(),x=rG(); r+=rP("set(0,"+i+",call("+f+","+x+",get("+i+")))");                        break; }
-      case 51:         { let i=rG(),f=rG()       ; r+=rP("set(0,"+i+",call("+f+      ",get("+i+")))");                        break; }
+      case 47:         { let i=rG(),       v=rG(); r+="try{"+set+"(1,"+i+","+v+");}catch(e){break;}";                             break; }
+      case 48:         { let i=rG(),       v=rG(); r+=rP(set+"(1,"+i+","+v                       +")");                        break; }
+      case 49:         { let i=rG(),       v=rG(); r+=rP(set+"(0,"+i+","+v                       +")");                        break; }
+      case 50:         { let i=rG(),f=rG(),x=rG(); r+=rP(set+"(0,"+i+",call("+f+","+x+",get("+i+")))");                        break; }
+      case 51:         { let i=rG(),f=rG()       ; r+=rP(set+"(0,"+i+",call("+f+      ",get("+i+")))");                        break; }
       case 66:         { let m=rG(); r+=rP("{vid:e.vid,m:"+m+",a:"+num()+"}");                                                break; }
       case 64:         { let v=rG(); r+=rP("readns("+v+",e.vid,"+num()+")");                                                  break; }
     }
@@ -188,8 +194,8 @@ let run = (B,O,F,S,L,T,src,env) => { // Bytecode, Objects, Blocks, Bodies, Locat
     if (type===0) c = de2+c;
     if (type===1) c = "const mod=(f  ) => {"+de2+" e2["+I+"]=mod;e2["+(I+1)+"]=f;"                +c+"}; mod.m=1;return mod;";
     if (type===2) c = "const mod=(f,g) => {"+de2+" e2["+I+"]=mod;e2["+(I+1)+"]=f;e2["+(I+2)+"]=g;"+c+"}; mod.m=2;return mod;";
-    return Function("'use strict'; return (chkM,has,call,getv,get,set,llst,train2,train3,readns,O,L,env,vid) => D => oe => {"+c+"};")()
-                                          (chkM,has,call,getv,get,set,llst,train2,train3,readns,O,L,env,vid);
+    return Function("'use strict'; return (chkM,has,call,getv,get,set,setc,llst,train2,train3,readns,O,L,env,vid) => D => oe => {"+c+"};")()
+                                          (chkM,has,call,getv,get,set,setc,llst,train2,train3,readns,O,L,env,vid);
   });
   D.forEach((d,i) => {D[i]=d(D)});
   return D[0]([]);
