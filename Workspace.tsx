@@ -155,7 +155,10 @@ export function Workspace({ manager }: WorkspaceProps) {
         keybindings={keybindings}
         placeholder="BQN)"
       />
-      <Output output={preview ?? repl.preview(workspace.current)} />
+      <Output
+        preview={true}
+        output={preview ?? repl.preview(workspace.current)}
+      />
     </div>
   );
 }
@@ -178,7 +181,13 @@ function Cell({ cell }: { cell: WorkspaceCell }) {
   );
 }
 
-function Output({ output }: { output: BQNPreview }) {
+function Output({
+  output,
+  preview,
+}: {
+  output: BQNPreview;
+  preview?: boolean;
+}) {
   let styles = UI.useStyles({
     root: {
       fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
@@ -191,6 +200,9 @@ function Output({ output }: { output: BQNPreview }) {
       marginRight: "0px",
       paddingLeft: "35px",
       textOverflow: "ellipsis",
+    },
+    hasPreview: {
+      color: "#888",
     },
     hasError: {
       color: "red",
@@ -212,6 +224,7 @@ function Output({ output }: { output: BQNPreview }) {
     <pre
       className={UI.cx(
         styles.root,
+        preview && styles.hasPreview,
         output.type === "error" && styles.hasError,
         output.type === "notice" && styles.hasNotice,
       )}
