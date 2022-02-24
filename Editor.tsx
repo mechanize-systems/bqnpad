@@ -17,6 +17,7 @@ export type EditorProps = {
   keybindings?: View.KeyBinding[];
   extensions?: (undefined | State.Extension)[];
   keymap?: "default" | "vim";
+  placeholder?: string | null | undefined;
   api?: React.MutableRefObject<null | View.EditorView>;
 };
 
@@ -26,6 +27,7 @@ export function Editor({
   keymap = "default",
   keybindings,
   extensions,
+  placeholder,
   api,
 }: EditorProps) {
   let ref = React.useRef<null | HTMLDivElement>(null);
@@ -44,6 +46,10 @@ export function Editor({
     () => View.keymap.of(keybindings ?? []),
     [keybindings],
   );
+  let placeholderExt = useStateCompartment(
+    () => View.placeholder(placeholder ?? ""),
+    [placeholder],
+  );
 
   React.useEffect(() => {
     let extensions0 = [
@@ -51,6 +57,7 @@ export function Editor({
       View.keymap.of(Commands.defaultKeymap),
       onDocExt,
       keybindingsExt,
+      placeholderExt,
       ...(extensions ?? []),
     ];
     let startState = State.EditorState.create({
@@ -67,7 +74,7 @@ export function Editor({
       view.current = null;
       if (api != null) api.current = null;
     };
-  }, [keymap, onDocExt, keybindingsExt, extensions]);
+  }, [keymap, onDocExt, keybindingsExt, placeholderExt, extensions]);
   let styles = UI.useStyles({
     root: {
       position: "relative",
