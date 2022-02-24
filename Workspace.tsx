@@ -61,7 +61,7 @@ export function Workspace({ manager }: WorkspaceProps) {
     [manager, setPreview, workspace],
   );
   let extensions = React.useMemo(
-    () => [EditorBQN.bqn(), ...workspace.extension],
+    () => [EditorBQN.bqn(), workspace.extension],
     [workspace],
   );
 
@@ -76,6 +76,7 @@ export function Workspace({ manager }: WorkspaceProps) {
         changes: { from: to, to, insert: "\n" },
         effects: [addCellEffect.of(cell)],
         selection: State.EditorSelection.cursor(to + 1),
+        scrollIntoView: true,
       });
       resetPreview();
       return true;
@@ -97,6 +98,7 @@ export function Workspace({ manager }: WorkspaceProps) {
         view.dispatch({
           changes: { from: to, to, insert: code },
           selection: State.EditorSelection.cursor(to),
+          scrollIntoView: true,
         });
         return true;
       }
