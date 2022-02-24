@@ -47,7 +47,7 @@ const INITIAL_DOC = State.Text.of(
 
 function useLocalWorkspaceManager(): WorkspaceManager {
   let [workspace, setWorkspace] = usePersistentState<Workspace>(
-    "bqn-workspace",
+    "bqn-workspace-v2",
     () => ({
       cells: [],
       current: INITIAL_DOC,

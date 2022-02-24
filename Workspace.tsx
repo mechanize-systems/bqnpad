@@ -175,6 +175,7 @@ function Output({
     root: {
       fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
       fontSize: "20px",
+      lineHeight: "1.4",
       overflowY: "hidden",
       overflowX: "hidden",
       marginTop: "0px",
