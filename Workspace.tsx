@@ -104,6 +104,25 @@ export function Workspace({ manager }: WorkspaceProps) {
     return false;
   }, []);
 
+  let selectCurrentCell = React.useCallback((view: View.EditorView) => {
+    let w = workspace.getWorkspace(view.state);
+    let [from, to] = currentRange(w);
+    let sel = view.state.selection.main;
+    if (sel.from >= from) {
+      view.dispatch({ selection: State.EditorSelection.range(from, to) });
+      return true;
+    }
+    for (let cell of w.cells) {
+      if (sel.from >= cell.from && sel.to < cell.to) {
+        view.dispatch({
+          selection: State.EditorSelection.range(cell.from, cell.to - 1),
+        });
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
   let keybindings: View.KeyBinding[] = React.useMemo(
     () => [
       {
@@ -114,6 +133,7 @@ export function Workspace({ manager }: WorkspaceProps) {
         key: "Enter",
         run: maybeRestoreCell,
       },
+      { key: "Mod-a", run: selectCurrentCell },
     ],
     [addCell, maybeRestoreCell],
   );
