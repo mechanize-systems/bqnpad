@@ -1,11 +1,12 @@
+/// <reference types="react-dom/next" />
 import type { Suspendable } from "@bqnpad/lib/PromiseUtil";
 import { useDebouncedCallback } from "@bqnpad/lib/ReactUtil";
-import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
-import type * as View from "@codemirror/view";
+import * as View from "@codemirror/view";
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 
-import { Editor, highlight } from "./Editor";
+import { Editor } from "./Editor";
 import type { EditorProps } from "./Editor";
 import * as EditorBQN from "./EditorBQN";
 import * as UI from "./UI";
@@ -23,7 +24,8 @@ export type Workspace = {
 };
 
 export type WorkspaceCell = {
-  code: string;
+  from: number;
+  to: number;
   result?: BQNResult | null;
 };
 
@@ -32,124 +34,101 @@ export type WorkspaceManager = {
   store(fn: (workspace: Workspace) => Workspace): void;
 };
 
-class REPL {
-  private repl: BQN.REPL;
-  constructor() {
-    this.repl = BQN.makerepl(BQN.sysargs, 1);
-  }
-
-  eval(code: State.Text | string): BQNResult {
-    let codeString = typeof code === "string" ? code : code.sliceString(0);
-    if (codeString.trim().length === 0) return { type: "ok", ok: null };
-    try {
-      let value = this.repl(codeString);
-      return { type: "ok", ok: BQN.fmt(value) };
-    } catch (e) {
-      return { type: "error", error: BQN.fmtErr(e as any) };
-    }
-  }
-
-  preview(code: State.Text | string): BQNPreview {
-    let codeString = typeof code === "string" ? code : code.sliceString(0);
-    if (codeString.trim().length === 0) return { type: "ok", ok: null };
-    try {
-      BQN.allowSideEffect(false);
-      let value = this.repl(codeString);
-      BQN.allowSideEffect(true);
-      return { type: "ok", ok: BQN.fmt(value) };
-    } catch (e) {
-      if ((e as any).kind === "sideEffect")
-        return {
-          type: "notice",
-          notice:
-            "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
-        };
-      return { type: "error", error: BQN.fmtErr(e as any) };
-    } finally {
-      BQN.allowSideEffect(true);
-    }
-  }
-}
-
-function usePreview(repl: REPL) {
-  let [preview, setPreview] = React.useState<null | BQNPreview>(null);
-  let [updatePreview, _onDocFinalize, onDocCancel] = useDebouncedCallback(
-    500,
-    (doc: State.Text, state: State.EditorState) => {
-      let tree = Language.syntaxTree(state);
-      let c = tree.cursor();
-      if (c.lastChild() && c.node.type.name === "ASSIGN" && c.firstChild()) {
-        let from = c.from;
-        if (c.nextSibling()) {
-          let to = c.from;
-          let ws = State.Text.of([new Array(to - from).fill(" ").join()]);
-          doc = doc.replace(from, to, ws);
-        }
-      }
-      setPreview(repl.preview(doc));
-    },
-    [setPreview, repl],
-  );
-  let resetPreview = () => {
-    onDocCancel();
-    setPreview({ type: "ok", ok: null });
-  };
-  return [preview, updatePreview, resetPreview] as const;
-}
-
 export type WorkspaceProps = {
   manager: WorkspaceManager;
 };
 
 export function Workspace({ manager }: WorkspaceProps) {
   let workspace0 = manager.load().getOrSuspend();
-  let repl = React.useMemo(() => new REPL(), []);
-  let [workspace, setWorkspace] = React.useState<Workspace>(() => workspace0);
-  let [preview, updatePreview, resetPreview] = usePreview(repl);
+  let workspace = React.useMemo(
+    () => workspaceExtension(workspace0),
+    [workspace0],
+  );
+  let repl = React.useMemo(() => {
+    let repl = new REPL();
+    for (let cell of workspace0.cells) {
+      let code = workspace0.current.sliceString(cell.from, cell.to);
+      cell.result = repl.eval(code);
+    }
+    return repl;
+  }, [workspace0]);
+  let [preview, setPreview, resetPreview] = usePreview(workspace, repl);
   let onDoc: EditorProps["onDoc"] = React.useCallback(
     (doc, state) => {
-      updatePreview(doc, state);
-      manager.store((workspace) => ({ ...workspace, current: doc }));
+      setPreview(doc, state);
+      manager.store((_) => workspace.getWorkspace(state));
     },
-    [manager, updatePreview],
+    [manager, setPreview, workspace],
   );
-  let editor = React.useRef<null | View.EditorView>(null);
-  let extensions = React.useMemo(() => [EditorBQN.bqn()], []);
+  let extensions = React.useMemo(
+    () => [EditorBQN.bqn(), ...workspace.extension],
+    [workspace],
+  );
+
+  let addCell = React.useCallback(
+    (view: View.EditorView) => {
+      let [from, to] = currentRange(workspace.getWorkspace(view.state));
+      if (to - from === 0) return true;
+      let code = view.state.doc.sliceString(from, to);
+      let result = repl.eval(code);
+      let cell: WorkspaceCell = { from, to: to + 1, result };
+      view.dispatch({
+        changes: { from: to, to, insert: "\n" },
+        effects: [addCellEffect.of(cell)],
+        selection: State.EditorSelection.cursor(to + 1),
+      });
+      resetPreview();
+      return true;
+    },
+    [workspace, resetPreview],
+  );
+
+  let maybeRestoreCell = React.useCallback((view: View.EditorView) => {
+    let w = workspace.getWorkspace(view.state);
+    let [from, _to] = currentRange(w);
+    if (view.state.selection.ranges.length !== 1) return false;
+    let sel = view.state.selection.main;
+    if (sel.from >= from) return false;
+    for (let cell of w.cells) {
+      if (sel.from >= cell.from && sel.to < cell.to) {
+        addCell(view);
+        let code = view.state.doc.sliceString(cell.from, cell.to - 1);
+        let to = view.state.doc.length;
+        view.dispatch({
+          changes: { from: to, to, insert: code },
+          selection: State.EditorSelection.cursor(to),
+        });
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
+  let keybindings: View.KeyBinding[] = React.useMemo(
+    () => [
+      {
+        key: "Shift-Enter",
+        run: addCell,
+      },
+      {
+        key: "Enter",
+        run: maybeRestoreCell,
+      },
+    ],
+    [addCell, maybeRestoreCell],
+  );
+
   let styles = UI.useStyles({
     root: {
       display: "flex",
       flexDirection: "column",
     },
-    historyItem: {
-      paddingBottom: "20px",
-    },
   });
-  let keybindings: View.KeyBinding[] = React.useMemo(
-    () => [
-      {
-        key: "Shift-Enter",
-        run: (view) => {
-          let text = view.state.doc;
-          let code = text.sliceString(0);
-          let cell = { code, result: repl.eval(code) };
-          setWorkspace((w) => ({ ...w, cells: w.cells.concat(cell) }));
-          manager.store((w) => ({ ...w, cells: w.cells.concat(cell) }));
-          resetPreview();
-          view.dispatch({ changes: { from: 0, to: code.length, insert: "" } });
-          return true;
-        },
-      },
-    ],
-    [setWorkspace, repl],
-  );
+
   return (
     <div className={styles.root}>
-      {workspace.cells.map((cell, idx) => (
-        <Cell key={idx} cell={cell} />
-      ))}
       <Editor
-        api={editor}
-        doc={workspace.current}
+        doc={workspace0.current}
         onDoc={onDoc}
         extensions={extensions}
         keybindings={keybindings}
@@ -157,26 +136,8 @@ export function Workspace({ manager }: WorkspaceProps) {
       />
       <Output
         preview={true}
-        output={preview ?? repl.preview(workspace.current)}
+        output={preview ?? repl.preview(currentCode(workspace0))}
       />
-    </div>
-  );
-}
-
-function Cell({ cell }: { cell: WorkspaceCell }) {
-  let code = React.useMemo(
-    () => highlight(cell.code, EditorBQN.language, EditorBQN.highlight),
-    [cell.code],
-  );
-  let styles = UI.useStyles({
-    root: {
-      paddingBottom: "20px",
-    },
-  });
-  return (
-    <div className={styles.root}>
-      <Code code={code} />
-      <Output output={cell.result ?? { type: "ok", ok: null }} />
     </div>
   );
 }
@@ -234,22 +195,203 @@ function Output({
   );
 }
 
-function Code({ code }: { code: string }) {
-  let styles = UI.useStyles({
-    root: {
-      fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
-      fontSize: "20px",
-      overflowY: "hidden",
-      overflowX: "hidden",
-      marginTop: "0px",
-      marginBottom: "0px",
-      marginLeft: "0px",
-      marginRight: "0px",
-      textOverflow: "ellipsis",
-      lineHeight: 1.4,
+class CellOutputWidget extends View.WidgetType {
+  _container: null | {
+    dom: HTMLDivElement;
+    root: ReactDOM.Root;
+  } = null;
+
+  get container() {
+    if (this._container == null) {
+      let dom = document.createElement("div");
+      dom.setAttribute("aria-hidden", "true");
+      let root = ReactDOM.createRoot(dom);
+      this._container = { dom, root };
+    }
+    return this._container;
+  }
+
+  constructor(
+    readonly cell: WorkspaceCell,
+    readonly preview: boolean = false,
+  ) {
+    super();
+  }
+
+  override eq(other: CellOutputWidget) {
+    return other.cell == this.cell;
+  }
+
+  toDOM() {
+    this.container.root.render(
+      <Output output={this.cell.result!} preview={this.preview} />,
+    );
+    return this.container.dom;
+  }
+
+  override ignoreEvent() {
+    return true;
+  }
+}
+
+let addCellEffect = State.StateEffect.define<WorkspaceCell>();
+
+type WorkspaceState = {
+  extension: State.Extension[];
+  getWorkspace: (state: State.EditorState) => Workspace;
+};
+
+function workspaceExtension(workspace0: Workspace): WorkspaceState {
+  const field = State.StateField.define<WorkspaceCell[]>({
+    create() {
+      return workspace0.cells;
+    },
+    update(state, tr) {
+      let nextState = state;
+      for (let e of tr.effects)
+        if (e.is(addCellEffect)) {
+          if (nextState === state) nextState = nextState.slice(0);
+          let cell = e.value;
+          nextState.push(cell);
+        }
+      return nextState;
+    },
+    provide(field) {
+      let outputs = View.EditorView.decorations.compute([field], (state) => {
+        let cells = state.field(field);
+        if (cells.length === 0) return View.Decoration.none;
+        else
+          return View.Decoration.set(
+            cells.map((cell) => {
+              let widget = new CellOutputWidget(cell);
+              let deco = View.Decoration.widget({
+                widget,
+                block: true,
+                side: -1,
+              });
+              return deco.range(cell.to);
+            }),
+          );
+      });
+      return [outputs];
     },
   });
-  return (
-    <pre className={styles.root} dangerouslySetInnerHTML={{ __html: code }} />
+
+  let ignoreCellEdit = State.EditorState.transactionFilter.of(
+    (tr: State.Transaction) => {
+      if (tr.docChanged) {
+        let cells = tr.startState.field(field);
+        let prevCell = cells[cells.length - 1];
+        let cut = prevCell?.to ?? 0;
+        let block = false;
+        tr.changes.iterChangedRanges((from, to) => {
+          if (from < cut || to < cut) block = true;
+        });
+        if (block) return [] as State.TransactionSpec[];
+      }
+      return tr as State.TransactionSpec;
+    },
   );
+
+  let getWorkspace = (state: State.EditorState): Workspace => {
+    let cells = state.field(field);
+    return { current: state.doc, cells };
+  };
+
+  return {
+    getWorkspace,
+    extension: [ignoreCellEdit, field],
+  };
+}
+
+function currentRange(workspace: Workspace) {
+  let prevCell = workspace.cells[workspace.cells.length - 1];
+  let from = prevCell?.to ?? 0;
+  let to = workspace.current.length;
+  return [from, to] as const;
+}
+
+function currentCode(workspace: Workspace) {
+  let [from, to] = currentRange(workspace);
+  let code = workspace.current.sliceString(from, to);
+  return code;
+}
+
+class REPL {
+  private repl: BQN.REPL;
+  constructor() {
+    this.repl = BQN.makerepl(BQN.sysargs, 1);
+  }
+
+  eval(code: State.Text | string): BQNResult {
+    let codeString = typeof code === "string" ? code : code.sliceString(0);
+    if (codeString.trim().length === 0) return { type: "ok", ok: null };
+    try {
+      let value = this.repl(codeString);
+      return { type: "ok", ok: BQN.fmt(value) };
+    } catch (e) {
+      return { type: "error", error: BQN.fmtErr(e as any) };
+    }
+  }
+
+  preview(code: State.Text | string): BQNPreview {
+    let codeString = typeof code === "string" ? code : code.sliceString(0);
+    if (codeString.trim().length === 0) return { type: "ok", ok: null };
+
+    // Try to see if we can preview expressions which end with LHS←RHS
+    let tree = EditorBQN.language.parser.parse(codeString);
+    let c = tree.cursor();
+    if (c.lastChild()) {
+      // Skip nodes which won't influence result
+      let safeNodes = new Set(["DELIM", "COMMENT"]);
+      while (safeNodes.has(c.node.type.name)) c.prevSibling();
+      // If the last node is LHS←RHS
+      if (c.node.type.name === "ASSIGN" && c.firstChild()) {
+        let from = c.from;
+        if (c.nextSibling()) {
+          // Keep only RHS and replace LHS← with spaces (to preserve error
+          // locations).
+          let to = c.from;
+          let ws = State.Text.of([new Array(to - from).fill(" ").join()]);
+          codeString =
+            codeString.substring(0, from) + ws + codeString.substring(to);
+        }
+      }
+    }
+
+    try {
+      BQN.allowSideEffect(false);
+      let value = this.repl(codeString);
+      BQN.allowSideEffect(true);
+      return { type: "ok", ok: BQN.fmt(value) };
+    } catch (e) {
+      if ((e as any).kind === "sideEffect")
+        return {
+          type: "notice",
+          notice:
+            "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
+        };
+      return { type: "error", error: BQN.fmtErr(e as any) };
+    } finally {
+      BQN.allowSideEffect(true);
+    }
+  }
+}
+
+function usePreview(workspaceState: WorkspaceState, repl: REPL) {
+  let [preview, setPreview0] = React.useState<null | BQNPreview>(null);
+  let [setPreview, _finalize, cancel] = useDebouncedCallback(
+    500,
+    (_doc: State.Text, state: State.EditorState) => {
+      let workspace = workspaceState.getWorkspace(state);
+      let code = currentCode(workspace);
+      setPreview0(repl.preview(code));
+    },
+    [setPreview0, workspaceState, repl],
+  );
+  let resetPreview = () => {
+    cancel();
+    setPreview0({ type: "ok", ok: null });
+  };
+  return [preview, setPreview, resetPreview] as const;
 }

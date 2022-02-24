@@ -54,9 +54,9 @@ export function Editor({
   React.useEffect(() => {
     let extensions0 = [
       keymap === "vim" && Vim.vim(),
-      View.keymap.of(Commands.defaultKeymap),
       onDocExt,
       keybindingsExt,
+      View.keymap.of(Commands.defaultKeymap),
       placeholderExt,
       ...(extensions ?? []),
     ];
