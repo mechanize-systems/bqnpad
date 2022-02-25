@@ -1,6 +1,7 @@
 /// <reference types="react-dom/next" />
 import type { Suspendable } from "@bqnpad/lib/PromiseUtil";
 import { useDebouncedCallback } from "@bqnpad/lib/ReactUtil";
+import * as History from "@codemirror/history";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as React from "react";
@@ -60,7 +61,7 @@ export function Workspace({ manager }: WorkspaceProps) {
   );
   let extensions = React.useMemo(
     () => [EditorBQN.bqn(), workspace.extension],
-    [workspace],
+    [workspace, history],
   );
 
   let addCell = React.useCallback(
@@ -76,6 +77,13 @@ export function Workspace({ manager }: WorkspaceProps) {
         selection: State.EditorSelection.cursor(to + 1),
         scrollIntoView: true,
       });
+      // TODO: Below we reset history state to initial as we cannot back in time
+      // after we've eval'ed some code.
+      let history = view.state.field(History.historyField) as any;
+      history.done = [];
+      history.undone = [];
+      history.prevTime = 0;
+      history.prevUserEvent = undefined;
       return true;
     },
     [workspace],

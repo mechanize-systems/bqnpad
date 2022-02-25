@@ -5,6 +5,7 @@
  */
 import * as Commands from "@codemirror/commands";
 import * as Highlight from "@codemirror/highlight";
+import * as History from "@codemirror/history";
 import type * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
@@ -59,6 +60,8 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
 
   React.useEffect(() => {
     let extensions0 = [
+      History.history(),
+      View.keymap.of(History.historyKeymap),
       keybindingsExt,
       keymap === "vim" && Vim.vim(),
       onDocExt,
@@ -141,7 +144,7 @@ export function highlight(
  * The extension is reconfigured whenever values mentioned in `deps` array
  * change.
  */
-function useStateCompartment(
+export function useStateCompartment(
   configure: () => State.Extension,
   deps: unknown[],
 ): State.Extension {
