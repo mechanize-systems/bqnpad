@@ -38,7 +38,7 @@ let workspaceCodec: Codec<Workspace> = {
 
 const INITIAL_DOC = State.Text.of(
   `
-# Hello, this is collaborative BQN REPL
+# Welcome to BQN REPL!
 "Hello, "∾<⟜'a'⊸/ "Big Questions Notation"
   `
     .trim()
