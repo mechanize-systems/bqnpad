@@ -1,3 +1,5 @@
+/// <reference types="react-dom/next" />
+
 /**
  * React bindings to codemirror 6.
  */
@@ -8,6 +10,7 @@ import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as Vim from "@replit/codemirror-vim";
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 
 import * as UI from "./UI";
 
@@ -53,9 +56,9 @@ export function Editor({
 
   React.useEffect(() => {
     let extensions0 = [
+      keybindingsExt,
       keymap === "vim" && Vim.vim(),
       onDocExt,
-      keybindingsExt,
       View.keymap.of(Commands.defaultKeymap),
       placeholderExt,
       ...(extensions ?? []),
@@ -83,7 +86,8 @@ export function Editor({
       "& .cm-content": {
         fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
         fontSize: "20px",
-        padding: 0,
+        padding: "12px",
+        paddingBottom: "300px",
       },
       "& .cm-editor": { width: "100%" },
       "& .cm-editor.cm-focused": {},
@@ -140,4 +144,39 @@ function useStateCompartment(
     compartment.reconfigure(configure());
   }, deps); // eslint-disable-line
   return extension;
+}
+
+export abstract class ReactWidget extends View.WidgetType {
+  abstract render(): React.ReactChild;
+
+  protected _container: null | {
+    dom: HTMLDivElement;
+    root: ReactDOM.Root;
+  } = null;
+
+  get container() {
+    if (this._container == null) {
+      let dom = document.createElement("div");
+      dom.setAttribute("aria-hidden", "true");
+      let root = ReactDOM.createRoot(dom);
+      this._container = { dom, root };
+    }
+    return this._container;
+  }
+
+  toDOM() {
+    this.container.root.render(this.render());
+    return this.container.dom;
+  }
+
+  override updateDOM(dom: HTMLElement) {
+    if (dom !== this.container.dom) return false;
+    this.container.root.render(this.render());
+    return true;
+  }
+
+  override destroy() {
+    this.container.root.unmount();
+    this._container = null;
+  }
 }

@@ -4,9 +4,8 @@ import { useDebouncedCallback } from "@bqnpad/lib/ReactUtil";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
-import { Editor } from "./Editor";
+import { Editor, ReactWidget } from "./Editor";
 import type { EditorProps } from "./Editor";
 import * as EditorBQN from "./EditorBQN";
 import * as UI from "./UI";
@@ -40,10 +39,6 @@ export type WorkspaceProps = {
 
 export function Workspace({ manager }: WorkspaceProps) {
   let workspace0 = manager.load().getOrSuspend();
-  let workspace = React.useMemo(
-    () => workspaceExtension(workspace0),
-    [workspace0],
-  );
   let repl = React.useMemo(() => {
     let repl = new REPL();
     for (let cell of workspace0.cells) {
@@ -52,13 +47,15 @@ export function Workspace({ manager }: WorkspaceProps) {
     }
     return repl;
   }, [workspace0]);
-  let [preview, setPreview, resetPreview] = usePreview(workspace, repl);
+  let workspace = React.useMemo(
+    () => workspaceExtension(repl, workspace0),
+    [repl, workspace0],
+  );
   let onDoc: EditorProps["onDoc"] = React.useCallback(
-    (doc, state) => {
-      setPreview(doc, state);
+    (_doc, state) => {
       manager.store((_) => workspace.getWorkspace(state));
     },
-    [manager, setPreview, workspace],
+    [manager, workspace],
   );
   let extensions = React.useMemo(
     () => [EditorBQN.bqn(), workspace.extension],
@@ -78,10 +75,9 @@ export function Workspace({ manager }: WorkspaceProps) {
         selection: State.EditorSelection.cursor(to + 1),
         scrollIntoView: true,
       });
-      resetPreview();
       return true;
     },
-    [workspace, resetPreview],
+    [workspace],
   );
 
   let maybeRestoreCell = React.useCallback((view: View.EditorView) => {
@@ -107,17 +103,22 @@ export function Workspace({ manager }: WorkspaceProps) {
   }, []);
 
   let selectCurrentCell = React.useCallback((view: View.EditorView) => {
+    console.log("selectCurrentCell");
     let w = workspace.getWorkspace(view.state);
     let [from, to] = currentRange(w);
     let sel = view.state.selection.main;
     if (sel.from >= from) {
-      view.dispatch({ selection: State.EditorSelection.range(from, to) });
+      view.dispatch({
+        selection: State.EditorSelection.range(from, to),
+        userEvent: "select",
+      });
       return true;
     }
     for (let cell of w.cells) {
       if (sel.from >= cell.from && sel.to < cell.to) {
         view.dispatch({
           selection: State.EditorSelection.range(cell.from, cell.to - 1),
+          userEvent: "select",
         });
         return true;
       }
@@ -125,20 +126,13 @@ export function Workspace({ manager }: WorkspaceProps) {
     return false;
   }, []);
 
-  let keybindings: View.KeyBinding[] = React.useMemo(
-    () => [
-      {
-        key: "Shift-Enter",
-        run: addCell,
-      },
-      {
-        key: "Enter",
-        run: maybeRestoreCell,
-      },
+  let keybindings: View.KeyBinding[] = React.useMemo<View.KeyBinding[]>(() => {
+    return [
       { key: "Mod-a", run: selectCurrentCell },
-    ],
-    [addCell, maybeRestoreCell],
-  );
+      { key: "Shift-Enter", run: addCell },
+      { key: "Enter", run: maybeRestoreCell },
+    ];
+  }, [addCell, maybeRestoreCell, selectCurrentCell]);
 
   let styles = UI.useStyles({
     root: {
@@ -155,10 +149,6 @@ export function Workspace({ manager }: WorkspaceProps) {
         extensions={extensions}
         keybindings={keybindings}
         placeholder="BQN)"
-      />
-      <Output
-        preview={true}
-        output={preview ?? repl.preview(currentCode(workspace0))}
       />
     </div>
   );
@@ -218,22 +208,26 @@ function Output({
   );
 }
 
-class CellOutputWidget extends View.WidgetType {
-  _container: null | {
-    dom: HTMLDivElement;
-    root: ReactDOM.Root;
-  } = null;
+function PreviewOutput({ code, repl }: { code: string; repl: REPL }) {
+  let [output, setOutput] = React.useState<BQNPreview | null>({
+    type: "ok",
+    ok: null,
+  });
+  let [compute] = useDebouncedCallback(
+    500,
+    (code: string) => {
+      let output = repl.preview(code);
+      setOutput(output);
+    },
+    [],
+  );
+  React.useEffect(() => {
+    compute(code);
+  }, [code]);
+  return output != null ? <Output output={output} preview={true} /> : null;
+}
 
-  get container() {
-    if (this._container == null) {
-      let dom = document.createElement("div");
-      dom.setAttribute("aria-hidden", "true");
-      let root = ReactDOM.createRoot(dom);
-      this._container = { dom, root };
-    }
-    return this._container;
-  }
-
+class OutputWidget extends ReactWidget {
   constructor(
     readonly cell: WorkspaceCell,
     readonly preview: boolean = false,
@@ -241,19 +235,30 @@ class CellOutputWidget extends View.WidgetType {
     super();
   }
 
-  override eq(other: CellOutputWidget) {
-    return other.cell == this.cell;
+  override render() {
+    return <Output output={this.cell.result!} preview={this.preview} />;
   }
 
-  toDOM() {
-    this.container.root.render(
-      <Output output={this.cell.result!} preview={this.preview} />,
-    );
-    return this.container.dom;
+  override eq(other: OutputWidget) {
+    return other.cell === this.cell && other.preview === this.preview;
+  }
+}
+
+class PreviewOutputWidget extends ReactWidget {
+  code: string;
+  readonly repl: REPL;
+  constructor(code: string, repl: REPL) {
+    super();
+    this.code = code;
+    this.repl = repl;
   }
 
-  override ignoreEvent() {
-    return true;
+  override render() {
+    return <PreviewOutput code={this.code} repl={this.repl} />;
+  }
+
+  override eq(_other: PreviewOutputWidget) {
+    return false;
   }
 }
 
@@ -264,8 +269,11 @@ type WorkspaceState = {
   getWorkspace: (state: State.EditorState) => Workspace;
 };
 
-function workspaceExtension(workspace0: Workspace): WorkspaceState {
-  const field = State.StateField.define<WorkspaceCell[]>({
+function workspaceExtension(
+  repl: REPL,
+  workspace0: Workspace,
+): WorkspaceState {
+  let cellsField = State.StateField.define<WorkspaceCell[]>({
     create() {
       return workspace0.cells;
     },
@@ -279,31 +287,46 @@ function workspaceExtension(workspace0: Workspace): WorkspaceState {
         }
       return nextState;
     },
-    provide(field) {
-      let outputs = View.EditorView.decorations.compute([field], (state) => {
-        let cells = state.field(field);
-        if (cells.length === 0) return View.Decoration.none;
-        else
-          return View.Decoration.set(
-            cells.map((cell) => {
-              let widget = new CellOutputWidget(cell);
-              let deco = View.Decoration.widget({
-                widget,
-                block: true,
-                side: -1,
-              });
-              return deco.range(cell.to);
-            }),
-          );
-      });
-      return [outputs];
-    },
   });
 
-  let ignoreCellEdit = State.EditorState.transactionFilter.of(
+  let outputs = View.EditorView.decorations.compute([cellsField], (state) => {
+    let cells = state.field(cellsField);
+    if (cells.length === 0) return View.Decoration.none;
+    else
+      return View.Decoration.set(
+        cells.map((cell) => {
+          let widget = new OutputWidget(cell);
+          let deco = View.Decoration.widget({
+            widget,
+            block: true,
+            side: -1,
+          });
+          return deco.range(cell.to);
+        }),
+      );
+  });
+
+  let code = currentCode(workspace0);
+  let previewWidget = new PreviewOutputWidget(code, repl);
+
+  let preview = View.EditorView.decorations.compute(["doc"], (state) => {
+    let workspace = getWorkspace(state);
+    let [_from, to] = currentRange(workspace);
+    let code: string = currentCode(workspace);
+    if (code.trim() === "") return View.Decoration.none;
+    previewWidget.code = code;
+    let deco = View.Decoration.widget({
+      widget: previewWidget,
+      block: true,
+      side: 1,
+    });
+    return View.Decoration.set([deco.range(to)]);
+  });
+
+  let ignoreCellEdits = State.EditorState.transactionFilter.of(
     (tr: State.Transaction) => {
       if (tr.docChanged) {
-        let cells = tr.startState.field(field);
+        let cells = tr.startState.field(cellsField);
         let prevCell = cells[cells.length - 1];
         let cut = prevCell?.to ?? 0;
         let block = false;
@@ -317,13 +340,13 @@ function workspaceExtension(workspace0: Workspace): WorkspaceState {
   );
 
   let getWorkspace = (state: State.EditorState): Workspace => {
-    let cells = state.field(field);
+    let cells = state.field(cellsField);
     return { current: state.doc, cells };
   };
 
   return {
     getWorkspace,
-    extension: [ignoreCellEdit, field],
+    extension: [ignoreCellEdits, cellsField, outputs, preview],
   };
 }
 
@@ -399,22 +422,4 @@ class REPL {
       BQN.allowSideEffect(true);
     }
   }
-}
-
-function usePreview(workspaceState: WorkspaceState, repl: REPL) {
-  let [preview, setPreview0] = React.useState<null | BQNPreview>(null);
-  let [setPreview, _finalize, cancel] = useDebouncedCallback(
-    500,
-    (_doc: State.Text, state: State.EditorState) => {
-      let workspace = workspaceState.getWorkspace(state);
-      let code = currentCode(workspace);
-      setPreview0(repl.preview(code));
-    },
-    [setPreview0, workspaceState, repl],
-  );
-  let resetPreview = () => {
-    cancel();
-    setPreview0({ type: "ok", ok: null });
-  };
-  return [preview, setPreview, resetPreview] as const;
 }
