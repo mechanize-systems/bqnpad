@@ -535,6 +535,7 @@ let KEYMAP: Record<string, string> = {
   L: "»",
   ":": "·",
   z: "⥊",
+  '"': "˙",
   x: "𝕩",
   c: "↓",
   v: "∨",
