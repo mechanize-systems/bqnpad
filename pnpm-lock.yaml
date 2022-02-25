@@ -11,6 +11,7 @@ specifiers:
   '@codemirror/search': ^0.19.8
   '@codemirror/state': ^0.19.9
   '@codemirror/stream-parser': ^0.19.6
+  '@codemirror/text': ^0.19.6
   '@codemirror/view': ^0.19.44
   '@github/stable-socket': ^1.1.0
   '@griffel/core': ^1.0.7
@@ -30,6 +31,7 @@ specifiers:
   eslint: ^8.9.0
   mocha: ^9.2.1
   nanoid: ^3.3.1
+  normalize.css: ^8.0.1
   prettier: ^2.5.1
   react: ^18.0.0-rc.0
   react-dom: ^18.0.0-rc.0
@@ -53,6 +55,7 @@ devDependencies:
   '@codemirror/panel': 0.19.1
   '@codemirror/search': 0.19.8
   '@codemirror/stream-parser': 0.19.6
+  '@codemirror/text': 0.19.6
   '@codemirror/view': 0.19.44
   '@github/stable-socket': 1.1.0
   '@griffel/core': 1.0.7
@@ -60,7 +63,7 @@ devDependencies:
   '@lezer/common': 0.15.11
   '@lezer/generator': 0.15.4
   '@lezer/lr': 0.15.8
-  '@replit/codemirror-vim': 0.19.0_f54841750456b37e0397171326d30bfc
+  '@replit/codemirror-vim': 0.19.0_486927e738a4f4c32d045899d121e9a0
   '@trivago/prettier-plugin-sort-imports': 3.2.0_prettier@2.5.1
   '@tsconfig/strictest': 1.0.0
   '@types/debug': 4.1.7
@@ -70,6 +73,7 @@ devDependencies:
   eslint: 8.9.0
   mocha: 9.2.1
   nanoid: 3.3.1
+  normalize.css: 8.0.1
   prettier: 2.5.1
   react: 18.0.0-rc.0
   react-dom: 18.0.0-rc.0_react@18.0.0-rc.0
@@ -550,7 +554,7 @@ packages:
       fastq: 1.13.0
     dev: true
 
-  /@replit/codemirror-vim/0.19.0_f54841750456b37e0397171326d30bfc:
+  /@replit/codemirror-vim/0.19.0_486927e738a4f4c32d045899d121e9a0:
     resolution: {integrity: sha512-Uq0Q/sy0pM8HPWKHGHM3lTNi3o//+yYMySJThtLeiwOhXXQaAbpxVxdbSc20P3xUtLyJ2Xo3gy/FXgxXJDDqoQ==}
     peerDependencies:
       '@codemirror/search': ^0.19.5
@@ -562,6 +566,7 @@ packages:
       '@codemirror/search': 0.19.8
       '@codemirror/state': 0.19.9
       '@codemirror/stream-parser': 0.19.6
+      '@codemirror/text': 0.19.6
       '@codemirror/view': 0.19.44
     dev: true
 
@@ -1740,6 +1745,10 @@ packages:
   /normalize-path/3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
+    dev: true
+
+  /normalize.css/8.0.1:
+    resolution: {integrity: sha512-qizSNPO93t1YUuUhP22btGOo3chcvDFqFaj2TRybP0DMxkHOCTYwp3n34fel4a31ORXy4m1Xq0Gyqpb5m33qIg==}
     dev: true
 
   /object-assign/4.1.1:

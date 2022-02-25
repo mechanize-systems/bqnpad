@@ -1,3 +1,4 @@
+@import "normalize.css/normalize.css";
 @import "./iosevka/index.css";
 body {
   background: #e3e7e7;
