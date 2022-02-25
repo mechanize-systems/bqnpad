@@ -138,6 +138,7 @@ export function Workspace({ manager }: WorkspaceProps) {
     root: {
       display: "flex",
       flexDirection: "column",
+      height: "100%",
     },
   });
 

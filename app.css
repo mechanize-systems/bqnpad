@@ -1,6 +1,11 @@
 @import "normalize.css/normalize.css";
 @import "./iosevka/index.css";
-body {
+html,
+body,
+#asap {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
   background: #e3e7e7;
   font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
 }

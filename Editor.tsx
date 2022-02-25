@@ -82,6 +82,7 @@ export function Editor({
     root: {
       position: "relative",
       width: "100%",
+      height: "100%",
       display: "flex",
       "& .cm-content": {
         fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
