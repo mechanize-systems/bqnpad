@@ -263,7 +263,6 @@ export function Workspace({ manager }: WorkspaceProps) {
         onDoc={onDoc}
         extensions={extensions}
         keybindings={keybindings}
-        placeholder="BQN)"
       />
     </div>
   );
