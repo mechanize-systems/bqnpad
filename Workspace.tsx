@@ -103,7 +103,6 @@ export function Workspace({ manager }: WorkspaceProps) {
   }, []);
 
   let selectCurrentCell = React.useCallback((view: View.EditorView) => {
-    console.log("selectCurrentCell");
     let w = workspace.getWorkspace(view.state);
     let [from, to] = currentRange(w);
     let sel = view.state.selection.main;
@@ -140,11 +139,22 @@ export function Workspace({ manager }: WorkspaceProps) {
       flexDirection: "column",
       height: "100%",
     },
+    header: {
+      display: "flex",
+      flexDirection: "row",
+      width: "100%",
+    },
   });
+
+  let editorRef = React.useRef<null | HTMLDivElement>(null);
 
   return (
     <div className={styles.root}>
+      <div className={styles.header}>
+        <GlyphsPalette defaultElementRef={editorRef} />
+      </div>
       <Editor
+        ref={editorRef}
         doc={workspace0.current}
         onDoc={onDoc}
         extensions={extensions}
@@ -153,6 +163,92 @@ export function Workspace({ manager }: WorkspaceProps) {
       />
     </div>
   );
+}
+
+type GlyphsPaletteProps = {
+  defaultElementRef?: React.RefObject<null | HTMLElement>;
+};
+
+function GlyphsPalette({ defaultElementRef }: GlyphsPaletteProps) {
+  let styles = UI.useStyles({
+    root: {
+      display: "flex",
+      flexDirection: "row",
+      fontSize: "20px",
+      width: "100%",
+      flexWrap: "wrap",
+      paddingLeft: "5px",
+      paddingRight: "5px",
+      paddingTop: "5px",
+      paddingBottom: "5px",
+    },
+    item: {
+      backgroundColor: "transparent",
+      borderLeftWidth: 0,
+      borderRightWidth: 0,
+      borderTopWidth: 0,
+      borderBottomWidth: 0,
+      paddingLeft: "5px",
+      paddingRight: "5px",
+      paddingTop: "5px",
+      paddingBottom: "5px",
+      "&:active": {
+        backgroundColor: "#CCC",
+      },
+    },
+  });
+  let active = React.useRef<null | HTMLElement>(null);
+  let chars: React.ReactChild[] = React.useMemo(() => {
+    let onMouseDown = () => {
+      let e = document.activeElement as HTMLElement;
+      if (e.tagName === "TEXTAREA" || e.contentEditable === "true")
+        active.current = e;
+    };
+    let chars: React.ReactChild[] = [];
+    for (let [_, glyph] of EditorBQN.keys) {
+      let onClick = () => {
+        let el = active.current ?? defaultElementRef?.current;
+        if (el == null) return;
+        let s = window.getSelection()!;
+        if (s.type === "None") {
+          el.focus();
+          let range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          s = window.getSelection()!;
+          s.removeAllRanges();
+          s.addRange(range);
+        }
+        if (s.rangeCount !== 1) return;
+        let r = s.getRangeAt(0);
+        r.deleteContents();
+        let node = document.createTextNode(glyph.glyph);
+        r.insertNode(node);
+        r.setStartAfter(node);
+        r.setEndAfter(node);
+        el.focus();
+        s.removeAllRanges();
+        s.addRange(r);
+        active.current = null;
+      };
+      let className: string | undefined;
+      if (glyph.tag != null)
+        className =
+          EditorBQN.highlight.match(glyph.tag, null as any) ?? undefined;
+      chars.push(
+        <button
+          key={glyph.glyph}
+          onMouseDown={onMouseDown}
+          onClick={onClick}
+          className={UI.cx(styles.item, className)}
+        >
+          {glyph.glyph}
+        </button>,
+      );
+    }
+    return chars;
+  }, []);
+  return <div className={styles.root}>{chars}</div>;
 }
 
 function Output({
@@ -316,6 +412,8 @@ function workspaceExtension(
     let code: string = currentCode(workspace);
     if (code.trim() === "") return View.Decoration.none;
     previewWidget.code = code;
+    // TODO: investigate why CM doesn't update it
+    previewWidget.updateDOM(previewWidget.container.dom);
     let deco = View.Decoration.widget({
       widget: previewWidget,
       block: true,

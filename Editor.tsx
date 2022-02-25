@@ -24,15 +24,18 @@ export type EditorProps = {
   api?: React.MutableRefObject<null | View.EditorView>;
 };
 
-export function Editor({
-  doc,
-  onDoc,
-  keymap = "default",
-  keybindings,
-  extensions,
-  placeholder,
-  api,
-}: EditorProps) {
+export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
+  {
+    doc,
+    onDoc,
+    keymap = "default",
+    keybindings,
+    extensions,
+    placeholder,
+    api,
+  },
+  ref0,
+) {
   let ref = React.useRef<null | HTMLDivElement>(null);
   let view = React.useRef<null | View.EditorView>(null);
 
@@ -71,6 +74,9 @@ export function Editor({
       state: startState,
       parent: ref.current as HTMLDivElement,
     });
+    if (ref0 != null)
+      if (typeof ref0 === "function") ref0(view.current.contentDOM);
+      else ref0.current = view.current.contentDOM;
     if (api != null) api.current = view.current;
     return () => {
       view.current?.destroy();
@@ -90,7 +96,7 @@ export function Editor({
         padding: "12px",
         paddingBottom: "300px",
       },
-      "& .cm-editor": { width: "100%" },
+      "& .cm-editor": { width: "100%", outline: "none !important" },
       "& .cm-editor.cm-focused": {},
       "& .cm-editor .cm-activeLine": {},
       "& .cm-editor.cm-focused .cm-activeLine": {},
@@ -98,7 +104,7 @@ export function Editor({
     },
   });
   return <div className={styles.root} ref={ref} />;
-}
+});
 
 export function highlight(
   textContent: string,
