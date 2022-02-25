@@ -9,3 +9,6 @@ body,
   background: #e3e7e7;
   font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
 }
+* {
+  box-sizing: border-box;
+}

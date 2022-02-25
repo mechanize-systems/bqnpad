@@ -38,16 +38,29 @@ let workspaceCodec: Codec<Workspace> = {
 
 const INITIAL_DOC = State.Text.of(
   `
-# Welcome to BQN REPL!
+# Welcome to BQN (https://mlochbaum.github.io/BQN/) REPL!
+#
+# How it works:
+# - Enter BQN glyphs using \\-prefix key or using glyph bar at the top
+# - Preview evaluation results as you type
+# - Shift+Enter to create a new cell (the current code is being preserved in
+#   workspace history)
+# - You can download file with BQN source code to your computer by pressing
+#   DOWNLOAD button.
+#
+# Have fun!
+
 "Hello, "∾<⟜'a'⊸/ "Big Questions Notation"
   `
     .trim()
     .split("\n"),
 );
 
+export let WORKSPACE_KEY = "bqn-workspace-v2";
+
 function useLocalWorkspaceManager(): WorkspaceManager {
   let [workspace, setWorkspace] = usePersistentState<Workspace>(
-    "bqn-workspace-v2",
+    WORKSPACE_KEY,
     () => ({
       cells: [],
       current: INITIAL_DOC,

@@ -9,6 +9,7 @@ import { Editor, ReactWidget } from "./Editor";
 import type { EditorProps } from "./Editor";
 import * as EditorBQN from "./EditorBQN";
 import * as UI from "./UI";
+import { WORKSPACE_KEY } from "./app";
 import * as BQN from "./bqn";
 
 type BQNResult =
@@ -133,30 +134,18 @@ export function Workspace({ manager }: WorkspaceProps) {
     ];
   }, [addCell, maybeRestoreCell, selectCurrentCell]);
 
-  let styles = UI.useStyles({
-    root: {
-      display: "flex",
-      flexDirection: "column",
-      height: "100%",
-    },
-    header: {
-      display: "flex",
-      flexDirection: "row",
-      width: "100%",
-    },
-  });
-
   let api = React.useRef<null | View.EditorView>(null);
 
   let onGlyph = React.useCallback(
     (glyph: EditorBQN.Glyph) => {
       let view = api.current;
       if (view == null) return;
-      if (!view.hasFocus) view.focus();
+      if (!view.hasFocus) {
+        view.focus();
+      }
       let [cfrom, cto] = currentRange(workspace.getWorkspace(view.state));
       let { from, to } = view.state.selection.main;
       if (from < cfrom) {
-        // selection is outside the current range, just append glyph then
         view.dispatch({
           changes: { from: cto, to: cto, insert: glyph.glyph },
           selection: State.EditorSelection.cursor(cto + 1),
@@ -171,10 +160,101 @@ export function Workspace({ manager }: WorkspaceProps) {
     [api, workspace],
   );
 
+  let onResetWorkspace = () => {
+    window.localStorage.removeItem(WORKSPACE_KEY);
+    window.location.reload();
+  };
+
+  let styles = UI.useStyles({
+    root: {
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+    },
+    header: {
+      display: "flex",
+      flexDirection: "column",
+      width: "100%",
+      paddingLeft: "5px",
+      paddingRight: "5px",
+      paddingTop: "5px",
+      paddingBottom: "5px",
+      borderBottomWidth: "2px",
+      borderBottomStyle: "solid",
+      borderBottomColor: "#BBB",
+    },
+    toolbar: {
+      fontWeight: "bold",
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    title: {
+      fontSize: "20px",
+    },
+    glyphs: {},
+    button: {
+      fontWeight: "bold",
+      backgroundColor: "transparent",
+      borderLeftWidth: 0,
+      borderRightWidth: 0,
+      borderTopWidth: 0,
+      borderBottomWidth: 0,
+      paddingLeft: "5px",
+      paddingRight: "5px",
+      paddingTop: "5px",
+      paddingBottom: "5px",
+      "&:hover": {
+        backgroundColor: "#DDD",
+      },
+      "&:active": {
+        backgroundColor: "#CCC",
+      },
+    },
+  });
+
+  let onSave = React.useCallback(() => {
+    let data = api.current?.state.doc.sliceString(0);
+    if (data == null) return;
+    let blob = new Blob([data], { type: "text/csv" });
+    let a = window.document.createElement("a");
+    a.href = window.URL.createObjectURL(blob);
+    a.download = "bqnpad-workspace.bqn";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, []);
+
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <GlyphsPalette onClick={onGlyph} />
+        <div className={styles.toolbar}>
+          <div className={styles.title}>
+            <span style={{ fontWeight: "bold" }}>
+              <a href="https://mlochbaum.github.io/BQN/index.html">BQN</a>
+              PAD.MECHANIZE.SYSTEMS
+            </span>
+          </div>
+          <div>
+            <button
+              className={styles.button}
+              onClick={onSave}
+              title="Download workspace"
+            >
+              DOWNLOAD
+            </button>
+            <button
+              className={styles.button}
+              onClick={onResetWorkspace}
+              title="Discard everything and start from scratch"
+            >
+              RESET
+            </button>
+          </div>
+        </div>
+        <div className={styles.glyphs}>
+          <GlyphsPalette onClick={onGlyph} />
+        </div>
       </div>
       <Editor
         api={api}
@@ -200,10 +280,6 @@ function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
       fontSize: "20px",
       width: "100%",
       flexWrap: "wrap",
-      paddingLeft: "5px",
-      paddingRight: "5px",
-      paddingTop: "5px",
-      paddingBottom: "5px",
     },
     item: {
       backgroundColor: "transparent",
@@ -215,13 +291,16 @@ function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
       paddingRight: "5px",
       paddingTop: "5px",
       paddingBottom: "5px",
+      "&:hover": {
+        backgroundColor: "#DDD",
+      },
       "&:active": {
         backgroundColor: "#CCC",
       },
     },
   });
   let chars = React.useMemo(() => {
-    return EditorBQN.keys.map(([_, glyph]) => {
+    return EditorBQN.glyphs.map((glyph) => {
       let className =
         glyph.tag != null
           ? EditorBQN.highlight.match(glyph.tag, null as any) ?? undefined
@@ -411,6 +490,21 @@ function workspaceExtension(
     return View.Decoration.set([deco.range(to)]);
   });
 
+  let placeholderWidget = View.Decoration.widget({
+    widget: new Placeholder("..."),
+    side: 1,
+  });
+
+  let placeholder = View.EditorView.decorations.compute(
+    ["doc", cellsField],
+    (state) => {
+      let [from, to] = currentRange(getWorkspace(state));
+      if (from - to === 0)
+        return View.Decoration.set([placeholderWidget.range(from)]);
+      else return View.Decoration.none;
+    },
+  );
+
   let ignoreCellEdits = State.EditorState.transactionFilter.of(
     (tr: State.Transaction) => {
       if (tr.docChanged) {
@@ -434,7 +528,7 @@ function workspaceExtension(
 
   return {
     getWorkspace,
-    extension: [ignoreCellEdits, cellsField, outputs, preview],
+    extension: [ignoreCellEdits, cellsField, outputs, preview, placeholder],
   };
 }
 
@@ -509,5 +603,30 @@ class REPL {
     } finally {
       BQN.allowSideEffect(true);
     }
+  }
+}
+
+class Placeholder extends View.WidgetType {
+  constructor(readonly content: string | HTMLElement) {
+    super();
+  }
+
+  toDOM() {
+    let wrap = document.createElement("span");
+    wrap.className = "cm-placeholder";
+    wrap.style.pointerEvents = "none";
+    wrap.appendChild(
+      typeof this.content == "string"
+        ? document.createTextNode(this.content)
+        : this.content,
+    );
+    if (typeof this.content == "string")
+      wrap.setAttribute("aria-label", "placeholder " + this.content);
+    else wrap.setAttribute("aria-hidden", "true");
+    return wrap;
+  }
+
+  override ignoreEvent() {
+    return false;
   }
 }
