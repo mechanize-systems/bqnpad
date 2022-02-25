@@ -64,6 +64,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
       onDocExt,
       View.keymap.of(Commands.defaultKeymap),
       placeholderExt,
+      View.EditorView.lineWrapping,
       ...(extensions ?? []),
     ];
     let startState = State.EditorState.create({
@@ -95,6 +96,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
         fontSize: "20px",
         padding: "12px",
         paddingBottom: "300px",
+        width: "100%",
       },
       "& .cm-editor": { width: "100%", outline: "none !important" },
       "& .cm-editor.cm-focused": {},
