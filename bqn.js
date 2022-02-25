@@ -125,7 +125,7 @@ let genjs = (B, p, L) => { // Bytecode -> Javascript compiler
       case 42:         { let p=rG(); r+="if(1!=="+p+"){if(0!=="+p+")throw Error('Predicate value must be 0 or 1');break;}";   break; }
       case 43:         { let m=rG(); r+=rP("{match:1,v:"+m+"}");                                                              break; }
       case 44:         {             r+=rP("{match:1}");                                                                      break; }
-      case 47:         { let i=rG(),       v=rG(); r+="try{"+set+"(1,"+i+","+v+");}catch(e){break;}";                             break; }
+      case 47:         { let i=rG(),       v=rG(); r+="try{set(1,"+i+","+v+");}catch(e){break;}";                             break; }
       case 48:         { let i=rG(),       v=rG(); r+=rP(set+"(1,"+i+","+v                       +")");                        break; }
       case 49:         { let i=rG(),       v=rG(); r+=rP(set+"(0,"+i+","+v                       +")");                        break; }
       case 50:         { let i=rG(),f=rG(),x=rG(); r+=rP(set+"(0,"+i+",call("+f+","+x+",get("+i+")))");                        break; }
@@ -156,7 +156,7 @@ let run = (B,O,F,S,L,T,src,env) => { // Bytecode, Objects, Blocks, Bodies, Locat
     let c,vid,def;
     if (isnum(ind)) {
       [c,vid] = gen(ind);
-      c="do {"+c+"} while (0);\nthrow Error('No matching case');\n";
+      c="do {"+c+"} while (0);\nthrow Error('No matching case1');\n";
       if (useenv) { c =          "const e=env;"+c; env.vid=vid; }
       else if (imm) c =          "const e=[...e2];e.vid=vid;e.p=oe;"+c;
       else c = "const fn=(x, w)=>{const e=[...e2];e.vid=vid;e.p=oe;e[0]=fn;e[1]=x;e[2]=w;"+c+"};"+repdf[type]+"return fn;";
@@ -172,7 +172,7 @@ let run = (B,O,F,S,L,T,src,env) => { // Bytecode, Objects, Blocks, Bodies, Locat
       }
       if (ind.length===3) ind[3]=[];
       let cases = ind.map((js,i) => {
-        let e = js.length?"No matching case":"Left argument "+(i?"not allowed":"required");
+        let e = js.length?"No matching case2":"Left argument "+(i?"not allowed":"required");
         return js.map(g).concat(["throw Error('"+e+"');\n"]).join("");
       });
       let fn = b => "(x, w)=>{const e1=[...e2];e1[0]=fn;e1[1]=x;e1[2]=w;\n"+b+"\n};";
@@ -184,7 +184,7 @@ let run = (B,O,F,S,L,T,src,env) => { // Bytecode, Objects, Blocks, Bodies, Locat
         c = "const fn="+combine(cases)+repdf[type];
         if (cases.length > 2) {
           c += "fn.inverse="+combine(cases.slice(2));
-          if (cases[4]) c += "fn.sinverse="+fn("if(!has(w))throw Error('No matching case');"+cases[4]);
+          if (cases[4]) c += "fn.sinverse="+fn("if(!has(w))throw Error('No matching case3');"+cases[4]);
         }
         c += "return fn;";
       }
