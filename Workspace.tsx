@@ -146,15 +146,38 @@ export function Workspace({ manager }: WorkspaceProps) {
     },
   });
 
-  let editorRef = React.useRef<null | HTMLDivElement>(null);
+  let api = React.useRef<null | View.EditorView>(null);
+
+  let onGlyph = React.useCallback(
+    (glyph: EditorBQN.Glyph) => {
+      let view = api.current;
+      if (view == null) return;
+      if (!view.hasFocus) view.focus();
+      let [cfrom, cto] = currentRange(workspace.getWorkspace(view.state));
+      let { from, to } = view.state.selection.main;
+      if (from < cfrom) {
+        // selection is outside the current range, just append glyph then
+        view.dispatch({
+          changes: { from: cto, to: cto, insert: glyph.glyph },
+          selection: State.EditorSelection.cursor(cto + 1),
+        });
+      } else {
+        view.dispatch({
+          changes: { from, to, insert: glyph.glyph },
+          selection: State.EditorSelection.cursor(to + 1, 1),
+        });
+      }
+    },
+    [api, workspace],
+  );
 
   return (
     <div className={styles.root}>
       <div className={styles.header}>
-        <GlyphsPalette defaultElementRef={editorRef} />
+        <GlyphsPalette onClick={onGlyph} />
       </div>
       <Editor
-        ref={editorRef}
+        api={api}
         doc={workspace0.current}
         onDoc={onDoc}
         extensions={extensions}
@@ -166,10 +189,10 @@ export function Workspace({ manager }: WorkspaceProps) {
 }
 
 type GlyphsPaletteProps = {
-  defaultElementRef?: React.RefObject<null | HTMLElement>;
+  onClick: (glyph: EditorBQN.Glyph) => void;
 };
 
-function GlyphsPalette({ defaultElementRef }: GlyphsPaletteProps) {
+function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
   let styles = UI.useStyles({
     root: {
       display: "flex",
@@ -197,57 +220,23 @@ function GlyphsPalette({ defaultElementRef }: GlyphsPaletteProps) {
       },
     },
   });
-  let active = React.useRef<null | HTMLElement>(null);
-  let chars: React.ReactChild[] = React.useMemo(() => {
-    let onMouseDown = () => {
-      let e = document.activeElement as HTMLElement;
-      if (e.tagName === "TEXTAREA" || e.contentEditable === "true")
-        active.current = e;
-    };
-    let chars: React.ReactChild[] = [];
-    for (let [_, glyph] of EditorBQN.keys) {
-      let onClick = () => {
-        let el = active.current ?? defaultElementRef?.current;
-        if (el == null) return;
-        let s = window.getSelection()!;
-        if (s.type === "None") {
-          el.focus();
-          let range = document.createRange();
-          range.selectNodeContents(el);
-          range.collapse(false);
-          s = window.getSelection()!;
-          s.removeAllRanges();
-          s.addRange(range);
-        }
-        if (s.rangeCount !== 1) return;
-        let r = s.getRangeAt(0);
-        r.deleteContents();
-        let node = document.createTextNode(glyph.glyph);
-        r.insertNode(node);
-        r.setStartAfter(node);
-        r.setEndAfter(node);
-        el.focus();
-        s.removeAllRanges();
-        s.addRange(r);
-        active.current = null;
-      };
-      let className: string | undefined;
-      if (glyph.tag != null)
-        className =
-          EditorBQN.highlight.match(glyph.tag, null as any) ?? undefined;
-      chars.push(
+  let chars = React.useMemo(() => {
+    return EditorBQN.keys.map(([_, glyph]) => {
+      let className =
+        glyph.tag != null
+          ? EditorBQN.highlight.match(glyph.tag, null as any) ?? undefined
+          : undefined;
+      return (
         <button
           key={glyph.glyph}
-          onMouseDown={onMouseDown}
-          onClick={onClick}
+          onClick={() => onClick(glyph)}
           className={UI.cx(styles.item, className)}
         >
           {glyph.glyph}
-        </button>,
+        </button>
       );
-    }
-    return chars;
-  }, []);
+    });
+  }, [onClick]);
   return <div className={styles.root}>{chars}</div>;
 }
 
