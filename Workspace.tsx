@@ -170,6 +170,7 @@ export function Workspace({ manager }: WorkspaceProps) {
       display: "flex",
       flexDirection: "column",
       height: "100%",
+      overflowY: "hidden",
     },
     header: {
       display: "flex",
@@ -305,8 +306,11 @@ function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
         glyph.tag != null
           ? EditorBQN.highlight.match(glyph.tag, null as any) ?? undefined
           : undefined;
+      let title =
+        glyph.title + "\n\n" + (glyph.key ? `\\-${glyph.key}` : glyph.glyph);
       return (
         <button
+          title={title}
           key={glyph.glyph}
           onClick={() => onClick(glyph)}
           className={UI.cx(styles.item, className)}

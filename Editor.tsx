@@ -88,6 +88,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
   let styles = UI.useStyles({
     root: {
       position: "relative",
+      overflowY: "hidden",
       width: "100%",
       height: "100%",
       display: "flex",
