@@ -424,7 +424,7 @@ type PreviewOutputProps = {
 function PreviewOutput({ code, output: output0, repl }: PreviewOutputProps) {
   let [output, setOutput] =
     React.useState<null | PromiseUtil.Deferred<REPLResult>>(output0);
-  let [compute] = ReactUtil.useDebouncedCallback(
+  let [compute, _flush, cancel] = ReactUtil.useDebouncedCallback(
     500,
     (code: string, output: PromiseUtil.Deferred<REPLResult>) => {
       repl.preview(code).then(output.resolve, output.reject);
@@ -433,6 +433,7 @@ function PreviewOutput({ code, output: output0, repl }: PreviewOutputProps) {
   );
   React.useEffect(() => {
     if (code === "") {
+      cancel();
       setOutput(null);
     } else {
       compute(code, output0);
