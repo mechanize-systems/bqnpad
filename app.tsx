@@ -9,8 +9,8 @@ import * as State from "@codemirror/state";
 import * as ASAP from "@mechanize/asap";
 import * as React from "react";
 
-import { Workspace } from "./Workspace";
-import type { WorkspaceManager } from "./Workspace";
+import * as Workspace from "./Workspace";
+import type { WorkspaceCell, WorkspaceManager } from "./Workspace";
 import "./app.css";
 
 export let routes = {
@@ -19,19 +19,26 @@ export let routes = {
 
 ASAP.boot({ routes, AppLoading });
 
-let workspaceCodec: Codec<Workspace> = {
-  encode(w: Workspace) {
+let workspaceCodec: Codec<Workspace.Workspace> = {
+  encode(w: Workspace.Workspace) {
+    let cells: WorkspaceCell[] = w.cells.map((c) => ({ ...c, result: null }));
     return jsonCodec.encode({
-      cells: w.cells,
-      current: w.current.sliceString(0),
+      cells: cells,
+      doc: w.doc.sliceString(0),
     });
   },
-  decode(s) {
+  decode(s): Workspace.Workspace {
     let v = jsonCodec.decode(s);
     if (v === NO_VALUE) return v;
+    let doc = State.Text.of(v.doc.split("\n"));
     return {
       cells: v.cells,
-      current: State.Text.of(v.current.split("\n")),
+      currentCell: {
+        result: null,
+        from: v.cells[v.cells.length - 1]?.to ?? 0,
+        to: v.doc.length,
+      },
+      doc,
     };
   },
 };
@@ -62,15 +69,12 @@ const INITIAL_DOC = State.Text.of(
     .split("\n"),
 );
 
-export let WORKSPACE_KEY = "bqn-workspace-v2";
+export let WORKSPACE_KEY = "bqn-workspace-v3";
 
 function useLocalWorkspaceManager(): WorkspaceManager {
-  let [workspace, setWorkspace] = usePersistentState<Workspace>(
+  let [workspace, setWorkspace] = usePersistentState<Workspace.Workspace>(
     WORKSPACE_KEY,
-    () => ({
-      cells: [],
-      current: INITIAL_DOC,
-    }),
+    () => Workspace.of(INITIAL_DOC),
     workspaceCodec,
   );
   return React.useMemo<WorkspaceManager>(() => {
@@ -85,7 +89,7 @@ function Index() {
   let manager = useLocalWorkspaceManager();
   return (
     <React.Suspense fallback={<AppLoading />}>
-      <Workspace manager={manager} />
+      <Workspace.Workspace manager={manager} />
     </React.Suspense>
   );
 }

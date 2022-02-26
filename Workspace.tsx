@@ -1,6 +1,7 @@
 /// <reference types="react-dom/next" />
-import type { Suspendable } from "@bqnpad/lib/PromiseUtil";
-import { useDebouncedCallback } from "@bqnpad/lib/ReactUtil";
+/// <reference types="react/next" />
+import * as PromiseUtil from "@bqnpad/lib/PromiseUtil";
+import * as ReactUtil from "@bqnpad/lib/ReactUtil";
 import * as Autocomplete from "@codemirror/autocomplete";
 import * as History from "@codemirror/history";
 import * as State from "@codemirror/state";
@@ -10,29 +11,26 @@ import * as React from "react";
 import { Editor, ReactWidget } from "./Editor";
 import type { EditorProps } from "./Editor";
 import * as EditorBQN from "./EditorBQN";
+import type { IREPL, REPLResult } from "./REPL";
+import { REPLWebWorkerClient, useREPLStatus } from "./REPLWebWorkerClient";
 import * as UI from "./UI";
 import { WORKSPACE_KEY } from "./app";
-import * as BQN from "./bqn";
-
-type BQNResult =
-  | { type: "ok"; ok: null | string }
-  | { type: "error"; error: string };
-
-type BQNPreview = BQNResult | { type: "notice"; notice: string };
 
 export type Workspace = {
+  doc: State.Text;
   cells: WorkspaceCell[];
-  current: State.Text;
+  currentCell: WorkspaceCell;
 };
 
 export type WorkspaceCell = {
   from: number;
   to: number;
-  result?: BQNResult | null;
+  result: null | PromiseUtil.Deferred<REPLResult>;
+  preview?: null | PromiseUtil.Deferred<REPLResult>;
 };
 
 export type WorkspaceManager = {
-  load: () => Suspendable<Workspace>;
+  load: () => PromiseUtil.Suspendable<Workspace>;
   store(fn: (workspace: Workspace) => Workspace): void;
 };
 
@@ -42,14 +40,17 @@ export type WorkspaceProps = {
 
 export function Workspace({ manager }: WorkspaceProps) {
   let workspace0 = manager.load().getOrSuspend();
-  let repl = React.useMemo(() => {
-    let repl = new REPL();
+  let repl = React.useMemo(() => new REPLWebWorkerClient(), [workspace0]);
+  let status = useREPLStatus(repl);
+  React.useEffect(() => {
     for (let cell of workspace0.cells) {
-      let code = workspace0.current.sliceString(cell.from, cell.to);
-      cell.result = repl.eval(code);
+      if (cell.result == null) {
+        let code = workspace0.doc.sliceString(cell.from, cell.to);
+        cell.result = PromiseUtil.deferred();
+        repl.eval(code).then(cell.result.resolve, cell.result.reject);
+      }
     }
-    return repl;
-  }, [workspace0]);
+  }, [repl, workspace0]);
   let workspace = React.useMemo(
     () => workspaceExtension(repl, workspace0),
     [repl, workspace0],
@@ -67,11 +68,17 @@ export function Workspace({ manager }: WorkspaceProps) {
 
   let addCell = React.useCallback(
     (view: View.EditorView) => {
-      let [from, to] = currentRange(workspace.getWorkspace(view.state));
+      let { currentCell } = workspace.getWorkspace(view.state);
+      let { from, to } = currentCell;
       if (to - from === 0) return true;
+      let cell: WorkspaceCell = {
+        from,
+        to: to + 1,
+        result: PromiseUtil.deferred(),
+        preview: currentCell.result ?? null,
+      };
       let code = view.state.doc.sliceString(from, to);
-      let result = repl.eval(code);
-      let cell: WorkspaceCell = { from, to: to + 1, result };
+      repl.eval(code).then(cell.result!.resolve, cell.result!.reject);
       view.dispatch({
         changes: { from: to, to, insert: "\n" },
         effects: [addCellEffect.of(cell)],
@@ -247,6 +254,9 @@ export function Workspace({ manager }: WorkspaceProps) {
             </span>
           </div>
           <div>
+            <button className={styles.button}>
+              VM {status.toUpperCase()}
+            </button>
             <button
               className={styles.button}
               onClick={onSave}
@@ -269,7 +279,7 @@ export function Workspace({ manager }: WorkspaceProps) {
       </div>
       <Editor
         api={api}
-        doc={workspace0.current}
+        doc={workspace0.doc}
         onDoc={onDoc}
         extensions={extensions}
         keybindings={keybindings}
@@ -332,13 +342,12 @@ function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
   return <div className={styles.root}>{chars}</div>;
 }
 
-function Output({
-  output,
-  preview,
-}: {
-  output: BQNPreview;
+type OutputProps = {
+  output: null | PromiseUtil.Deferred<REPLResult>;
   preview?: boolean;
-}) {
+};
+
+function Output({ output: outputDeferred, preview }: OutputProps) {
   let styles = UI.useStyles({
     root: {
       fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
@@ -365,6 +374,10 @@ function Output({
     },
   });
   let children = null;
+  let output =
+    outputDeferred == null
+      ? ({ type: "notice", notice: "..." } as REPLResult)
+      : outputDeferred.getOrSuspend();
   if (output.type === "ok") {
     children = output.ok;
   } else if (output.type === "error") {
@@ -386,53 +399,83 @@ function Output({
   );
 }
 
-function PreviewOutput({ code, repl }: { code: string; repl: REPL }) {
-  let [output, setOutput] = React.useState<BQNPreview | null>({
-    type: "ok",
-    ok: null,
-  });
-  let [compute] = useDebouncedCallback(
+type CellOutputProps = {
+  cell: WorkspaceCell;
+};
+
+function CellOutput({ cell }: CellOutputProps) {
+  return (
+    <React.Suspense
+      fallback={
+        <Output output={cell.preview?.isResolved ? cell.preview : null} />
+      }
+    >
+      <Output output={cell.result} />
+    </React.Suspense>
+  );
+}
+
+type PreviewOutputProps = {
+  repl: IREPL;
+  code: string;
+  output: PromiseUtil.Deferred<REPLResult>;
+};
+
+function PreviewOutput({ code, output: output0, repl }: PreviewOutputProps) {
+  let [output, setOutput] =
+    React.useState<null | PromiseUtil.Deferred<REPLResult>>(output0);
+  let [compute] = ReactUtil.useDebouncedCallback(
     500,
-    (code: string) => {
-      let output = repl.preview(code);
-      setOutput(output);
+    (code: string, output: PromiseUtil.Deferred<REPLResult>) => {
+      repl.preview(code).then(output.resolve, output.reject);
+      React.startTransition(() => setOutput(output));
     },
-    [],
   );
   React.useEffect(() => {
-    compute(code);
-  }, [code]);
-  return output != null ? <Output output={output} preview={true} /> : null;
+    if (code === "") {
+      setOutput(null);
+    } else {
+      compute(code, output0);
+    }
+  }, [code, output0]);
+  return (
+    <React.Suspense fallback={<Output output={null} />}>
+      {output == null ? null : <Output output={output} preview={true} />}
+    </React.Suspense>
+  );
 }
 
 class OutputWidget extends ReactWidget {
+  constructor(readonly cell: WorkspaceCell) {
+    super();
+  }
+
+  override render() {
+    return <CellOutput cell={this.cell} />;
+  }
+
+  override eq(other: OutputWidget) {
+    return other.cell === this.cell;
+  }
+}
+
+class PreviewOutputWidget extends ReactWidget {
   constructor(
-    readonly cell: WorkspaceCell,
-    readonly preview: boolean = false,
+    public cell: WorkspaceCell,
+    public code: string,
+    readonly repl: IREPL,
   ) {
     super();
   }
 
   override render() {
-    return <Output output={this.cell.result!} preview={this.preview} />;
-  }
-
-  override eq(other: OutputWidget) {
-    return other.cell === this.cell && other.preview === this.preview;
-  }
-}
-
-class PreviewOutputWidget extends ReactWidget {
-  code: string;
-  readonly repl: REPL;
-  constructor(code: string, repl: REPL) {
-    super();
-    this.code = code;
-    this.repl = repl;
-  }
-
-  override render() {
-    return <PreviewOutput code={this.code} repl={this.repl} />;
+    return (
+      <PreviewOutput
+        output={this.cell.result!}
+        code={this.code}
+        repl={this.repl}
+      />
+    );
   }
 
   override eq(_other: PreviewOutputWidget) {
@@ -448,7 +491,7 @@ type WorkspaceState = {
 };
 
 function workspaceExtension(
-  repl: REPL,
+  repl: IREPL,
   workspace0: Workspace,
 ): WorkspaceState {
   let cellsField = State.StateField.define<WorkspaceCell[]>({
@@ -467,6 +510,18 @@ function workspaceExtension(
     },
   });
 
+  let currentCellField = State.Facet.define<WorkspaceCell>();
+
+  let computeCurrentCellField = currentCellField.compute(
+    ["doc", cellsField],
+    (state) => {
+      let cells = state.field(cellsField);
+      let from = cells[cells.length - 1]?.to ?? 0;
+      let to = state.doc.length;
+      return { from, to, result: PromiseUtil.deferred() };
+    },
+  );
+
   let outputs = View.EditorView.decorations.compute([cellsField], (state) => {
     let cells = state.field(cellsField);
     if (cells.length === 0) return View.Decoration.none;
@@ -484,15 +539,23 @@ function workspaceExtension(
       );
   });
 
-  let code = currentCode(workspace0);
-  let previewWidget = new PreviewOutputWidget(code, repl);
+  let code: string;
+  {
+    let prevCell = workspace0.cells[workspace0.cells.length - 1];
+    let from = prevCell?.to ?? 0;
+    let to = workspace0.doc.length;
+    code = workspace0.doc.sliceString(from, to);
+  }
+  let previewWidget = new PreviewOutputWidget(
+    workspace0.currentCell,
+    code,
+    repl,
+  );
 
   let preview = View.EditorView.decorations.compute(["doc"], (state) => {
-    let workspace = getWorkspace(state);
-    let [_from, to] = currentRange(workspace);
-    let code: string = currentCode(workspace);
-    if (code.trim() === "") return View.Decoration.none;
-    previewWidget.code = code;
+    let cell = state.facet(currentCellField)[0]!;
+    previewWidget.cell = cell;
+    previewWidget.code = state.doc.sliceString(cell.from, cell.to);
     // TODO: investigate why CM doesn't update it
     previewWidget.updateDOM(previewWidget.container.dom);
     let deco = View.Decoration.widget({
@@ -500,7 +563,7 @@ function workspaceExtension(
       block: true,
       side: 1,
     });
-    return View.Decoration.set([deco.range(to)]);
+    return View.Decoration.set([deco.range(previewWidget.cell.to)]);
   });
 
   let placeholderWidget = View.Decoration.widget({
@@ -536,87 +599,36 @@ function workspaceExtension(
 
   let getWorkspace = (state: State.EditorState): Workspace => {
     let cells = state.field(cellsField);
-    return { current: state.doc, cells };
+    let currentCell = state.facet(currentCellField)[0]!;
+    return { doc: state.doc, cells, currentCell };
   };
 
   return {
     getWorkspace,
-    extension: [ignoreCellEdits, cellsField, outputs, preview, placeholder],
+    extension: [
+      ignoreCellEdits,
+      cellsField,
+      outputs,
+      computeCurrentCellField,
+      preview,
+      placeholder,
+    ],
+  };
+}
+
+export function of(doc: State.Text): Workspace {
+  return {
+    doc,
+    cells: [],
+    currentCell: { from: 0, to: doc.length, result: null },
   };
 }
 
 function currentRange(workspace: Workspace) {
   let prevCell = workspace.cells[workspace.cells.length - 1];
   let from = prevCell?.to ?? 0;
-  let to = workspace.current.length;
+  let to = workspace.doc.length;
   return [from, to] as const;
-}
-
-function currentCode(workspace: Workspace) {
-  let [from, to] = currentRange(workspace);
-  let code = workspace.current.sliceString(from, to);
-  return code;
-}
-
-class REPL {
-  private repl: BQN.REPL;
-  constructor() {
-    this.repl = BQN.makerepl(BQN.sysargs, 1);
-  }
-
-  eval(code: State.Text | string): BQNResult {
-    let codeString = typeof code === "string" ? code : code.sliceString(0);
-    if (codeString.trim().length === 0) return { type: "ok", ok: null };
-    try {
-      let value = this.repl(codeString);
-      return { type: "ok", ok: BQN.fmt(value) };
-    } catch (e) {
-      return { type: "error", error: BQN.fmtErr(e as any) };
-    }
-  }
-
-  preview(code: State.Text | string): BQNPreview {
-    let codeString = typeof code === "string" ? code : code.sliceString(0);
-    if (codeString.trim().length === 0) return { type: "ok", ok: null };
-
-    // Try to see if we can preview expressions which end with LHS←RHS
-    let tree = EditorBQN.language.parser.parse(codeString);
-    let c = tree.cursor();
-    if (c.lastChild()) {
-      // Skip nodes which won't influence result
-      let safeNodes = new Set(["DELIM", "COMMENT"]);
-      while (safeNodes.has(c.node.type.name)) c.prevSibling();
-      // If the last node is LHS←RHS
-      if (c.node.type.name === "ASSIGN" && c.firstChild()) {
-        let from = c.from;
-        if (c.nextSibling()) {
-          // Keep only RHS and replace LHS← with spaces (to preserve error
-          // locations).
-          let to = c.from;
-          let ws = State.Text.of([new Array(to - from).fill(" ").join()]);
-          codeString =
-            codeString.substring(0, from) + ws + codeString.substring(to);
-        }
-      }
-    }
-
-    try {
-      BQN.allowSideEffect(false);
-      let value = this.repl(codeString);
-      BQN.allowSideEffect(true);
-      return { type: "ok", ok: BQN.fmt(value) };
-    } catch (e) {
-      if ((e as any).kind === "sideEffect")
-        return {
-          type: "notice",
-          notice:
-            "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
-        };
-      return { type: "error", error: BQN.fmtErr(e as any) };
-    } finally {
-      BQN.allowSideEffect(true);
-    }
-  }
 }
 
 class Placeholder extends View.WidgetType {

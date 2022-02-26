@@ -2,7 +2,8 @@
   "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
     "moduleResolution": "node",
-    "target": "es2020",
+    "module": "es2022",
+    "target": "es2021",
     "jsx": "react",
     "noEmit": true,
     "paths": {
