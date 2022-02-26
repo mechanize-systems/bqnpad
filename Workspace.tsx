@@ -3,6 +3,7 @@ import type { Suspendable } from "@bqnpad/lib/PromiseUtil";
 import { useDebouncedCallback } from "@bqnpad/lib/ReactUtil";
 import * as Autocomplete from "@codemirror/autocomplete";
 import * as History from "@codemirror/history";
+import * as R from "@codemirror/rangeset";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as React from "react";
@@ -447,21 +448,36 @@ type WorkspaceState = {
   getWorkspace: (state: State.EditorState) => Workspace;
 };
 
+class CellRange extends R.RangeValue {
+  constructor(readonly cell: WorkspaceCell) {
+    super();
+  }
+  override eq(other: CellRange) {
+    return (
+      this.cell.from === other.cell.from && this.cell.to === other.cell.to
+    );
+  }
+}
+
 function workspaceExtension(
   repl: REPL,
   workspace0: Workspace,
 ): WorkspaceState {
-  let cellsField = State.StateField.define<WorkspaceCell[]>({
+  let cellsField = State.StateField.define<R.RangeSet<CellRange>>({
     create() {
-      return workspace0.cells;
+      let b = new R.RangeSetBuilder<CellRange>();
+      for (let cell of workspace0.cells)
+        b.add(cell.from, cell.to, new CellRange(cell));
+      return b.finish();
     },
     update(state, tr) {
-      let nextState = state;
+      let nextState = state.map(tr.changes);
       for (let e of tr.effects)
         if (e.is(addCellEffect)) {
-          if (nextState === state) nextState = nextState.slice(0);
           let cell = e.value;
-          nextState.push(cell);
+          nextState = nextState.update({
+            add: [new CellRange(cell).range(cell.from, cell.to)],
+          });
         }
       return nextState;
     },
@@ -469,19 +485,22 @@ function workspaceExtension(
 
   let outputs = View.EditorView.decorations.compute([cellsField], (state) => {
     let cells = state.field(cellsField);
-    if (cells.length === 0) return View.Decoration.none;
-    else
-      return View.Decoration.set(
-        cells.map((cell) => {
-          let widget = new OutputWidget(cell);
-          let deco = View.Decoration.widget({
-            widget,
-            block: true,
-            side: -1,
-          });
-          return deco.range(cell.to);
-        }),
-      );
+    if (cells.size === 0) return View.Decoration.none;
+    else {
+      let b = new R.RangeSetBuilder<View.Decoration>();
+      let it = cells.iter();
+      while (it.value != null) {
+        let widget = new OutputWidget(it.value.cell);
+        let deco = View.Decoration.widget({
+          widget,
+          block: true,
+          side: -1,
+        });
+        b.add(it.to, it.to, deco);
+        it.next();
+      }
+      return b.finish();
+    }
   });
 
   let code = currentCode(workspace0);
@@ -522,8 +541,7 @@ function workspaceExtension(
     (tr: State.Transaction) => {
       if (tr.docChanged) {
         let cells = tr.startState.field(cellsField);
-        let prevCell = cells[cells.length - 1];
-        let cut = prevCell?.to ?? 0;
+        let cut = cells.iter(cells.size - 1).to ?? 0;
         let block = false;
         tr.changes.iterChangedRanges((from, to) => {
           if (from < cut || to < cut) block = true;
@@ -535,13 +553,24 @@ function workspaceExtension(
   );
 
   let getWorkspace = (state: State.EditorState): Workspace => {
-    let cells = state.field(cellsField);
+    let cells: WorkspaceCell[] = [];
+    let it = state.field(cellsField).iter();
+    while (it.value != null) {
+      let cell = it.value.cell;
+      cells.push({ ...cell, from: it.from, to: it.to });
+      it.next();
+    }
     return { current: state.doc, cells };
   };
 
   return {
     getWorkspace,
-    extension: [ignoreCellEdits, cellsField, outputs, preview, placeholder],
+    extension: [
+      /*ignoreCellEdits,*/ cellsField,
+      outputs,
+      preview,
+      placeholder,
+    ],
   };
 }
 
