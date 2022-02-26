@@ -564,7 +564,7 @@ export let glyphs: Glyph[] = [
     glyph: "·",
     title: "Nothing",
     tag: tags.BQNnothing,
-    key: ",",
+    key: ":",
   },
   {
     glyph: "•",
