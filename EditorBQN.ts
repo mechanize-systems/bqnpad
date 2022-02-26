@@ -736,10 +736,12 @@ function bqnKeymap(): State.Extension {
 }
 
 let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
+  let detail = glyph.glyph;
+  if (glyph.key != null) detail = `\\${glyph.key} ${detail}`;
   return {
     label: `\\${glyph.title}`,
     apply: glyph.glyph,
-    detail: glyph.glyph,
+    detail
   };
 });
 
