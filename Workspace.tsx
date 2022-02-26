@@ -1,6 +1,7 @@
 /// <reference types="react-dom/next" />
 import type { Suspendable } from "@bqnpad/lib/PromiseUtil";
 import { useDebouncedCallback } from "@bqnpad/lib/ReactUtil";
+import * as Autocomplete from "@codemirror/autocomplete";
 import * as History from "@codemirror/history";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
@@ -139,6 +140,7 @@ export function Workspace({ manager }: WorkspaceProps) {
       { key: "Mod-a", run: selectCurrentCell },
       { key: "Shift-Enter", run: addCell },
       { key: "Enter", run: maybeRestoreCell },
+      { key: "Tab", run: Autocomplete.startCompletion },
     ];
   }, [addCell, maybeRestoreCell, selectCurrentCell]);
 

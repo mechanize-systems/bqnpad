@@ -2,6 +2,7 @@
  * Editor support for BQN.
  */
 import { parser } from "@bqnpad/grammar";
+import * as Autocomplete from "@codemirror/autocomplete";
 import { HighlightStyle, Tag, styleTags } from "@codemirror/highlight";
 import { LRLanguage, LanguageSupport } from "@codemirror/language";
 import * as State from "@codemirror/state";
@@ -734,10 +735,37 @@ function bqnKeymap(): State.Extension {
   return [transactionFilter, manageExpecting];
 }
 
+let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
+  return {
+    label: `\\${glyph.title}`,
+    apply: glyph.glyph,
+    detail: glyph.glyph,
+  };
+});
+
+let glyphCompletion: Autocomplete.CompletionSource = (
+  context: Autocomplete.CompletionContext,
+) => {
+  let word = context.matchBefore(/\\[A-Za-z]*/);
+  if (word == null || (word.from == word.to && !context.explicit)) return null;
+  return {
+    from: word.from,
+    filter: true,
+    options: glyphCompletions,
+  };
+};
+
 /**
  * Configure extension for BQN.
  */
 export function bqn() {
-  let extensions: State.Extension[] = [highlight, bqnKeymap()];
+  let extensions: State.Extension[] = [
+    highlight,
+    bqnKeymap(),
+    Autocomplete.autocompletion({
+      override: [glyphCompletion],
+      activateOnTyping: false,
+    }),
+  ];
   return new LanguageSupport(language, extensions);
 }

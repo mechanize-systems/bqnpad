@@ -12,3 +12,36 @@ body,
 * {
   box-sizing: border-box;
 }
+
+.cm-tooltip-autocomplete {
+  border: none !important;
+  background-color: #f3f3f3 !important;
+}
+
+.cm-tooltip-autocomplete ul li {
+  color: #444 !important;
+  font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.cm-tooltip-autocomplete ul li[aria-selected] {
+  color: #444 !important;
+  background-color: #ededed !important;
+}
+
+.cm-completionIcon {
+  display: none !important;
+}
+
+.cm-completionMatchedText {
+  text-decoration: none !important;
+  background-color: yellow;
+}
+
+.cm-completionDetail {
+  font-style: normal !important;
+  font-size: 20px;
+  padding-right: 10px;
+}
