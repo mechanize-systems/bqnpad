@@ -46,6 +46,10 @@ export function Workspace({ manager }: WorkspaceProps) {
   );
   let [{ status }, workspace] = useWorkspace(workspace0, config);
 
+  React.useEffect(() => {
+    workspace.commands.focusCurrentCell(editor.current!);
+  }, [editor, workspace]);
+
   let [onDoc] = Lib.ReactUtil.useDebouncedCallback(
     1000,
     (_doc, state: State.EditorState) => {
