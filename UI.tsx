@@ -87,11 +87,14 @@ export function Checkbox(props: CheckboxProps) {
       },
     },
   });
+  let active = React.useRef<null | HTMLElement>(null);
+  // prevent stealing focus with onMouseDown
+  let onMouseDown: React.MouseEventHandler = (ev) => ev.preventDefault();
   let handleChange: React.ChangeEventHandler = (ev) => {
     props.onValue((ev.target as HTMLInputElement).checked);
   };
   return (
-    <label className={styles.root}>
+    <label className={styles.root} onMouseDown={onMouseDown}>
       <input type="checkbox" checked={props.value} onChange={handleChange} />{" "}
       {props.children}
     </label>
