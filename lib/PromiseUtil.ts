@@ -81,6 +81,12 @@ class Deferred<T> implements Suspendable<T> {
 
 export type { Deferred };
 
+export function isDeferred<T>(
+  value: Deferred<T> | unknown,
+): value is Deferred<T> {
+  return value instanceof Deferred;
+}
+
 export function deferred<T>(): Deferred<T> {
   return new Deferred<T>();
 }

@@ -231,11 +231,11 @@ export function Workspace({ manager }: WorkspaceProps) {
 }
 
 type OutputProps = {
-  output: null | Lib.PromiseUtil.Deferred<REPL.REPLResult>;
+  result: null | Lib.PromiseUtil.Deferred<REPL.REPLResult> | REPL.REPLResult;
   preview?: boolean;
 };
 
-function Output({ output: outputDeferred, preview }: OutputProps) {
+function Output({ result: resultDeferred, preview }: OutputProps) {
   let styles = UI.useStyles({
     root: {
       fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
@@ -262,24 +262,26 @@ function Output({ output: outputDeferred, preview }: OutputProps) {
     },
   });
   let children = null;
-  let output =
-    outputDeferred == null
+  let result =
+    resultDeferred == null
       ? ({ type: "notice", notice: "..." } as REPL.REPLResult)
-      : outputDeferred.getOrSuspend();
-  if (output.type === "ok") {
-    children = output.ok;
-  } else if (output.type === "error") {
-    children = output.error;
-  } else if (output.type === "notice") {
-    children = output.notice;
+      : Lib.PromiseUtil.isDeferred<REPL.REPLResult>(resultDeferred)
+      ? resultDeferred.getOrSuspend()
+      : resultDeferred;
+  if (result.type === "ok") {
+    children = result.ok;
+  } else if (result.type === "error") {
+    children = result.error;
+  } else if (result.type === "notice") {
+    children = result.notice;
   }
   return (
     <pre
       className={UI.cx(
         styles.root,
         preview && styles.hasPreview,
-        output.type === "error" && styles.hasError,
-        output.type === "notice" && styles.hasNotice,
+        result.type === "error" && styles.hasError,
+        result.type === "notice" && styles.hasNotice,
       )}
     >
       {children}
@@ -293,12 +295,8 @@ type CellOutputProps = {
 
 function CellOutput({ cell }: CellOutputProps) {
   return (
-    <React.Suspense
-      fallback={
-        <Output output={cell.preview?.isResolved ? cell.preview : null} />
-      }
-    >
-      <Output output={cell.result} />
+    <React.Suspense fallback={<Output result={cell.resultPreview} />}>
+      <Output result={cell.result} />
     </React.Suspense>
   );
 }
@@ -310,30 +308,30 @@ type PreviewOutputProps = {
 };
 
 function PreviewOutput({ code, cell, repl }: PreviewOutputProps) {
-  let [output, setOutput] =
+  let [result, setResult] =
     React.useState<null | Lib.PromiseUtil.Deferred<REPL.REPLResult>>(null);
   let [compute, _flush, cancel] = Lib.ReactUtil.useDebouncedCallback(
     500,
-    (code: string, output: Lib.PromiseUtil.Deferred<REPL.REPLResult>) => {
-      repl.preview(code).then(output.resolve, output.reject);
-      React.startTransition(() => setOutput(output));
+    (code: string, result: Lib.PromiseUtil.Deferred<REPL.REPLResult>) => {
+      repl.preview(code).then(result.resolve, result.reject);
+      React.startTransition(() => setResult(result));
     },
   );
   React.useEffect(() => {
     cancel();
-    setOutput(null);
+    setResult(null);
   }, [cell.idx]);
   React.useEffect(() => {
     if (code === "") {
       cancel();
-      setOutput(null);
+      setResult(null);
     } else {
       compute(code, cell.result!);
     }
   }, [code, cell.result]);
   return (
-    <React.Suspense fallback={<Output output={null} />}>
-      {output == null ? null : <Output output={output} preview={true} />}
+    <React.Suspense fallback={<Output result={null} />}>
+      {result == null ? null : <Output result={result} preview={true} />}
     </React.Suspense>
   );
 }
@@ -375,6 +373,7 @@ type Workspace = {
     addCell: View.Command;
     selectCell: View.Command;
     reuseCell: View.Command;
+    focusCurrentCell: View.Command;
   };
 
   extension: State.Extension[];
@@ -386,7 +385,7 @@ export type WorkspaceCell = {
   from: number;
   to: number;
   result: null | Lib.PromiseUtil.Deferred<REPL.REPLResult>;
-  preview: null | Lib.PromiseUtil.Deferred<REPL.REPLResult>;
+  resultPreview: null | REPL.REPLResult;
 };
 
 type WorkspaceState = {
@@ -413,13 +412,15 @@ function workspace(
   let addCellEffect = State.StateEffect.define<WorkspaceCell>();
   let cellsField = State.StateField.define<WorkspaceCell[]>({
     create() {
-      return workspace0.cells.map((cell, idx) => ({
-        idx,
-        from: cell.from,
-        to: cell.to,
-        result: null,
-        preview: null,
-      }));
+      return workspace0.cells.map(
+        (cell, idx): WorkspaceCell => ({
+          idx,
+          from: cell.from,
+          to: cell.to,
+          result: null,
+          resultPreview: cell.result,
+        }),
+      );
     },
     update(state, tr) {
       let nextState = state;
@@ -446,7 +447,7 @@ function workspace(
         from,
         to,
         result: Lib.PromiseUtil.deferred(),
-        preview: null,
+        resultPreview: null,
       };
     },
   );
@@ -526,10 +527,11 @@ function workspace(
     },
   );
 
-  let startEval = View.ViewPlugin.fromClass(
+  let onInit = View.ViewPlugin.fromClass(
     class {
       constructor(view: View.EditorView) {
         let state = view.state;
+        // Start evaluating cells
         let cells = query.cells(state);
         for (let cell of cells) {
           if (cell.result == null) {
@@ -563,7 +565,9 @@ function workspace(
       from: currentCell.from,
       to: currentCell.to + 1,
       result: Lib.PromiseUtil.deferred(),
-      preview: currentCell.result,
+      resultPreview: currentCell.result?.isResolved
+        ? currentCell.result.value
+        : null,
     };
     let code = view.state.doc.sliceString(currentCell.from, currentCell.to);
     repl.eval(code).then(cell.result!.resolve, cell.result!.reject);
@@ -629,7 +633,16 @@ function workspace(
     return false;
   };
 
-  let commands = { addCell, reuseCell, selectCell };
+  let focusCurrentCell: View.Command = (view: View.EditorView) => {
+    let currentCell = query.currentCell(view.state);
+    if (!view.hasFocus) view.focus();
+    view.dispatch({
+      selection: State.EditorSelection.cursor(currentCell.to),
+    });
+    return true;
+  };
+
+  let commands = { addCell, reuseCell, selectCell, focusCurrentCell };
 
   let toWorkspace0 = (state: State.EditorState): Workspace0.Workspace0 => {
     let toWorkspaceCell0 = (
@@ -637,6 +650,7 @@ function workspace(
     ): Workspace0.WorkspaceCell0 => ({
       from: cell.from,
       to: cell.to,
+      result: cell.result?.isResolved ? cell.result.value : null,
     });
     return {
       doc: state.doc.sliceString(0),
@@ -646,7 +660,7 @@ function workspace(
   };
 
   let extension = [
-    startEval.extension,
+    onInit.extension,
     ignoreCellEdits,
     cellsField,
     outputWidgets,
@@ -656,12 +670,14 @@ function workspace(
   ];
   if (config instanceof State.StateField) extension.push(config);
 
-  return {
+  let workspace = {
     query,
     commands,
     toWorkspace0,
     extension,
   };
+
+  return workspace;
 }
 
 class PlaceholderWidget extends View.WidgetType {
