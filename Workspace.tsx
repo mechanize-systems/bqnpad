@@ -546,7 +546,7 @@ function workspace(
 
   let onSelection = View.ViewPlugin.fromClass(
     class {
-      constructor(view: View.EditorView) {}
+      constructor() {}
       update(up: View.ViewUpdate) {
         let view = up.view;
         if (!up.selectionSet) return;
@@ -662,6 +662,7 @@ function workspace(
     if (!view.hasFocus) view.focus();
     view.dispatch({
       selection: State.EditorSelection.cursor(currentCell.to),
+      scrollIntoView: true,
     });
     return true;
   };
