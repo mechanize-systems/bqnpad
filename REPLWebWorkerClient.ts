@@ -1,15 +1,13 @@
-import { EventEmitter } from "@bqnpad/lib/EventEmitter";
-import * as ReactUtil from "@bqnpad/lib/ReactUtil";
-import * as WorkerUtil from "@bqnpad/lib/WorkerUtil";
+import * as Lib from "@bqnpad/lib";
 import * as React from "react";
 
 import type { IREPL, REPLResult } from "./REPL";
 import type { Method } from "./REPLWebWorker";
 
-type REPLStatus = "running" | "idle";
+export type REPLStatus = "running" | "idle";
 
 export class REPLWebWorkerClient implements IREPL {
-  onStatus = new EventEmitter<REPLStatus>();
+  onStatus = new Lib.EventEmitter<REPLStatus>();
 
   private inflght: number = 0;
 
@@ -41,7 +39,7 @@ export class REPLWebWorkerClient implements IREPL {
 
 export function useREPLStatus(repl: REPLWebWorkerClient) {
   let [status, setStatus0] = React.useState<REPLStatus>(repl.status);
-  let [setStatus] = ReactUtil.useDebouncedCallback(1, setStatus0);
+  let [setStatus] = Lib.ReactUtil.useDebouncedCallback(1, setStatus0);
   React.useEffect(() => repl.onStatus.subscribe(setStatus), [repl, setStatus]);
   return status;
 }
@@ -59,7 +57,7 @@ declare var ASAPConfig: { basePath: string };
 let BASENAME_RE =
   /^(?:\/?|)(?:[\s\S]*?)((?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/;
 
-let bqnWorker = new WorkerUtil.WorkerManager<
+let bqnWorker = new Lib.WorkerUtil.WorkerManager<
   [method: Method, code: string],
   REPLResult,
   Error

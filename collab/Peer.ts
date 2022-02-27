@@ -1,4 +1,5 @@
 import * as Collab from "@codemirror/collab";
+import type * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 
 import type { WorkspaceConnection } from "./WorkspaceConnection";
@@ -6,7 +7,7 @@ import type { WorkspaceConnection } from "./WorkspaceConnection";
 export function peerExtension(
   conn: WorkspaceConnection,
   startVersion: number,
-) {
+): State.Extension {
   let plugin = View.ViewPlugin.fromClass(
     class {
       private pushing = false;

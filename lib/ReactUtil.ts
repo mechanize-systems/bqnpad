@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-type Callback = (...args: Array<any>) => void | Promise<void>;
 type Finalize = () => void;
 
 /**
@@ -17,11 +16,15 @@ type Finalize = () => void;
  *
  * The `cancel()` cancels the most recently scheduled invocation.
  */
-export function useDebouncedCallback<T extends Callback>(
+export function useDebouncedCallback<Args extends unknown[]>(
   ms: number,
-  f: T,
+  f: (...args: Args) => void | Promise<void>,
   deps: unknown[] = [],
-): readonly [callback: T, flush: Finalize, cancel: Finalize] {
+): readonly [
+  callback: (...args: Args) => void | Promise<void>,
+  flush: Finalize,
+  cancel: Finalize,
+] {
   // Store current ms value in ref.
   //
   // Since we only care about this value changed when we schedule the next
@@ -75,7 +78,7 @@ export function useDebouncedCallback<T extends Callback>(
       invocation: { f, args },
       timer: setTimeout(flush, msref.current),
     };
-  }, deps) as T; // eslint-disable-line react-hooks/exhaustive-deps
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 
   return [cbd, flush, cancel] as const;
 }

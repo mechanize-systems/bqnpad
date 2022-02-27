@@ -1,16 +1,9 @@
-import { suspendable } from "@bqnpad/lib/PromiseUtil";
-import {
-  NO_VALUE,
-  jsonCodec,
-  usePersistentState,
-} from "@bqnpad/lib/ReactUtil";
-import type { Codec } from "@bqnpad/lib/ReactUtil";
-import * as State from "@codemirror/state";
 import * as ASAP from "@mechanize/asap";
 import * as React from "react";
 
 import * as Workspace from "./Workspace";
-import type { WorkspaceCell, WorkspaceManager } from "./Workspace";
+import * as Workspace0 from "./Workspace0";
+import * as WorkspaceManager from "./WorkspaceManager";
 import "./app.css";
 
 export let routes = {
@@ -19,32 +12,7 @@ export let routes = {
 
 ASAP.boot({ routes, AppLoading });
 
-let workspaceCodec: Codec<Workspace.Workspace> = {
-  encode(w: Workspace.Workspace) {
-    let cells: WorkspaceCell[] = w.cells.map((c) => ({ ...c, result: null }));
-    return jsonCodec.encode({
-      cells: cells,
-      doc: w.doc.sliceString(0),
-    });
-  },
-  decode(s): Workspace.Workspace {
-    let v = jsonCodec.decode(s);
-    if (v === NO_VALUE) return v;
-    let doc = State.Text.of(v.doc.split("\n"));
-    return {
-      cells: v.cells,
-      currentCell: {
-        result: null,
-        from: v.cells[v.cells.length - 1]?.to ?? 0,
-        to: v.doc.length,
-      },
-      doc,
-    };
-  },
-};
-
-const INITIAL_DOC = State.Text.of(
-  `
+const INITIAL_DOC = `
 # Welcome to BQN (https://mlochbaum.github.io/BQN/) REPL!
 #
 # How to enter BQN glyphs:
@@ -64,29 +32,12 @@ const INITIAL_DOC = State.Text.of(
 # Have fun ('Cmd/Ctrl-a' to select all and press 'Del' to remove this message)!
 
 "Hello, "∾<⟜'a'⊸/ "Big Questions Notation"
-  `
-    .trim()
-    .split("\n"),
-);
-
-export let WORKSPACE_KEY = "bqn-workspace-v3";
-
-function useLocalWorkspaceManager(): WorkspaceManager {
-  let [workspace, setWorkspace] = usePersistentState<Workspace.Workspace>(
-    WORKSPACE_KEY,
-    () => Workspace.of(INITIAL_DOC),
-    workspaceCodec,
-  );
-  return React.useMemo<WorkspaceManager>(() => {
-    return {
-      load: suspendable(() => workspace),
-      store: (fn) => setWorkspace(fn),
-    } as WorkspaceManager;
-  }, []);
-}
+`.trim();
 
 function Index() {
-  let manager = useLocalWorkspaceManager();
+  let manager = WorkspaceManager.useLocalWorkspaceManager(() =>
+    Workspace0.make(INITIAL_DOC),
+  );
   return (
     <React.Suspense fallback={<AppLoading />}>
       <Workspace.Workspace manager={manager} />

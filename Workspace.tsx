@@ -1,7 +1,6 @@
 /// <reference types="react-dom/next" />
 /// <reference types="react/next" />
-import * as PromiseUtil from "@bqnpad/lib/PromiseUtil";
-import * as ReactUtil from "@bqnpad/lib/ReactUtil";
+import * as Lib from "@bqnpad/lib";
 import * as Autocomplete from "@codemirror/autocomplete";
 import * as History from "@codemirror/history";
 import * as State from "@codemirror/state";
@@ -9,31 +8,17 @@ import * as View from "@codemirror/view";
 import * as React from "react";
 
 import { Editor, ReactWidget } from "./Editor";
-import type { EditorProps } from "./Editor";
 import * as EditorBQN from "./EditorBQN";
 import { GlyphsPalette } from "./GlyphPalette";
 import type { IREPL, REPLResult } from "./REPL";
-import { REPLWebWorkerClient, useREPLStatus } from "./REPLWebWorkerClient";
+import {
+  REPLStatus,
+  REPLWebWorkerClient,
+  useREPLStatus,
+} from "./REPLWebWorkerClient";
 import * as UI from "./UI";
-import { WORKSPACE_KEY } from "./app";
-
-export type Workspace = {
-  doc: State.Text;
-  cells: WorkspaceCell[];
-  currentCell: WorkspaceCell;
-};
-
-export type WorkspaceCell = {
-  from: number;
-  to: number;
-  result: null | PromiseUtil.Deferred<REPLResult>;
-  preview?: null | PromiseUtil.Deferred<REPLResult>;
-};
-
-export type WorkspaceManager = {
-  load: () => PromiseUtil.Suspendable<Workspace>;
-  store(fn: (workspace: Workspace) => Workspace): void;
-};
+import * as Workspace0 from "./Workspace0";
+import type { WorkspaceManager } from "./WorkspaceManager";
 
 export type WorkspaceProps = {
   manager: WorkspaceManager;
@@ -41,132 +26,50 @@ export type WorkspaceProps = {
 
 export function Workspace({ manager }: WorkspaceProps) {
   let workspace0 = manager.load().getOrSuspend();
-  let repl = React.useMemo(() => new REPLWebWorkerClient(), [workspace0]);
-  let status = useREPLStatus(repl);
-  React.useEffect(() => {
-    for (let cell of workspace0.cells) {
-      if (cell.result == null) {
-        let code = workspace0.doc.sliceString(cell.from, cell.to);
-        cell.result = PromiseUtil.deferred();
-        repl.eval(code).then(cell.result.resolve, cell.result.reject);
-      }
-    }
-  }, [repl, workspace0]);
-  let workspace = React.useMemo(
-    () => workspaceExtension(repl, workspace0),
-    [repl, workspace0],
+  let doc0 = React.useMemo(
+    () => State.Text.of(workspace0.doc.split("\n")),
+    [workspace0],
   );
-  let onDoc: EditorProps["onDoc"] = React.useCallback(
-    (_doc, state) => {
-      manager.store((_) => workspace.getWorkspace(state));
+  let editor = React.useRef<null | View.EditorView>(null);
+
+  let [{ status }, workspace] = useWorkspace(workspace0);
+
+  let [onDoc] = Lib.ReactUtil.useDebouncedCallback(
+    1000,
+    (_doc, state: State.EditorState) => {
+      manager.store((_) => workspace.toWorkspace0(state));
     },
     [manager, workspace],
   );
+
   let extensions = React.useMemo(
     () => [EditorBQN.bqn(), workspace.extension],
     [workspace],
   );
 
-  let addCell = React.useCallback(
-    (view: View.EditorView) => {
-      let { currentCell } = workspace.getWorkspace(view.state);
-      let { from, to } = currentCell;
-      if (to - from === 0) return true;
-      let cell: WorkspaceCell = {
-        from,
-        to: to + 1,
-        result: PromiseUtil.deferred(),
-        preview: currentCell.result ?? null,
-      };
-      let code = view.state.doc.sliceString(from, to);
-      repl.eval(code).then(cell.result!.resolve, cell.result!.reject);
-      view.dispatch({
-        changes: { from: to, to, insert: "\n" },
-        effects: [addCellEffect.of(cell)],
-        selection: State.EditorSelection.cursor(to + 1),
-        scrollIntoView: true,
-      });
-      // TODO: Below we reset history state to initial as we cannot back in time
-      // after we've eval'ed some code.
-      let history = view.state.field(History.historyField) as any;
-      history.done = [];
-      history.undone = [];
-      history.prevTime = 0;
-      history.prevUserEvent = undefined;
-      return true;
-    },
-    [workspace],
-  );
-
-  let maybeRestoreCell = React.useCallback((view: View.EditorView) => {
-    let w = workspace.getWorkspace(view.state);
-    let [from, _to] = currentRange(w);
-    if (view.state.selection.ranges.length !== 1) return false;
-    let sel = view.state.selection.main;
-    if (sel.from >= from) return false;
-    for (let cell of w.cells) {
-      if (sel.from >= cell.from && sel.to < cell.to) {
-        addCell(view);
-        let code = view.state.doc.sliceString(cell.from, cell.to - 1);
-        let to = view.state.doc.length;
-        view.dispatch({
-          changes: { from: to, to, insert: code },
-          selection: State.EditorSelection.cursor(to),
-          scrollIntoView: true,
-        });
-        return true;
-      }
-    }
-    return false;
-  }, []);
-
-  let selectCurrentCell = React.useCallback((view: View.EditorView) => {
-    let w = workspace.getWorkspace(view.state);
-    let [from, to] = currentRange(w);
-    let sel = view.state.selection.main;
-    if (sel.from >= from) {
-      view.dispatch({
-        selection: State.EditorSelection.range(from, to),
-        userEvent: "select",
-      });
-      return true;
-    }
-    for (let cell of w.cells) {
-      if (sel.from >= cell.from && sel.to < cell.to) {
-        view.dispatch({
-          selection: State.EditorSelection.range(cell.from, cell.to - 1),
-          userEvent: "select",
-        });
-        return true;
-      }
-    }
-    return false;
-  }, []);
-
   let keybindings: View.KeyBinding[] = React.useMemo<View.KeyBinding[]>(() => {
     return [
-      { key: "Mod-a", run: selectCurrentCell },
-      { key: "Shift-Enter", run: addCell },
-      { key: "Enter", run: maybeRestoreCell },
+      { key: "Mod-a", run: workspace.commands.selectCell },
+      { key: "Shift-Enter", run: workspace.commands.addCell },
+      { key: "Enter", run: workspace.commands.reuseCell },
       { key: "Tab", run: Autocomplete.startCompletion },
     ];
-  }, [addCell, maybeRestoreCell, selectCurrentCell]);
-
-  let api = React.useRef<null | View.EditorView>(null);
+  }, [workspace]);
 
   let onGlyph = React.useCallback(
     (glyph: EditorBQN.Glyph) => {
-      let view = api.current;
-      if (view == null) return;
-      if (!view.hasFocus) {
-        view.focus();
-      }
-      let [cfrom, cto] = currentRange(workspace.getWorkspace(view.state));
+      let view = editor.current!;
+      if (!view.hasFocus) view.focus();
+      let currentCell = workspace.query.currentCell(view.state);
       let { from, to } = view.state.selection.main;
-      if (from < cfrom) {
+      if (from < currentCell.from) {
         view.dispatch({
-          changes: { from: cto, to: cto, insert: glyph.glyph },
-          selection: State.EditorSelection.cursor(cto + 1),
+          changes: {
+            from: currentCell.to,
+            to: currentCell.to,
+            insert: glyph.glyph,
+          },
+          selection: State.EditorSelection.cursor(currentCell.to + 1),
         });
       } else {
         view.dispatch({
@@ -175,13 +78,14 @@ export function Workspace({ manager }: WorkspaceProps) {
         });
       }
     },
-    [api, workspace],
+    [editor, workspace],
   );
 
-  let onResetWorkspace = () => {
-    window.localStorage.removeItem(WORKSPACE_KEY);
-    window.location.reload();
-  };
+  let onSave = React.useCallback(() => {
+    let data = editor.current!.state.doc.sliceString(0);
+    let blob = new Blob([data], { type: "text/csv" });
+    download(blob, "bqnpad-workspace.bqn");
+  }, []);
 
   let styles = UI.useStyles({
     root: {
@@ -232,18 +136,6 @@ export function Workspace({ manager }: WorkspaceProps) {
     },
   });
 
-  let onSave = React.useCallback(() => {
-    let data = api.current?.state.doc.sliceString(0);
-    if (data == null) return;
-    let blob = new Blob([data], { type: "text/csv" });
-    let a = window.document.createElement("a");
-    a.href = window.URL.createObjectURL(blob);
-    a.download = "bqnpad-workspace.bqn";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }, []);
-
   return (
     <div className={styles.root}>
       <div className={styles.header}>
@@ -267,7 +159,7 @@ export function Workspace({ manager }: WorkspaceProps) {
             </button>
             <button
               className={styles.button}
-              onClick={onResetWorkspace}
+              onClick={() => manager.reset()}
               title="Discard everything and start from scratch"
             >
               RESET
@@ -279,8 +171,8 @@ export function Workspace({ manager }: WorkspaceProps) {
         </div>
       </div>
       <Editor
-        api={api}
-        doc={workspace0.doc}
+        api={editor}
+        doc={doc0}
         onDoc={onDoc}
         extensions={extensions}
         keybindings={keybindings}
@@ -290,7 +182,7 @@ export function Workspace({ manager }: WorkspaceProps) {
 }
 
 type OutputProps = {
-  output: null | PromiseUtil.Deferred<REPLResult>;
+  output: null | Lib.PromiseUtil.Deferred<REPLResult>;
   preview?: boolean;
 };
 
@@ -365,32 +257,349 @@ function CellOutput({ cell }: CellOutputProps) {
 type PreviewOutputProps = {
   repl: IREPL;
   code: string;
-  output: PromiseUtil.Deferred<REPLResult>;
+  cell: WorkspaceCell;
 };
 
-function PreviewOutput({ code, output: output0, repl }: PreviewOutputProps) {
+function PreviewOutput({ code, cell, repl }: PreviewOutputProps) {
   let [output, setOutput] =
-    React.useState<null | PromiseUtil.Deferred<REPLResult>>(output0);
-  let [compute, _flush, cancel] = ReactUtil.useDebouncedCallback(
+    React.useState<null | Lib.PromiseUtil.Deferred<REPLResult>>(null);
+  let [compute, _flush, cancel] = Lib.ReactUtil.useDebouncedCallback(
     500,
-    (code: string, output: PromiseUtil.Deferred<REPLResult>) => {
+    (code: string, output: Lib.PromiseUtil.Deferred<REPLResult>) => {
       repl.preview(code).then(output.resolve, output.reject);
       React.startTransition(() => setOutput(output));
     },
   );
   React.useEffect(() => {
+    console.log("idx");
+    setOutput(null);
+  }, [cell.idx]);
+  React.useEffect(() => {
     if (code === "") {
       cancel();
       setOutput(null);
     } else {
-      compute(code, output0);
+      compute(code, cell.result!);
     }
-  }, [code, output0]);
+  }, [code, cell.result]);
   return (
     <React.Suspense fallback={<Output output={null} />}>
       {output == null ? null : <Output output={output} preview={true} />}
     </React.Suspense>
   );
+}
+
+type Workspace = {
+  query: {
+    cells: (state: State.EditorState) => WorkspaceCell[];
+    currentCell: (state: State.EditorState) => WorkspaceCell;
+  };
+
+  commands: {
+    addCell: View.Command;
+    selectCell: View.Command;
+    reuseCell: View.Command;
+  };
+
+  extension: State.Extension[];
+  toWorkspace0: (state: State.EditorState) => Workspace0.Workspace0;
+};
+
+export type WorkspaceCell = {
+  idx: number;
+  from: number;
+  to: number;
+  result: null | Lib.PromiseUtil.Deferred<REPLResult>;
+  preview: null | Lib.PromiseUtil.Deferred<REPLResult>;
+};
+
+type WorkspaceState = {
+  readonly status: REPLStatus;
+};
+
+function useWorkspace(
+  workspace0: Workspace0.Workspace0 = Workspace0.empty,
+): readonly [WorkspaceState, Workspace] {
+  let repl = React.useMemo(() => new REPLWebWorkerClient(), []);
+  let w = React.useMemo(() => workspace(repl, workspace0), [repl, workspace0]);
+  let status = useREPLStatus(repl);
+  return [{ status }, w] as const;
+}
+
+function workspace(
+  repl: IREPL,
+  workspace0: Workspace0.Workspace0 = Workspace0.empty,
+): Workspace {
+  let addCellEffect = State.StateEffect.define<WorkspaceCell>();
+  let cellsField = State.StateField.define<WorkspaceCell[]>({
+    create() {
+      return workspace0.cells.map((cell, idx) => ({
+        idx,
+        from: cell.from,
+        to: cell.to,
+        result: null,
+        preview: null,
+      }));
+    },
+    update(state, tr) {
+      let nextState = state;
+      for (let e of tr.effects)
+        if (e.is(addCellEffect)) {
+          if (nextState === state) nextState = nextState.slice(0);
+          let cell = e.value;
+          nextState.push(cell);
+        }
+      return nextState;
+    },
+  });
+
+  let currentCellField = State.Facet.define<WorkspaceCell>();
+
+  let computeCurrentCellField = currentCellField.compute(
+    ["doc", cellsField],
+    (state): WorkspaceCell => {
+      let cells = state.field(cellsField);
+      let from = cells[cells.length - 1]?.to ?? 0;
+      let to = state.doc.length;
+      return {
+        idx: cells.length,
+        from,
+        to,
+        result: Lib.PromiseUtil.deferred(),
+        preview: null,
+      };
+    },
+  );
+
+  let outputWidgets = View.EditorView.decorations.compute(
+    [cellsField],
+    (state) => {
+      let cells = state.field(cellsField);
+      if (cells.length === 0) return View.Decoration.none;
+      else
+        return View.Decoration.set(
+          cells.map((cell) => {
+            let widget = new OutputWidget(cell);
+            let deco = View.Decoration.widget({
+              widget,
+              block: true,
+              side: -1,
+            });
+            return deco.range(cell.to);
+          }),
+        );
+    },
+  );
+
+  let previewWidget: null | PreviewOutputWidget = null;
+
+  let preview = View.EditorView.decorations.compute(["doc"], (state) => {
+    let cell = state.facet(currentCellField)[0]!;
+    let code = state.doc.sliceString(cell.from, cell.to);
+    if (previewWidget == null) {
+      previewWidget = new PreviewOutputWidget(cell, code, repl);
+    }
+    previewWidget.cell = cell;
+    previewWidget.code = code;
+    // TODO: investigate why CM doesn't update it
+    previewWidget.updateDOM(previewWidget.container.dom);
+    let deco = View.Decoration.widget({
+      widget: previewWidget,
+      block: true,
+      side: 1,
+    });
+    return View.Decoration.set([deco.range(previewWidget.cell.to)]);
+  });
+
+  let placeholderWidget = View.Decoration.widget({
+    widget: new PlaceholderWidget("..."),
+    side: 1,
+  });
+
+  let placeholder = View.EditorView.decorations.compute(
+    ["doc", cellsField],
+    (state) => {
+      let { from, to } = currentCell(state);
+      if (from - to === 0)
+        return View.Decoration.set([placeholderWidget.range(from)]);
+      else return View.Decoration.none;
+    },
+  );
+
+  let ignoreCellEdits = State.EditorState.transactionFilter.of(
+    (tr: State.Transaction) => {
+      if (tr.docChanged) {
+        let cells = tr.startState.field(cellsField);
+        let prevCell = cells[cells.length - 1];
+        let cut = prevCell?.to ?? 0;
+        let block = false;
+        tr.changes.iterChangedRanges((from, to) => {
+          if (from < cut || to < cut) block = true;
+        });
+        if (block) return [] as State.TransactionSpec[];
+      }
+      return tr as State.TransactionSpec;
+    },
+  );
+
+  let startEval = View.ViewPlugin.fromClass(
+    class {
+      constructor(view: View.EditorView) {
+        let state = view.state;
+        let cells = query.cells(state);
+        for (let cell of cells) {
+          if (cell.result == null) {
+            let code = state.doc.sliceString(cell.from, cell.to);
+            cell.result = Lib.PromiseUtil.deferred();
+            repl.eval(code).then(cell.result.resolve, cell.result.reject);
+          }
+        }
+      }
+    },
+  );
+
+  // Query
+
+  let cells = (state: State.EditorState) => state.field(cellsField);
+  let currentCell = (state: State.EditorState) =>
+    state.facet(currentCellField)[0]!;
+
+  let query = {
+    cells,
+    currentCell,
+  };
+
+  // Commands
+
+  let addCell = (view: View.EditorView) => {
+    let currentCell = query.currentCell(view.state);
+    if (currentCell.to - currentCell.from === 0) return true;
+    let cell: WorkspaceCell = {
+      idx: currentCell.idx,
+      from: currentCell.from,
+      to: currentCell.to + 1,
+      result: Lib.PromiseUtil.deferred(),
+      preview: currentCell.result,
+    };
+    let code = view.state.doc.sliceString(currentCell.from, currentCell.to);
+    repl.eval(code).then(cell.result!.resolve, cell.result!.reject);
+    view.dispatch({
+      changes: { from: currentCell.to, to: currentCell.to, insert: "\n" },
+      effects: [addCellEffect.of(cell)],
+      selection: State.EditorSelection.cursor(currentCell.to + 1),
+      scrollIntoView: true,
+    });
+    // TODO: Below we reset history state to initial as we cannot back in time
+    // after we've eval'ed some code.
+    let history = view.state.field(History.historyField) as any;
+    history.done = [];
+    history.undone = [];
+    history.prevTime = 0;
+    history.prevUserEvent = undefined;
+    return true;
+  };
+
+  let reuseCell = (view: View.EditorView) => {
+    let currentCell = query.currentCell(view.state);
+    if (view.state.selection.ranges.length !== 1) return false;
+    let sel = view.state.selection.main;
+    if (sel.from >= currentCell.from) return false;
+    for (let cell of cells(view.state)) {
+      if (sel.from >= cell.from && sel.to < cell.to) {
+        addCell(view);
+        let code = view.state.doc.sliceString(cell.from, cell.to - 1);
+        let to = view.state.doc.length;
+        view.dispatch({
+          changes: { from: to, to, insert: code },
+          selection: State.EditorSelection.cursor(to),
+          scrollIntoView: true,
+        });
+        return true;
+      }
+    }
+    return false;
+  };
+
+  let selectCell = (view: View.EditorView) => {
+    let currentCell = query.currentCell(view.state);
+    let sel = view.state.selection.main;
+    if (sel.from >= currentCell.from) {
+      view.dispatch({
+        selection: State.EditorSelection.range(
+          currentCell.from,
+          currentCell.to,
+        ),
+        userEvent: "select",
+      });
+      return true;
+    }
+    for (let cell of cells(view.state)) {
+      if (sel.from >= cell.from && sel.to < cell.to) {
+        view.dispatch({
+          selection: State.EditorSelection.range(cell.from, cell.to - 1),
+          userEvent: "select",
+        });
+        return true;
+      }
+    }
+    return false;
+  };
+
+  let commands = { addCell, reuseCell, selectCell };
+
+  let toWorkspace0 = (state: State.EditorState): Workspace0.Workspace0 => {
+    let toWorkspaceCell0 = (
+      cell: WorkspaceCell,
+    ): Workspace0.WorkspaceCell0 => ({
+      from: cell.from,
+      to: cell.to,
+    });
+    return {
+      doc: state.doc.sliceString(0),
+      cells: cells(state).map(toWorkspaceCell0),
+      currentCell: toWorkspaceCell0(currentCell(state)),
+    };
+  };
+
+  return {
+    query,
+    commands,
+    toWorkspace0,
+    extension: [
+      startEval.extension,
+      ignoreCellEdits,
+      cellsField,
+      outputWidgets,
+      computeCurrentCellField,
+      preview,
+      placeholder,
+    ],
+  };
+}
+
+class PlaceholderWidget extends View.WidgetType {
+  constructor(readonly content: string | HTMLElement) {
+    super();
+  }
+
+  toDOM() {
+    let wrap = document.createElement("span");
+    wrap.className = "cm-placeholder";
+    wrap.style.pointerEvents = "none";
+    wrap.appendChild(
+      typeof this.content == "string"
+        ? document.createTextNode(this.content)
+        : this.content,
+    );
+    if (typeof this.content == "string")
+      wrap.setAttribute("aria-label", "placeholder " + this.content);
+    else wrap.setAttribute("aria-hidden", "true");
+    return wrap;
+  }
+
+  override ignoreEvent() {
+    return false;
+  }
 }
 
 class OutputWidget extends ReactWidget {
@@ -418,11 +627,7 @@ class PreviewOutputWidget extends ReactWidget {
 
   override render() {
     return (
-      <PreviewOutput
-        output={this.cell.result!}
-        code={this.code}
-        repl={this.repl}
-      />
+      <PreviewOutput cell={this.cell} code={this.code} repl={this.repl} />
     );
   }
 
@@ -431,175 +636,11 @@ class PreviewOutputWidget extends ReactWidget {
   }
 }
 
-let addCellEffect = State.StateEffect.define<WorkspaceCell>();
-
-type WorkspaceState = {
-  extension: State.Extension[];
-  getWorkspace: (state: State.EditorState) => Workspace;
-};
-
-function workspaceExtension(
-  repl: IREPL,
-  workspace0: Workspace,
-): WorkspaceState {
-  let cellsField = State.StateField.define<WorkspaceCell[]>({
-    create() {
-      return workspace0.cells;
-    },
-    update(state, tr) {
-      let nextState = state;
-      for (let e of tr.effects)
-        if (e.is(addCellEffect)) {
-          if (nextState === state) nextState = nextState.slice(0);
-          let cell = e.value;
-          nextState.push(cell);
-        }
-      return nextState;
-    },
-  });
-
-  let currentCellField = State.Facet.define<WorkspaceCell>();
-
-  let computeCurrentCellField = currentCellField.compute(
-    ["doc", cellsField],
-    (state) => {
-      let cells = state.field(cellsField);
-      let from = cells[cells.length - 1]?.to ?? 0;
-      let to = state.doc.length;
-      return { from, to, result: PromiseUtil.deferred() };
-    },
-  );
-
-  let outputs = View.EditorView.decorations.compute([cellsField], (state) => {
-    let cells = state.field(cellsField);
-    if (cells.length === 0) return View.Decoration.none;
-    else
-      return View.Decoration.set(
-        cells.map((cell) => {
-          let widget = new OutputWidget(cell);
-          let deco = View.Decoration.widget({
-            widget,
-            block: true,
-            side: -1,
-          });
-          return deco.range(cell.to);
-        }),
-      );
-  });
-
-  let code: string;
-  {
-    let prevCell = workspace0.cells[workspace0.cells.length - 1];
-    let from = prevCell?.to ?? 0;
-    let to = workspace0.doc.length;
-    code = workspace0.doc.sliceString(from, to);
-  }
-  let previewWidget = new PreviewOutputWidget(
-    workspace0.currentCell,
-    code,
-    repl,
-  );
-
-  let preview = View.EditorView.decorations.compute(["doc"], (state) => {
-    let cell = state.facet(currentCellField)[0]!;
-    previewWidget.cell = cell;
-    previewWidget.code = state.doc.sliceString(cell.from, cell.to);
-    // TODO: investigate why CM doesn't update it
-    previewWidget.updateDOM(previewWidget.container.dom);
-    let deco = View.Decoration.widget({
-      widget: previewWidget,
-      block: true,
-      side: 1,
-    });
-    return View.Decoration.set([deco.range(previewWidget.cell.to)]);
-  });
-
-  let placeholderWidget = View.Decoration.widget({
-    widget: new Placeholder("..."),
-    side: 1,
-  });
-
-  let placeholder = View.EditorView.decorations.compute(
-    ["doc", cellsField],
-    (state) => {
-      let [from, to] = currentRange(getWorkspace(state));
-      if (from - to === 0)
-        return View.Decoration.set([placeholderWidget.range(from)]);
-      else return View.Decoration.none;
-    },
-  );
-
-  let ignoreCellEdits = State.EditorState.transactionFilter.of(
-    (tr: State.Transaction) => {
-      if (tr.docChanged) {
-        let cells = tr.startState.field(cellsField);
-        let prevCell = cells[cells.length - 1];
-        let cut = prevCell?.to ?? 0;
-        let block = false;
-        tr.changes.iterChangedRanges((from, to) => {
-          if (from < cut || to < cut) block = true;
-        });
-        if (block) return [] as State.TransactionSpec[];
-      }
-      return tr as State.TransactionSpec;
-    },
-  );
-
-  let getWorkspace = (state: State.EditorState): Workspace => {
-    let cells = state.field(cellsField);
-    let currentCell = state.facet(currentCellField)[0]!;
-    return { doc: state.doc, cells, currentCell };
-  };
-
-  return {
-    getWorkspace,
-    extension: [
-      ignoreCellEdits,
-      cellsField,
-      outputs,
-      computeCurrentCellField,
-      preview,
-      placeholder,
-    ],
-  };
-}
-
-export function of(doc: State.Text): Workspace {
-  return {
-    doc,
-    cells: [],
-    currentCell: { from: 0, to: doc.length, result: null },
-  };
-}
-
-function currentRange(workspace: Workspace) {
-  let prevCell = workspace.cells[workspace.cells.length - 1];
-  let from = prevCell?.to ?? 0;
-  let to = workspace.doc.length;
-  return [from, to] as const;
-}
-
-class Placeholder extends View.WidgetType {
-  constructor(readonly content: string | HTMLElement) {
-    super();
-  }
-
-  toDOM() {
-    let wrap = document.createElement("span");
-    wrap.className = "cm-placeholder";
-    wrap.style.pointerEvents = "none";
-    wrap.appendChild(
-      typeof this.content == "string"
-        ? document.createTextNode(this.content)
-        : this.content,
-    );
-    if (typeof this.content == "string")
-      wrap.setAttribute("aria-label", "placeholder " + this.content);
-    else wrap.setAttribute("aria-hidden", "true");
-    return wrap;
-  }
-
-  override ignoreEvent() {
-    return false;
-  }
+function download(blob: Blob, filename: string) {
+  let a = window.document.createElement("a");
+  a.href = window.URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }

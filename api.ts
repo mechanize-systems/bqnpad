@@ -5,7 +5,7 @@ import debug from "debug";
 import type * as http from "http";
 import ws from "ws";
 
-import type * as Workspace from "./Workspace";
+import type * as Workspace0 from "./Workspace0";
 
 let log = debug("bqnpad:api");
 
@@ -31,11 +31,11 @@ let doc: Sync<Text, Update> = {
 export type WorkspaceUpdate = {
   type: "AddCell";
   clientID: string;
-  cell: Workspace.WorkspaceCell;
+  cell: Workspace0.WorkspaceCell0;
 };
 
-let workspace: Sync<Workspace.Workspace, WorkspaceUpdate> = {
-  value: { cells: [], current: Text.of([""]) },
+let workspace: Sync<Workspace0.Workspace0, WorkspaceUpdate> = {
+  value: { cells: [], current: Text.of([""]) as any } as any,
   updates: [],
   pending: [],
 };

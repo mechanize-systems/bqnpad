@@ -1,32 +1,31 @@
-import { suspendable } from "@bqnpad/lib/PromiseUtil";
-import type { Suspendable } from "@bqnpad/lib/PromiseUtil";
+import * as Lib from "@bqnpad/lib";
 import type { Update } from "@codemirror/collab";
 import { ChangeSet, Text } from "@codemirror/state";
 import { nanoid } from "nanoid";
 import * as React from "react";
 
-import type { Workspace } from "../Workspace";
+import type { Workspace0 } from "../Workspace0";
 import type { WorkspaceUpdate } from "../api";
 import { Connection } from "./Connection";
 
 class WorkspaceConnection {
   clientID: string;
   private conn: Connection;
-  initial: () => Suspendable<{
+  initial: () => Lib.PromiseUtil.Suspendable<{
     doc: {
       version: number;
       doc: Text;
     };
     workspace: {
       version: number;
-      workspace: Workspace;
+      workspace: Workspace0;
     };
   }>;
 
   constructor() {
     this.conn = new Connection();
     this.clientID = nanoid();
-    this.initial = suspendable(() => this._initial());
+    this.initial = Lib.PromiseUtil.suspendable(() => this._initial());
   }
 
   open() {
@@ -44,7 +43,7 @@ class WorkspaceConnection {
     };
     workspace: {
       version: number;
-      workspace: Workspace;
+      workspace: Workspace0;
     };
   }> {
     let data = await this.conn.request<{
@@ -54,7 +53,7 @@ class WorkspaceConnection {
       };
       workspace: {
         version: number;
-        workspace: Workspace;
+        workspace: Workspace0;
       };
     }>({
       type: "initial",
