@@ -1,15 +1,27 @@
 {
-  "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "moduleResolution": "node",
-    "module": "es2022",
     "target": "es2021",
-    "jsx": "react",
-    "noEmit": true,
+    "baseUrl": "./",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "outDir": "node_modules/.cache/tsbuild",
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "composite": true,
+    "incremental": true,
     "paths": {
       "@bqnpad/*": ["./*"]
     }
   },
-  "include": ["**/*.ts", "**/*.d.ts", "**/*.tsx"],
-  "exclude": ["bqn.grammar.js"]
+  "include": ["**/*.js", "**/*.ts", "**/*.d.ts", "**/*.tsx"],
+  "exclude": []
 }
