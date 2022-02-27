@@ -156,7 +156,7 @@ export function Workspace({ manager }: WorkspaceProps) {
           <div className={styles.title}>
             <span style={{ fontWeight: "bold" }}>
               <a href="https://mlochbaum.github.io/BQN/index.html">BQN</a>
-              PAD.MECHANIZE.SYSTEMS
+              PAD
             </span>
           </div>
         </div>
