@@ -544,6 +544,30 @@ function workspace(
     },
   );
 
+  let onSelection = View.ViewPlugin.fromClass(
+    class {
+      constructor(view: View.EditorView) {}
+      update(up: View.ViewUpdate) {
+        let view = up.view;
+        if (!up.selectionSet) return;
+        let sel = up.state.selection.main;
+        view.requestMeasure<{ cursor: View.Rect | null; scroller: DOMRect }>({
+          read() {
+            return {
+              scroller: view.scrollDOM.getBoundingClientRect(),
+              cursor: view.coordsAtPos(sel.anchor),
+            };
+          },
+          write({ cursor, scroller }) {
+            if (cursor == null) return;
+            let diff = scroller.bottom - cursor.bottom;
+            if (diff < 100) view.scrollDOM.scrollTop += 100 - diff;
+          },
+        });
+      }
+    },
+  );
+
   // Query
 
   let cells = (state: State.EditorState) => state.field(cellsField);
@@ -661,6 +685,7 @@ function workspace(
 
   let extension = [
     onInit.extension,
+    onSelection.extension,
     ignoreCellEdits,
     cellsField,
     outputWidgets,
