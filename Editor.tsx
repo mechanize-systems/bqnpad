@@ -41,6 +41,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
   let view = React.useRef<null | View.EditorView>(null);
 
   let onDocExt = useStateCompartment(
+    view,
     () =>
       View.EditorView.updateListener.of((update) => {
         if (update.docChanged && onDoc != null) {
@@ -50,10 +51,12 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
     [onDoc],
   );
   let keybindingsExt = useStateCompartment(
+    view,
     () => View.keymap.of(keybindings ?? []),
     [keybindings],
   );
   let placeholderExt = useStateCompartment(
+    view,
     () => View.placeholder(placeholder ?? ""),
     [placeholder],
   );
@@ -145,6 +148,7 @@ export function highlight(
  * change.
  */
 export function useStateCompartment(
+  view: View.EditorView | React.RefObject<View.EditorView | null>,
   configure: () => State.Extension,
   deps: unknown[],
 ): State.Extension {
@@ -154,9 +158,37 @@ export function useStateCompartment(
     return { compartment, extension };
   }, []); // eslint-disable-line
   React.useEffect(() => {
-    compartment.reconfigure(configure());
-  }, deps); // eslint-disable-line
+    let v = view instanceof View.EditorView ? view : view.current;
+    if (v == null) return;
+    v.dispatch({ effects: [compartment.reconfigure(configure())] });
+  }, [view, ...deps]); // eslint-disable-line
   return extension;
+}
+
+export function useStateField<T>(
+  view: View.EditorView | React.RefObject<View.EditorView | null>,
+  value: T,
+  deps: unknown[] = [value],
+) {
+  let [field, effect] = React.useMemo(() => {
+    let effect = State.StateEffect.define<T>();
+    let field = State.StateField.define<T>({
+      create() {
+        return value;
+      },
+      update(state, tr) {
+        for (let e of tr.effects) if (e.is(effect)) return e.value;
+        return state;
+      },
+    });
+    return [field, effect] as const;
+  }, []);
+  React.useEffect(() => {
+    let v = view instanceof View.EditorView ? view : view.current;
+    if (v == null) return;
+    v.dispatch({ effects: [effect.of(value)] });
+  }, [view, effect, value]); // eslint-disable-line
+  return field;
 }
 
 export abstract class ReactWidget extends View.WidgetType {

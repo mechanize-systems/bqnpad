@@ -6,6 +6,7 @@ import * as Workspace0 from "./Workspace0";
 export interface WorkspaceManager {
   load(): Lib.PromiseUtil.Suspendable<Workspace0.Workspace0>;
   store(fn: (workspace: Workspace0.Workspace0) => Workspace0.Workspace0): void;
+  restart(): void;
   reset(): void;
 }
 
@@ -24,6 +25,9 @@ export function useLocalWorkspaceManager(
       load: Lib.PromiseUtil.suspendable(() => workspace),
       store(fn) {
         setWorkspace(fn);
+      },
+      restart() {
+        window.location.reload();
       },
       reset() {
         window.localStorage.removeItem(WORKSPACE_KEY);

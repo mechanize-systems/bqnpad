@@ -7,7 +7,7 @@ import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as React from "react";
 
-import { Editor, ReactWidget } from "./Editor";
+import * as Editor from "./Editor";
 import * as EditorBQN from "./EditorBQN";
 import { GlyphsPalette } from "./GlyphPalette";
 import * as REPL from "./REPL";
@@ -28,7 +28,23 @@ export function Workspace({ manager }: WorkspaceProps) {
   );
   let editor = React.useRef<null | View.EditorView>(null);
 
-  let [{ status }, workspace] = useWorkspace(workspace0);
+  let [showGlyphbar, setShowGlyphbar] = Lib.ReactUtil.usePersistentState(
+    "bqnpad-pref-showGlyphbar",
+    () => true,
+  );
+
+  let [enableLivePreview, setEnableLivePreview] =
+    Lib.ReactUtil.usePersistentState(
+      "bqnpad-pref-enableLivePreview",
+      () => true,
+    );
+
+  let config = Editor.useStateField<WorkspaceConfig>(
+    editor,
+    { enableLivePreview },
+    [enableLivePreview],
+  );
+  let [{ status }, workspace] = useWorkspace(workspace0, config);
 
   let [onDoc] = Lib.ReactUtil.useDebouncedCallback(
     1000,
@@ -106,30 +122,31 @@ export function Workspace({ manager }: WorkspaceProps) {
       fontWeight: "bold",
       display: "flex",
       flexDirection: "row",
+      alignItems: "center",
       justifyContent: "space-between",
+      flexWrap: "wrap",
+    },
+    toolbarSection: {
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center",
+      paddingRight: "10px",
     },
     title: {
       fontSize: "20px",
     },
     glyphs: {},
-    button: {
-      fontWeight: "bold",
-      backgroundColor: "transparent",
-      borderLeftWidth: 0,
-      borderRightWidth: 0,
-      borderTopWidth: 0,
-      borderBottomWidth: 0,
+    label: {
+      color: "#888",
+    },
+    element: {
       paddingLeft: "5px",
       paddingRight: "5px",
       paddingTop: "5px",
       paddingBottom: "5px",
-      "&:hover": {
-        backgroundColor: "#DDD",
-      },
-      "&:active": {
-        backgroundColor: "#CCC",
-      },
     },
+    statusIdle: { color: "green" },
+    statusRunning: { color: "orange" },
   });
 
   return (
@@ -142,33 +159,63 @@ export function Workspace({ manager }: WorkspaceProps) {
               PAD.MECHANIZE.SYSTEMS
             </span>
           </div>
-          <div>
-            {status != null && (
-              <button className={styles.button}>
-                VM {status.toUpperCase()}
-              </button>
-            )}
-            <button
-              className={styles.button}
+        </div>
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarSection}>
+            <div className={styles.label}>WORKSPACE: </div>
+            <UI.Button
+              title="Start new workspace"
+              onClick={() => manager.reset()}
+            >
+              NEW
+            </UI.Button>
+            <UI.Button
+              title="Restart current workspace"
+              onClick={() => manager.restart()}
+            >
+              RESTART
+            </UI.Button>
+            <UI.Button
+              title="Download workspace as .bqn source file"
               onClick={onSave}
-              title="Download workspace"
             >
               DOWNLOAD
-            </button>
-            <button
-              className={styles.button}
-              onClick={() => manager.reset()}
-              title="Discard everything and start from scratch"
+            </UI.Button>
+          </div>
+          {status != null && (
+            <div className={styles.toolbarSection}>
+              <div className={styles.label}>VM: </div>
+              <div
+                className={UI.cx(
+                  styles.element,
+                  status === "idle" && styles.statusIdle,
+                  status === "running" && styles.statusRunning,
+                )}
+              >
+                {status.toUpperCase().padEnd(7, "\u00A0")}
+              </div>
+            </div>
+          )}
+          <div className={styles.toolbarSection}>
+            <div className={styles.label}>PREFERENCES: </div>
+            <UI.Checkbox
+              value={enableLivePreview}
+              onValue={setEnableLivePreview}
             >
-              RESET
-            </button>
+              LIVE PREVIEW
+            </UI.Checkbox>
+            <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
+              SHOW GLYPHBAR
+            </UI.Checkbox>
           </div>
         </div>
-        <div className={styles.glyphs}>
-          <GlyphsPalette onClick={onGlyph} />
-        </div>
+        {showGlyphbar && (
+          <div className={styles.glyphs}>
+            <GlyphsPalette onClick={onGlyph} />
+          </div>
+        )}
       </div>
-      <Editor
+      <Editor.Editor
         api={editor}
         doc={doc0}
         onDoc={onDoc}
@@ -287,6 +334,33 @@ function PreviewOutput({ code, cell, repl }: PreviewOutputProps) {
   );
 }
 
+function useWorkspace(
+  workspace0: Workspace0.Workspace0 = Workspace0.empty,
+  config: WorkspaceConfig | State.StateField<WorkspaceConfig>,
+): readonly [WorkspaceState, Workspace] {
+  let repl = React.useMemo(() => {
+    if (Lib.WorkerUtil.supportsWorkerModule()) {
+      return new REPLWebWorkerClient();
+    } else {
+      // Those browsers (looking at you, Firefox) which don't support WebWorker
+      // type=module will get in process REPL.
+      //
+      // - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1247687
+      return new REPL.REPL();
+    }
+  }, []);
+  let w = React.useMemo(
+    () => workspace(repl, workspace0, config),
+    [repl, workspace0],
+  );
+  let status = REPL.useREPLStatus(repl);
+  return [{ status }, w] as const;
+}
+
+type WorkspaceConfig = {
+  enableLivePreview: boolean;
+};
+
 type Workspace = {
   query: {
     cells: (state: State.EditorState) => WorkspaceCell[];
@@ -315,29 +389,23 @@ type WorkspaceState = {
   readonly status: REPL.REPLStatus | null;
 };
 
-function useWorkspace(
-  workspace0: Workspace0.Workspace0 = Workspace0.empty,
-): readonly [WorkspaceState, Workspace] {
-  let repl = React.useMemo(() => {
-    if (Lib.WorkerUtil.supportsWorkerModule()) {
-      return new REPLWebWorkerClient();
-    } else {
-      // Those browsers (looking at you, Firefox) which don't support WebWorker
-      // type=module will get in process REPL.
-      //
-      // - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1247687
-      return new REPL.REPL();
-    }
-  }, []);
-  let w = React.useMemo(() => workspace(repl, workspace0), [repl, workspace0]);
-  let status = REPL.useREPLStatus(repl);
-  return [{ status }, w] as const;
-}
-
 function workspace(
   repl: REPL.IREPL,
   workspace0: Workspace0.Workspace0 = Workspace0.empty,
+  config0: WorkspaceConfig | State.StateField<WorkspaceConfig>,
 ): Workspace {
+  let config =
+    config0 instanceof State.StateField
+      ? config0
+      : State.StateField.define({
+          create() {
+            return config0;
+          },
+          update(config) {
+            return config;
+          },
+        });
+
   let addCellEffect = State.StateEffect.define<WorkspaceCell>();
   let cellsField = State.StateField.define<WorkspaceCell[]>({
     create() {
@@ -401,23 +469,27 @@ function workspace(
 
   let previewWidget: null | PreviewOutputWidget = null;
 
-  let preview = View.EditorView.decorations.compute(["doc"], (state) => {
-    let cell = state.facet(currentCellField)[0]!;
-    let code = state.doc.sliceString(cell.from, cell.to);
-    if (previewWidget == null) {
-      previewWidget = new PreviewOutputWidget(cell, code, repl);
-    }
-    previewWidget.cell = cell;
-    previewWidget.code = code;
-    // TODO: investigate why CM doesn't update it
-    previewWidget.updateDOM(previewWidget.container.dom);
-    let deco = View.Decoration.widget({
-      widget: previewWidget,
-      block: true,
-      side: 1,
-    });
-    return View.Decoration.set([deco.range(previewWidget.cell.to)]);
-  });
+  let preview = View.EditorView.decorations.compute(
+    ["doc", config],
+    (state) => {
+      let { enableLivePreview } = state.field(config);
+      if (!enableLivePreview) return View.Decoration.none;
+      let cell = state.facet(currentCellField)[0]!;
+      let code = state.doc.sliceString(cell.from, cell.to);
+      if (previewWidget == null)
+        previewWidget = new PreviewOutputWidget(cell, code, repl);
+      previewWidget.cell = cell;
+      previewWidget.code = code;
+      // TODO: investigate why CM doesn't update it
+      previewWidget.updateDOM(previewWidget.container.dom);
+      let deco = View.Decoration.widget({
+        widget: previewWidget,
+        block: true,
+        side: 1,
+      });
+      return View.Decoration.set([deco.range(previewWidget.cell.to)]);
+    },
+  );
 
   let placeholderWidget = View.Decoration.widget({
     widget: new PlaceholderWidget("..."),
@@ -569,19 +641,22 @@ function workspace(
     };
   };
 
+  let extension = [
+    startEval.extension,
+    ignoreCellEdits,
+    cellsField,
+    outputWidgets,
+    computeCurrentCellField,
+    preview,
+    placeholder,
+  ];
+  if (config instanceof State.StateField) extension.push(config);
+
   return {
     query,
     commands,
     toWorkspace0,
-    extension: [
-      startEval.extension,
-      ignoreCellEdits,
-      cellsField,
-      outputWidgets,
-      computeCurrentCellField,
-      preview,
-      placeholder,
-    ],
+    extension,
   };
 }
 
@@ -610,7 +685,7 @@ class PlaceholderWidget extends View.WidgetType {
   }
 }
 
-class OutputWidget extends ReactWidget {
+class OutputWidget extends Editor.ReactWidget {
   constructor(readonly cell: WorkspaceCell) {
     super();
   }
@@ -624,7 +699,7 @@ class OutputWidget extends ReactWidget {
   }
 }
 
-class PreviewOutputWidget extends ReactWidget {
+class PreviewOutputWidget extends Editor.ReactWidget {
   constructor(
     public cell: WorkspaceCell,
     public code: string,

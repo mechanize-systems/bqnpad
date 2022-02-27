@@ -19,17 +19,12 @@ const INITIAL_DOC = `
 # - Use glyph bar at the top
 # - Use '\\'-prefix to enter glyphs from keyboard.
 # - Enter '\\' and press Tab for completions
+# 
+# Expressions are being evaluated as you type. Press 'Shift+Enter'
+# to create a new cell (the current code is being preserved in the
+# workspace history).
 #
-# How to evaluate BQN expressions:
-# - Expressions are being evaluated as you type
-# - Press 'Shift+Enter' to create a new cell (the current code is being preserved in
-#   the workspace history)
-#
-# What else:
-# - You can download workspace code as a .bqn file to your computer by pressing
-#   DOWNLOAD button.
-#
-# Have fun ('Cmd/Ctrl-a' to select all and press 'Del' to remove this message)!
+# Have fun!
 
 "Hello, "∾<⟜'a'⊸/ "Big Questions Notation"
 `.trim();

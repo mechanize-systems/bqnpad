@@ -19,3 +19,81 @@ export function useStyles<S extends Record<string, GriffelStyle>>(
 }
 
 export let cx = mergeClasses;
+
+let padding = {
+  paddingLeft: "5px",
+  paddingRight: "5px",
+  paddingTop: "5px",
+  paddingBottom: "5px",
+};
+
+export type ButtonProps = {
+  children: string;
+  onClick?: React.MouseEventHandler;
+  title?: string;
+};
+
+export function Button(props: ButtonProps) {
+  let styles = useStyles({
+    root: {
+      ...padding,
+      fontWeight: "bold",
+      backgroundColor: "transparent",
+      borderLeftWidth: 0,
+      borderRightWidth: 0,
+      borderTopWidth: 0,
+      borderBottomWidth: 0,
+      "&:hover": {
+        backgroundColor: "#DDD",
+      },
+      "&:active": {
+        backgroundColor: "#CCC",
+      },
+    },
+  });
+  return (
+    <button
+      className={styles.root}
+      onClick={props.onClick}
+      title={props.title}
+    >
+      {props.children}
+    </button>
+  );
+}
+
+export type CheckboxProps = {
+  children: string;
+  value: boolean;
+  onValue: (value: boolean) => void;
+};
+
+export function Checkbox(props: CheckboxProps) {
+  let styles = useStyles({
+    root: {
+      ...padding,
+      userSelect: "none",
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "baseline",
+      "&:hover": {
+        backgroundColor: "#DDD",
+      },
+      "&:active": {
+        backgroundColor: "#CCC",
+      },
+      "& > input": {
+        marginRight: "5px",
+      },
+    },
+  });
+  let handleChange: React.ChangeEventHandler = (ev) => {
+    props.onValue((ev.target as HTMLInputElement).checked);
+  };
+  return (
+    <label className={styles.root}>
+      <input type="checkbox" checked={props.value} onChange={handleChange} />{" "}
+      {props.children}
+    </label>
+  );
+}
