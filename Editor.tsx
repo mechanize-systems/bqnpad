@@ -210,13 +210,17 @@ export abstract class ReactWidget extends View.WidgetType {
   }
 
   toDOM() {
-    this.container.root.render(this.render());
+    ReactDOM.flushSync(() => {
+      this.container.root.render(this.render());
+    });
     return this.container.dom;
   }
 
   override updateDOM(dom: HTMLElement) {
     if (dom !== this.container.dom) return false;
-    this.container.root.render(this.render());
+    ReactDOM.flushSync(() => {
+      this.container.root.render(this.render());
+    });
     return true;
   }
 
