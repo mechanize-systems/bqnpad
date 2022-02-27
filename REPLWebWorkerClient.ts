@@ -1,47 +1,41 @@
 import * as Lib from "@bqnpad/lib";
 import * as React from "react";
 
-import type { IREPL, REPLResult } from "./REPL";
+import type { IREPL, REPLResult, REPLStatus } from "./REPL";
 import type { Method } from "./REPLWebWorker";
 
-export type REPLStatus = "running" | "idle";
-
 export class REPLWebWorkerClient implements IREPL {
-  onStatus = new Lib.EventEmitter<REPLStatus>();
-
   private inflght: number = 0;
+
+  private inflghtInc() {
+    this.inflght += 1;
+    if (this.inflght === 1) this.onStatus.fire(this.status);
+  }
+  private inflghtDec() {
+    this.inflght -= 1;
+    if (this.inflght === 0) this.onStatus.fire(this.status);
+  }
 
   get status(): REPLStatus {
     return this.inflght === 0 ? "idle" : "running";
   }
 
+  onStatus = new Lib.EventEmitter<REPLStatus>();
+
   async eval(code: string) {
-    this.inflght += 1;
-    if (this.inflght === 1) {
-      this.onStatus.fire(this.status);
-    }
+    this.inflghtInc();
     let res = await bqnWorker.submit("eval", code);
-    this.inflght -= 1;
-    if (this.inflght === 0) this.onStatus.fire(this.status);
+    this.inflghtDec();
     if (res.type === "error") throw res.error;
     return res.value;
   }
   async preview(code: string) {
-    this.inflght += 1;
-    if (this.inflght === 1) this.onStatus.fire(this.status);
+    this.inflghtInc();
     let res = await bqnWorker.submit("preview", code);
-    this.inflght -= 1;
-    if (this.inflght === 0) this.onStatus.fire(this.status);
+    this.inflghtDec();
     if (res.type === "error") throw res.error;
     return res.value;
   }
-}
-
-export function useREPLStatus(repl: REPLWebWorkerClient) {
-  let [status, setStatus0] = React.useState<REPLStatus>(repl.status);
-  let [setStatus] = Lib.ReactUtil.useDebouncedCallback(1, setStatus0);
-  React.useEffect(() => repl.onStatus.subscribe(setStatus), [repl, setStatus]);
-  return status;
 }
 
 // NOTE: Below compileWorker implements a very hacky way to acquire

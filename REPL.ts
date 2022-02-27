@@ -1,3 +1,6 @@
+import * as Lib from "@bqnpad/lib";
+import * as React from "react";
+
 import * as EditorBQN from "./EditorBQN";
 import * as BQN from "./bqn";
 
@@ -6,7 +9,11 @@ export type REPLResult =
   | { type: "error"; error: string }
   | { type: "notice"; notice: string };
 
+export type REPLStatus = "running" | "idle";
+
 export interface IREPL {
+  status: REPLStatus | null;
+  onStatus: Lib.EventEmitter<REPLStatus>;
   eval(code: string): Promise<REPLResult>;
   preview(code: string): Promise<REPLResult>;
 }
@@ -16,6 +23,10 @@ const FMTLIMIT = 5000;
 export class REPL implements IREPL {
   private repl: BQN.REPL;
   ready: Promise<unknown>;
+
+  onStatus = new Lib.EventEmitter<REPLStatus>();
+  status = null;
+
   constructor() {
     this.repl = BQN.makerepl(BQN.sysargs, 1);
     this.ready = Promise.resolve(null);
@@ -79,4 +90,14 @@ export class REPL implements IREPL {
     this.ready = res;
     return res;
   }
+}
+
+export function useREPLStatus(repl: IREPL): REPLStatus | null {
+  let [status, setStatus0] = React.useState<REPLStatus | null>(repl.status);
+  let [setStatus] = Lib.ReactUtil.useDebouncedCallback(1, setStatus0);
+  React.useLayoutEffect(
+    () => repl.onStatus.subscribe(setStatus),
+    [repl, setStatus],
+  );
+  return status;
 }

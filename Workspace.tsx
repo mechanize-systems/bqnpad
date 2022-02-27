@@ -10,12 +10,8 @@ import * as React from "react";
 import { Editor, ReactWidget } from "./Editor";
 import * as EditorBQN from "./EditorBQN";
 import { GlyphsPalette } from "./GlyphPalette";
-import type { IREPL, REPLResult } from "./REPL";
-import {
-  REPLStatus,
-  REPLWebWorkerClient,
-  useREPLStatus,
-} from "./REPLWebWorkerClient";
+import * as REPL from "./REPL";
+import { REPLWebWorkerClient } from "./REPLWebWorkerClient";
 import * as UI from "./UI";
 import * as Workspace0 from "./Workspace0";
 import type { WorkspaceManager } from "./WorkspaceManager";
@@ -147,9 +143,11 @@ export function Workspace({ manager }: WorkspaceProps) {
             </span>
           </div>
           <div>
-            <button className={styles.button}>
-              VM {status.toUpperCase()}
-            </button>
+            {status != null && (
+              <button className={styles.button}>
+                VM {status.toUpperCase()}
+              </button>
+            )}
             <button
               className={styles.button}
               onClick={onSave}
@@ -182,7 +180,7 @@ export function Workspace({ manager }: WorkspaceProps) {
 }
 
 type OutputProps = {
-  output: null | Lib.PromiseUtil.Deferred<REPLResult>;
+  output: null | Lib.PromiseUtil.Deferred<REPL.REPLResult>;
   preview?: boolean;
 };
 
@@ -215,7 +213,7 @@ function Output({ output: outputDeferred, preview }: OutputProps) {
   let children = null;
   let output =
     outputDeferred == null
-      ? ({ type: "notice", notice: "..." } as REPLResult)
+      ? ({ type: "notice", notice: "..." } as REPL.REPLResult)
       : outputDeferred.getOrSuspend();
   if (output.type === "ok") {
     children = output.ok;
@@ -255,23 +253,22 @@ function CellOutput({ cell }: CellOutputProps) {
 }
 
 type PreviewOutputProps = {
-  repl: IREPL;
+  repl: REPL.IREPL;
   code: string;
   cell: WorkspaceCell;
 };
 
 function PreviewOutput({ code, cell, repl }: PreviewOutputProps) {
   let [output, setOutput] =
-    React.useState<null | Lib.PromiseUtil.Deferred<REPLResult>>(null);
+    React.useState<null | Lib.PromiseUtil.Deferred<REPL.REPLResult>>(null);
   let [compute, _flush, cancel] = Lib.ReactUtil.useDebouncedCallback(
     500,
-    (code: string, output: Lib.PromiseUtil.Deferred<REPLResult>) => {
+    (code: string, output: Lib.PromiseUtil.Deferred<REPL.REPLResult>) => {
       repl.preview(code).then(output.resolve, output.reject);
       React.startTransition(() => setOutput(output));
     },
   );
   React.useEffect(() => {
-    console.log("idx");
     setOutput(null);
   }, [cell.idx]);
   React.useEffect(() => {
@@ -309,25 +306,35 @@ export type WorkspaceCell = {
   idx: number;
   from: number;
   to: number;
-  result: null | Lib.PromiseUtil.Deferred<REPLResult>;
-  preview: null | Lib.PromiseUtil.Deferred<REPLResult>;
+  result: null | Lib.PromiseUtil.Deferred<REPL.REPLResult>;
+  preview: null | Lib.PromiseUtil.Deferred<REPL.REPLResult>;
 };
 
 type WorkspaceState = {
-  readonly status: REPLStatus;
+  readonly status: REPL.REPLStatus | null;
 };
 
 function useWorkspace(
   workspace0: Workspace0.Workspace0 = Workspace0.empty,
 ): readonly [WorkspaceState, Workspace] {
-  let repl = React.useMemo(() => new REPLWebWorkerClient(), []);
+  let repl = React.useMemo(() => {
+    if (Lib.WorkerUtil.supportsWorkerModule()) {
+      return new REPLWebWorkerClient();
+    } else {
+      // Those browsers (looking at you, Firefox) which don't support WebWorker
+      // type=module will get in process REPL.
+      //
+      // - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1247687
+      return new REPL.REPL();
+    }
+  }, []);
   let w = React.useMemo(() => workspace(repl, workspace0), [repl, workspace0]);
-  let status = useREPLStatus(repl);
+  let status = REPL.useREPLStatus(repl);
   return [{ status }, w] as const;
 }
 
 function workspace(
-  repl: IREPL,
+  repl: REPL.IREPL,
   workspace0: Workspace0.Workspace0 = Workspace0.empty,
 ): Workspace {
   let addCellEffect = State.StateEffect.define<WorkspaceCell>();
@@ -620,7 +627,7 @@ class PreviewOutputWidget extends ReactWidget {
   constructor(
     public cell: WorkspaceCell,
     public code: string,
-    readonly repl: IREPL,
+    readonly repl: REPL.IREPL,
   ) {
     super();
   }
