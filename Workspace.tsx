@@ -269,6 +269,7 @@ function PreviewOutput({ code, cell, repl }: PreviewOutputProps) {
     },
   );
   React.useEffect(() => {
+    cancel();
     setOutput(null);
   }, [cell.idx]);
   React.useEffect(() => {
