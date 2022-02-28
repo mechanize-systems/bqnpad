@@ -262,112 +262,6 @@ export function Workspace({ manager }: WorkspaceProps) {
   );
 }
 
-type OutputProps = {
-  result: null | Lib.PromiseUtil.Deferred<REPL.REPLResult> | REPL.REPLResult;
-  preview?: boolean;
-};
-
-function Output({ result: resultDeferred, preview }: OutputProps) {
-  let styles = UI.useStyles({
-    root: {
-      fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
-      fontSize: "20px",
-      lineHeight: "1.4",
-      overflowY: "hidden",
-      overflowX: "hidden",
-      marginTop: "0px",
-      marginBottom: "0px",
-      marginLeft: "0px",
-      marginRight: "0px",
-      paddingLeft: "35px",
-      textOverflow: "ellipsis",
-    },
-    hasPreview: {
-      color: "#888",
-    },
-    hasError: {
-      color: "red",
-    },
-    hasNotice: {
-      color: "#888888",
-      whiteSpace: "pre-wrap",
-    },
-  });
-  let children = null;
-  let result =
-    resultDeferred == null
-      ? ({ type: "notice", notice: "..." } as REPL.REPLResult)
-      : Lib.PromiseUtil.isDeferred<REPL.REPLResult>(resultDeferred)
-      ? resultDeferred.getOrSuspend()
-      : resultDeferred;
-  if (result.type === "ok") {
-    children = result.ok;
-  } else if (result.type === "error") {
-    children = result.error;
-  } else if (result.type === "notice") {
-    children = result.notice;
-  }
-  return (
-    <pre
-      className={UI.cx(
-        styles.root,
-        preview && styles.hasPreview,
-        result.type === "error" && styles.hasError,
-        result.type === "notice" && styles.hasNotice,
-      )}
-    >
-      {children}
-    </pre>
-  );
-}
-
-type CellOutputProps = {
-  cell: WorkspaceCell;
-};
-
-function CellOutput({ cell }: CellOutputProps) {
-  return (
-    <React.Suspense fallback={<Output result={cell.resultPreview} />}>
-      <Output result={cell.result} />
-    </React.Suspense>
-  );
-}
-
-type PreviewOutputProps = {
-  repl: REPL.IREPL;
-  code: string;
-  cell: WorkspaceCell;
-};
-
-function PreviewOutput({ code, cell, repl }: PreviewOutputProps) {
-  let [result, setResult] =
-    React.useState<null | Lib.PromiseUtil.Deferred<REPL.REPLResult>>(null);
-  let [compute, _flush, cancel] = Lib.ReactUtil.useDebouncedCallback(
-    500,
-    (code: string, result: Lib.PromiseUtil.Deferred<REPL.REPLResult>) => {
-      repl.preview(code).then(result.resolve, result.reject);
-      React.startTransition(() => setResult(result));
-    },
-  );
-  React.useEffect(() => {
-    cancel();
-    setResult(null);
-  }, [cell.idx]);
-  React.useEffect(() => {
-    if (code === "") {
-      cancel();
-      setResult(null);
-    } else {
-      compute(code, cell.result!);
-    }
-  }, [code, cell.result]);
-  return (
-    <React.Suspense fallback={<Output result={null} />}>
-      {result == null ? null : <Output result={result} preview={true} />}
-    </React.Suspense>
-  );
-}
-
 function useWorkspace(
   workspace0: Workspace0.Workspace0 = Workspace0.empty,
   config: WorkspaceConfig | State.StateField<WorkspaceConfig>,
@@ -518,7 +412,7 @@ function workspace(
       else
         return View.Decoration.set(
           cells.map((cell) => {
-            let widget = new PrevOutputWidget(cell);
+            let widget = new CellOutputWidget(cell, false);
             let deco = View.Decoration.widget({
               widget,
               block: true,
@@ -538,7 +432,7 @@ function workspace(
       else
         return View.Decoration.set(
           cells.map((cell) => {
-            let widget = new OutputWidget(cell);
+            let widget = new CellOutputWidget(cell, true);
             let deco = View.Decoration.widget({
               widget,
               block: true,
@@ -550,7 +444,7 @@ function workspace(
     },
   );
 
-  let sessionBanner = View.EditorView.decorations.compute([], (state) => {
+  let sessionBanner = View.EditorView.decorations.compute([], (_state) => {
     let ranges: View.Range<View.Decoration>[] = [];
 
     let add = (
@@ -591,7 +485,7 @@ function workspace(
       previewWidget.cell = cell;
       previewWidget.code = code;
       // TODO: investigate why CM doesn't update it
-      previewWidget.updateDOM(previewWidget.container.dom);
+      // previewWidget.updateDOM(previewWidget.container.dom);
       let deco = View.Decoration.widget({
         widget: previewWidget,
         block: true,
@@ -849,35 +743,72 @@ class PlaceholderWidget extends View.WidgetType {
   }
 }
 
-class PrevOutputWidget extends Editor.ReactWidget {
-  constructor(readonly cell: WorkspaceCell) {
+function renderResult(
+  root: HTMLDivElement,
+  result: REPL.REPLResult,
+  preview: boolean = false,
+) {
+  root.classList.remove(...root.classList.values());
+  root.classList.add("Output");
+  if (preview) root.classList.add("Output--preview");
+  if (result.type === "ok") {
+    root.innerText = result.ok ?? "";
+  } else if (result.type === "error") {
+    root.innerText = result.error;
+    root.classList.add("Output--error");
+  } else if (result.type === "notice") {
+    root.innerText = result.notice;
+    root.classList.add("Output--notice");
+  }
+}
+
+class CellOutputWidget extends View.WidgetType {
+  private mounted: boolean = true;
+
+  constructor(
+    private readonly cell: WorkspaceCell,
+    private readonly fetch: boolean = false,
+  ) {
     super();
   }
 
-  override render() {
-    return <Output result={this.cell.resultPreview} />;
+  toDOM() {
+    let root = document.createElement("div");
+    let result = this.cell.result?.isCompleted
+      ? this.cell.result.value
+      : this.cell.resultPreview;
+    if (result != null) {
+      renderResult(root, result);
+    } else {
+      renderResult(root, { type: "notice", notice: "..." });
+    }
+    if (
+      this.fetch &&
+      this.cell.result != null &&
+      !this.cell.result.isCompleted
+    ) {
+      this.cell.result.then((result) => {
+        if (this.mounted) renderResult(root, result);
+      });
+    }
+    return root;
   }
 
-  override eq(other: OutputWidget) {
+  override destroy(_dom: HTMLElement) {
+    this.mounted = false;
+  }
+
+  override eq(other: CellOutputWidget) {
     return other.cell === this.cell;
   }
 }
 
-class OutputWidget extends Editor.ReactWidget {
-  constructor(readonly cell: WorkspaceCell) {
-    super();
-  }
+class PreviewOutputWidget extends View.WidgetType {
+  private mounted: boolean = true;
+  private timer: NodeJS.Timer | null = null;
+  private prevCode: string | null = null;
+  private root: HTMLDivElement | null = null;
 
-  override render() {
-    return <CellOutput cell={this.cell} />;
-  }
-
-  override eq(other: OutputWidget) {
-    return other.cell === this.cell;
-  }
-}
-
-class PreviewOutputWidget extends Editor.ReactWidget {
   constructor(
     public cell: WorkspaceCell,
     public code: string,
@@ -886,27 +817,62 @@ class PreviewOutputWidget extends Editor.ReactWidget {
     super();
   }
 
-  override render() {
-    return (
-      <PreviewOutput cell={this.cell} code={this.code} repl={this.repl} />
-    );
+  toDOM() {
+    this.root = document.createElement("div");
+    let result = this.cell.result?.isCompleted
+      ? this.cell.result.value
+      : this.cell.resultPreview;
+    if (result != null) renderResult(this.root, result, true);
+    if (!this.cell.result?.isCompleted)
+      this.schedulePreview(this.cell, this.code);
+    return this.root;
   }
 
-  override eq(_other: PreviewOutputWidget) {
-    return false;
+  override updateDOM(_dom: HTMLElement): boolean {
+    if (!this.cell.result?.isCompleted)
+      this.schedulePreview(this.cell, this.code);
+    return true;
+  }
+
+  schedulePreview(cell: WorkspaceCell, code: string) {
+    this.prevCode = code;
+    if (code.trim() === "")
+      renderResult(this.root!, { type: "notice", notice: "" }, true);
+    if (this.timer != null) clearTimeout(this.timer);
+    let timer = setTimeout(() => {
+      this.repl.preview(code).then(cell.result!.resolve, cell.result!.reject);
+      cell.result!.then((result) => {
+        if (this.mounted && timer === this.timer) {
+          renderResult(this.root!, result, true);
+        }
+      });
+    }, 400);
+    this.timer = timer;
+  }
+
+  override eq(other: PreviewOutputWidget) {
+    return other.code === this.prevCode;
+  }
+
+  override destroy(_dom: HTMLElement) {
+    this.mounted = false;
+    if (this.timer != null) clearTimeout(this.timer);
   }
 }
 
-class LineWidget extends Editor.ReactWidget {
+class LineWidget extends View.WidgetType {
   constructor(private readonly startTime: number) {
     super();
   }
-  override render() {
+  toDOM() {
+    let root = document.createElement("div");
+    root.classList.add("SessionBanner");
     let date = new Intl.DateTimeFormat(undefined, {
       dateStyle: "short",
       timeStyle: "short",
     }).format(this.startTime);
-    return <div style={{ color: "#AAA" }}>STARTED {date}</div>;
+    root.innerText = `STARTED ${date}`;
+    return root;
   }
 }
 

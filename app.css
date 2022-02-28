@@ -45,3 +45,31 @@ body,
   font-size: 20px;
   padding-right: 10px;
 }
+
+.Output {
+  font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  font-size: 20px;
+  line-height: 1.4;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 35px;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+.Output--error {
+  color: red;
+}
+.Output--preview {
+  color: #888888;
+}
+.Output--notice {
+  color: #888888;
+}
+
+.SessionBanner {
+  color: #aaaaaa;
+}
