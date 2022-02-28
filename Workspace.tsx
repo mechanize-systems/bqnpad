@@ -189,7 +189,12 @@ export function Workspace({ manager }: WorkspaceProps) {
         <div className={styles.toolbar}>
           <div className={styles.title}>
             <span style={{ fontWeight: "bold" }}>
-              <a href="https://mlochbaum.github.io/BQN/index.html">BQN</a>
+              <a
+                target="_blank"
+                href="https://mlochbaum.github.io/BQN/index.html"
+              >
+                BQN
+              </a>
               PAD
             </span>
           </div>
