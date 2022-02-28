@@ -7,11 +7,11 @@ export interface WorkspaceManager {
   load(): Lib.PromiseUtil.Suspendable<Workspace0.Workspace0>;
   store(fn: (workspace: Workspace0.Workspace0) => Workspace0.Workspace0): void;
   restart(): void;
-  reset(): void;
 }
 
-export let WORKSPACE_KEY = "bqn-workspace-v3";
-
+/**
+ * Workspace manager which stores workspace in a browser's `localStorage`.
+ */
 export function useLocalWorkspaceManager(
   makeWorkspace: () => Workspace0.Workspace0,
 ): WorkspaceManager {
@@ -29,10 +29,8 @@ export function useLocalWorkspaceManager(
       restart() {
         window.location.reload();
       },
-      reset() {
-        window.localStorage.removeItem(WORKSPACE_KEY);
-        window.location.reload();
-      },
     };
   }, []);
 }
+
+export let WORKSPACE_KEY = `bqn-workspace-v${Workspace0.version}`;

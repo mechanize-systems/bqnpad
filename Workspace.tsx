@@ -50,7 +50,7 @@ export function Workspace({ manager }: WorkspaceProps) {
     workspace.commands.focusCurrentCell(editor.current!);
   }, [editor, workspace]);
 
-  let [onDoc] = Lib.ReactUtil.useDebouncedCallback(
+  let [onDoc, _onDocFlush, onDocCancel] = Lib.ReactUtil.useDebouncedCallback(
     1000,
     (_doc, state: State.EditorState) => {
       manager.store((_) => workspace.toWorkspace0(state));
@@ -101,7 +101,37 @@ export function Workspace({ manager }: WorkspaceProps) {
     let data = editor.current!.state.doc.sliceString(0);
     let blob = new Blob([data], { type: "text/csv" });
     download(blob, "bqnpad-workspace.bqn");
-  }, []);
+  }, [editor]);
+
+  let onNew = React.useCallback(() => {
+    let state = editor.current!.state;
+    let { doc, currentSession, prevSessions, currentCell } =
+      workspace.toWorkspace0(state);
+    doc = doc.slice(0, currentCell.from);
+    currentCell = {
+      from: doc.length,
+      to: doc.length,
+      result: null,
+    };
+    if (currentSession.cells.length === 0) return;
+    if (!doc.endsWith("\n")) doc += "\n";
+    let newW: Workspace0.Workspace0 = {
+      doc,
+      prevSessions: prevSessions.concat(currentSession),
+      currentSession: {
+        createdAt: Date.now(),
+        cells: [],
+      },
+      currentCell: {
+        from: doc.length,
+        to: doc.length + 1,
+        result: null,
+      },
+    };
+    onDocCancel();
+    manager.store((_) => newW);
+    manager.restart();
+  }, [editor]);
 
   let styles = UI.useStyles({
     root: {
@@ -166,15 +196,17 @@ export function Workspace({ manager }: WorkspaceProps) {
         </div>
         <div className={styles.toolbar}>
           <div className={styles.toolbarSection}>
-            <div className={styles.label}>WORKSPACE: </div>
+            <div className={styles.label}>SESSION: </div>
             <UI.Button
-              title="Start new workspace"
-              onClick={() => manager.reset()}
+              title="Create new session"
+              onClick={() => {
+                onNew();
+              }}
             >
               NEW
             </UI.Button>
             <UI.Button
-              title="Restart current workspace"
+              title="Restart current session"
               onClick={() => manager.restart()}
             >
               RESTART
@@ -365,8 +397,10 @@ type WorkspaceConfig = {
 
 type Workspace = {
   query: {
-    cells: (state: State.EditorState) => WorkspaceCell[];
     currentCell: (state: State.EditorState) => WorkspaceCell;
+    prevCells: (state: State.EditorState) => Iterable<WorkspaceCell>;
+    cells: (state: State.EditorState) => Iterable<WorkspaceCell>;
+    allCells: (state: State.EditorState) => Iterable<WorkspaceCell>;
   };
 
   commands: {
@@ -409,10 +443,29 @@ function workspace(
           },
         });
 
+  let prevCellsField = State.StateField.define<WorkspaceCell[]>({
+    create() {
+      return workspace0.prevSessions.flatMap((session) =>
+        session.cells.map(
+          (cell, idx): WorkspaceCell => ({
+            idx,
+            from: cell.from,
+            to: cell.to,
+            result: null,
+            resultPreview: cell.result,
+          }),
+        ),
+      );
+    },
+    update(state) {
+      return state;
+    },
+  });
+
   let addCellEffect = State.StateEffect.define<WorkspaceCell>();
   let cellsField = State.StateField.define<WorkspaceCell[]>({
     create() {
-      return workspace0.cells.map(
+      return workspace0.currentSession.cells.map(
         (cell, idx): WorkspaceCell => ({
           idx,
           from: cell.from,
@@ -439,7 +492,12 @@ function workspace(
   let computeCurrentCellField = currentCellField.compute(
     ["doc", cellsField],
     (state): WorkspaceCell => {
-      let cells = state.field(cellsField);
+      let cells: { from: number; to: number }[] = state.field(cellsField);
+      if (cells.length === 0) {
+        let session =
+          workspace0.prevSessions[workspace0.prevSessions.length - 1];
+        cells = session?.cells ?? [];
+      }
       let from = cells[cells.length - 1]?.to ?? 0;
       let to = state.doc.length;
       return {
@@ -449,6 +507,26 @@ function workspace(
         result: Lib.PromiseUtil.deferred(),
         resultPreview: null,
       };
+    },
+  );
+
+  let prevOutputWidgets = View.EditorView.decorations.compute(
+    [prevCellsField],
+    (state) => {
+      let cells = state.field(prevCellsField);
+      if (cells.length === 0) return View.Decoration.none;
+      else
+        return View.Decoration.set(
+          cells.map((cell) => {
+            let widget = new PrevOutputWidget(cell);
+            let deco = View.Decoration.widget({
+              widget,
+              block: true,
+              side: 1,
+            });
+            return deco.range(cell.to - 1);
+          }),
+        );
     },
   );
 
@@ -464,13 +542,40 @@ function workspace(
             let deco = View.Decoration.widget({
               widget,
               block: true,
-              side: -1,
+              side: 1,
             });
-            return deco.range(cell.to);
+            return deco.range(cell.to - 1);
           }),
         );
     },
   );
+
+  let sessionBanner = View.EditorView.decorations.compute([], (state) => {
+    let ranges: View.Range<View.Decoration>[] = [];
+
+    let add = (
+      session: Workspace0.Session0,
+      pos: number | undefined = undefined,
+    ) => {
+      let firstCell = session.cells[0];
+      let from =
+        firstCell == null || firstCell.from === firstCell.to
+          ? pos
+          : firstCell.from;
+      if (from == null) return;
+      let deco = View.Decoration.widget({
+        widget: new LineWidget(session.createdAt),
+        block: true,
+        side: -1,
+      });
+      ranges.push(deco.range(from));
+    };
+
+    for (let session of workspace0.prevSessions) add(session);
+    add(workspace0.currentSession, workspace0.currentCell.from);
+
+    return View.Decoration.set(ranges);
+  });
 
   let previewWidget: null | PreviewOutputWidget = null;
 
@@ -514,9 +619,8 @@ function workspace(
   let ignoreCellEdits = State.EditorState.transactionFilter.of(
     (tr: State.Transaction) => {
       if (tr.docChanged) {
-        let cells = tr.startState.field(cellsField);
-        let prevCell = cells[cells.length - 1];
-        let cut = prevCell?.to ?? 0;
+        let currentCell = query.currentCell(tr.startState);
+        let cut = currentCell.from;
         let block = false;
         tr.changes.iterChangedRanges((from, to) => {
           if (from < cut || to < cut) block = true;
@@ -561,7 +665,7 @@ function workspace(
           write({ cursor, scroller }) {
             if (cursor == null) return;
             let diff = scroller.bottom - cursor.bottom;
-            if (diff < 100) view.scrollDOM.scrollTop += 100 - diff;
+            if (diff < 150) view.scrollDOM.scrollTop += 150 - diff;
           },
         });
       }
@@ -571,11 +675,18 @@ function workspace(
   // Query
 
   let cells = (state: State.EditorState) => state.field(cellsField);
+  let prevCells = (state: State.EditorState) => state.field(prevCellsField);
   let currentCell = (state: State.EditorState) =>
     state.facet(currentCellField)[0]!;
+  function* allCells(state: State.EditorState) {
+    for (let cell of state.field(cellsField)) yield cell;
+    for (let cell of state.field(prevCellsField)) yield cell;
+  }
 
   let query = {
     cells,
+    prevCells,
+    allCells,
     currentCell,
   };
 
@@ -616,7 +727,7 @@ function workspace(
     if (view.state.selection.ranges.length !== 1) return false;
     let sel = view.state.selection.main;
     if (sel.from >= currentCell.from) return false;
-    for (let cell of cells(view.state)) {
+    for (let cell of query.allCells(view.state)) {
       if (sel.from >= cell.from && sel.to < cell.to) {
         addCell(view);
         let code = view.state.doc.sliceString(cell.from, cell.to - 1);
@@ -645,7 +756,7 @@ function workspace(
       });
       return true;
     }
-    for (let cell of cells(view.state)) {
+    for (let cell of query.allCells(view.state)) {
       if (sel.from >= cell.from && sel.to < cell.to) {
         view.dispatch({
           selection: State.EditorSelection.range(cell.from, cell.to - 1),
@@ -679,7 +790,11 @@ function workspace(
     });
     return {
       doc: state.doc.sliceString(0),
-      cells: cells(state).map(toWorkspaceCell0),
+      prevSessions: workspace0.prevSessions,
+      currentSession: {
+        createdAt: workspace0.currentSession.createdAt,
+        cells: cells(state).map(toWorkspaceCell0),
+      },
       currentCell: toWorkspaceCell0(currentCell(state)),
     };
   };
@@ -687,12 +802,15 @@ function workspace(
   let extension = [
     onInit.extension,
     onSelection.extension,
-    ignoreCellEdits,
-    cellsField,
-    outputWidgets,
     computeCurrentCellField,
+    prevCellsField,
+    cellsField,
+    prevOutputWidgets,
+    outputWidgets,
     preview,
     placeholder,
+    sessionBanner,
+    ignoreCellEdits,
   ];
   if (config instanceof State.StateField) extension.push(config);
 
@@ -731,6 +849,20 @@ class PlaceholderWidget extends View.WidgetType {
   }
 }
 
+class PrevOutputWidget extends Editor.ReactWidget {
+  constructor(readonly cell: WorkspaceCell) {
+    super();
+  }
+
+  override render() {
+    return <Output result={this.cell.resultPreview} />;
+  }
+
+  override eq(other: OutputWidget) {
+    return other.cell === this.cell;
+  }
+}
+
 class OutputWidget extends Editor.ReactWidget {
   constructor(readonly cell: WorkspaceCell) {
     super();
@@ -762,6 +894,19 @@ class PreviewOutputWidget extends Editor.ReactWidget {
 
   override eq(_other: PreviewOutputWidget) {
     return false;
+  }
+}
+
+class LineWidget extends Editor.ReactWidget {
+  constructor(private readonly startTime: number) {
+    super();
+  }
+  override render() {
+    let date = new Intl.DateTimeFormat(undefined, {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(this.startTime);
+    return <div style={{ color: "#AAA" }}>STARTED {date}</div>;
   }
 }
 
