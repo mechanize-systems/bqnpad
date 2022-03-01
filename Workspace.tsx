@@ -479,10 +479,13 @@ function workspace(
   let previewWidget: null | PreviewOutputWidget = null;
 
   let preview = View.EditorView.decorations.compute(
-    ["doc", config],
+    ["doc", currentCellField, config],
     (state) => {
       let { enableLivePreview } = state.field(config);
-      if (!enableLivePreview) return View.Decoration.none;
+      if (!enableLivePreview) {
+        previewWidget = null;
+        return View.Decoration.none;
+      }
       let cell = state.facet(currentCellField)[0]!;
       let code = state.doc.sliceString(cell.from, cell.to);
       if (previewWidget == null)
