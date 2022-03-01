@@ -493,7 +493,8 @@ function workspace(
       previewWidget.cell = cell;
       previewWidget.code = code;
       // TODO: investigate why CM doesn't update it
-      // previewWidget.updateDOM(previewWidget.container.dom);
+      if (previewWidget.root != null)
+        previewWidget.updateDOM(previewWidget.root);
       let deco = View.Decoration.widget({
         widget: previewWidget,
         block: true,
@@ -815,7 +816,7 @@ class PreviewOutputWidget extends View.WidgetType {
   private mounted: boolean = true;
   private timer: NodeJS.Timer | null = null;
   private prevCode: string | null = null;
-  private root: HTMLDivElement | null = null;
+  root: HTMLDivElement | null = null;
 
   constructor(
     public cell: WorkspaceCell,
@@ -843,6 +844,7 @@ class PreviewOutputWidget extends View.WidgetType {
   }
 
   schedulePreview(cell: WorkspaceCell, code: string) {
+    if (this.prevCode === code) return;
     this.prevCode = code;
     if (code.trim() === "")
       renderResult(this.root!, { type: "notice", notice: "" }, true);
@@ -859,6 +861,7 @@ class PreviewOutputWidget extends View.WidgetType {
   }
 
   override eq(other: PreviewOutputWidget) {
+    console.log("eq");
     return other.code === this.prevCode;
   }
 
