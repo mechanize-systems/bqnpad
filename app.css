@@ -1,13 +1,32 @@
 @import "normalize.css/normalize.css";
 @import "./iosevka/index.css";
+
+:root {
+  --editor-font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  --ui-font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+
+  --ui-background: #e3e7e7;
+  --ui-background-hover: #ddd;
+  --ui-background-active: #ccc;
+  --ui-border: #bbb;
+  --ui-color: #000;
+  --ui-color-dimmed: #888;
+
+  --editor-color: var(--ui-color);
+  --editor-color-output: #444;
+  --editor-color-output-error: red;
+  --editor-color-output-dimmed: #888;
+}
+
 html,
 body,
 #asap {
   overflow: hidden;
   height: 100%;
   width: 100%;
-  background: #e3e7e7;
-  font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  background-color: var(--ui-background);
+  font-family: var(--ui-font-family);
+  color: var(--ui-color);
 }
 * {
   box-sizing: border-box;
@@ -23,10 +42,11 @@ body,
   width: 100%;
   height: 100%;
   display: flex;
+  color: var(--editor-color);
 }
 
 .Editor .cm-content {
-  font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  font-family: var(--editor-font-family);
   font-size: 20px;
   padding-top: 12px;
   padding-left: 12px;
@@ -41,23 +61,28 @@ body,
 .Editor .cm-line {
   padding: 0;
 }
+.Editor .cm-focused .cm-cursor {
+  color: var(--editor-color);
+  background-color: var(--editor-color);
+  border-left-color: red !important;
+}
 
 .Editor .cm-tooltip-autocomplete {
   border: none !important;
-  background-color: #f3f3f3 !important;
+  background-color: var(--ui-background) !important;
 }
 
 .Editor .cm-tooltip-autocomplete ul li {
-  color: #444 !important;
-  font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  color: var(--editor-color) !important;
+  font-family: var(--editor-font-family);
   font-size: 18px;
   display: flex;
   justify-content: space-between;
 }
 
 .Editor .cm-tooltip-autocomplete ul li[aria-selected] {
-  color: #444 !important;
-  background-color: #ededed !important;
+  color: var(--editor-color) !important;
+  background-color: var(--ui-background-hover) !important;
 }
 
 .Editor .cm-completionIcon {
@@ -66,7 +91,7 @@ body,
 
 .Editor .cm-completionMatchedText {
   text-decoration: none !important;
-  background-color: yellow;
+  background-color: transparent;
 }
 
 .Editor .cm-completionDetail {
@@ -91,7 +116,8 @@ body,
 }
 
 .Output {
-  font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  color: var(--editor-color-output);
+  font-family: var(--editor-font-family);
   font-size: 20px;
   line-height: 1.4;
   overflow-y: hidden;
@@ -105,17 +131,17 @@ body,
   white-space: pre;
 }
 .Output--error {
-  color: red;
+  color: var(--editor-color-output-error);
 }
 .Output--preview {
-  color: #888888;
+  color: var(--editor-color-output-dimmed);
 }
 .Output--notice {
-  color: #888888;
+  color: var(--editor-color-output-dimmed);
 }
 
 .SessionBanner {
-  color: #aaaaaa;
+  color: var(--ui-color-dimmed);
 }
 
 .Checkbox {
@@ -126,10 +152,10 @@ body,
   align-items: baseline;
 }
 .Checkbox:hover {
-  background-color: #ddd;
+  background-color: var(--ui-background-hover);
 }
 .Checkbox:active {
-  background-color: #ccc;
+  background-color: var(--ui-background-active);
 }
 .Checkbox > input {
   margin-right: 5px;
@@ -140,12 +166,13 @@ body,
   font-weight: bold;
   background-color: transparent;
   border: none;
+  color: var(--ui-color);
 }
 .Button:hover {
-  background-color: #ddd;
+  background-color: var(--ui-background-hover);
 }
 .Button:active {
-  background-color: #ccc;
+  background-color: var(--ui-background-active);
 }
 
 .Toolbar {
@@ -182,7 +209,7 @@ body,
   padding: 5px;
   border-bottom-width: 2px;
   border-bottom-style: solid;
-  border-bottom-color: #bbb;
+  border-bottom-color: var(--ui-border);
 }
 
 .GlyphsPalette {
@@ -199,10 +226,10 @@ body,
   padding: 5px;
 }
 .GlyphsPalette__item:hover {
-  background-color: #ddd;
+  background-color: var(--ui-background-hover);
 }
 .GlyphsPalette__item:active {
-  background-color: #ccc;
+  background-color: var(--ui-background-active);
 }
 
 /**
@@ -215,5 +242,5 @@ body,
 }
 
 .label {
-  color: #888;
+  color: var(--ui-color-dimmed);
 }

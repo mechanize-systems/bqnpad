@@ -21,7 +21,7 @@ export function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
           title={title}
           key={glyph.glyph}
           onClick={() => onClick(glyph)}
-          className={UI.cx("GlyphsPalette__item", className)}
+          className={UI.cx(className, "GlyphsPalette__item")}
         >
           {glyph.glyph}
         </button>

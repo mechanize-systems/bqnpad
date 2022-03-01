@@ -411,7 +411,7 @@ function workspace(
           : firstCell.from;
       if (from == null) return;
       let deco = View.Decoration.widget({
-        widget: new LineWidget(session.createdAt),
+        widget: new SessionBanner(session.createdAt),
         block: true,
         side: -1,
       });
@@ -809,7 +809,6 @@ class PreviewOutputWidget extends View.WidgetType {
   }
 
   override eq(other: PreviewOutputWidget) {
-    console.log("eq");
     return other.code === this.prevCode;
   }
 
@@ -819,7 +818,7 @@ class PreviewOutputWidget extends View.WidgetType {
   }
 }
 
-class LineWidget extends View.WidgetType {
+class SessionBanner extends View.WidgetType {
   constructor(private readonly startTime: number) {
     super();
   }
