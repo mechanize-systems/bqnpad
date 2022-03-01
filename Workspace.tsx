@@ -684,6 +684,10 @@ class PlaceholderWidget extends View.WidgetType {
     super();
   }
 
+  override get estimatedHeight() {
+    return LINE_HEIGHT;
+  }
+
   toDOM() {
     let wrap = document.createElement("span");
     wrap.className = "cm-placeholder";
@@ -713,12 +717,12 @@ function renderResult(
   root.classList.add("Output");
   if (preview) root.classList.add("Output--preview");
   if (result.type === "ok") {
-    root.innerText = result.ok ?? "";
+    root.innerHTML = result.ok ?? "&nbsp;";
   } else if (result.type === "error") {
-    root.innerText = result.error;
+    root.innerHTML = result.error;
     root.classList.add("Output--error");
   } else if (result.type === "notice") {
-    root.innerText = result.notice;
+    root.innerHTML = result.notice;
     root.classList.add("Output--notice");
   }
 }
@@ -734,9 +738,10 @@ class CellOutputWidget extends View.WidgetType {
   }
 
   override get estimatedHeight() {
-    let content = this.cell.resultPreview
-      ? resultContent(this.cell.resultPreview).trim()
-      : "";
+    let result = this.cell.result?.isCompleted
+      ? this.cell.result.value
+      : this.cell.resultPreview;
+    let content = result ? resultContent(result).trim() : "";
     return content.split("\n").length * LINE_HEIGHT;
   }
 
@@ -789,6 +794,10 @@ class PreviewOutputWidget extends View.WidgetType {
   private prevCode: string | null = null;
   root: HTMLDivElement | null = null;
 
+  override get estimatedHeight() {
+    return LINE_HEIGHT;
+  }
+
   constructor(
     public cell: WorkspaceCell,
     public code: string,
@@ -818,7 +827,7 @@ class PreviewOutputWidget extends View.WidgetType {
     if (this.prevCode === code) return;
     this.prevCode = code;
     if (code.trim() === "")
-      renderResult(this.root!, { type: "notice", notice: "" }, true);
+      renderResult(this.root!, { type: "notice", notice: "&nbsp;" }, true);
     if (this.timer != null) clearTimeout(this.timer);
     let timer = setTimeout(() => {
       this.repl.preview(code).then(cell.result!.resolve, cell.result!.reject);
