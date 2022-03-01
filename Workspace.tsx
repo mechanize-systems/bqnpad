@@ -16,6 +16,10 @@ import * as UI from "./UI";
 import * as Workspace0 from "./Workspace0";
 import type { WorkspaceManager } from "./WorkspaceManager";
 
+// TODO: need to infer this from CSS
+// line-height (1.4) * fontSize (20)
+const LINE_HEIGHT = 28;
+
 export type WorkspaceProps = {
   manager: WorkspaceManager;
 };
@@ -729,6 +733,13 @@ class CellOutputWidget extends View.WidgetType {
     super();
   }
 
+  override get estimatedHeight() {
+    let content = this.cell.resultPreview
+      ? resultContent(this.cell.resultPreview).trim()
+      : "";
+    return content.split("\n").length * LINE_HEIGHT;
+  }
+
   toDOM() {
     let root = document.createElement("div");
     let result = this.cell.result?.isCompleted
@@ -757,6 +768,18 @@ class CellOutputWidget extends View.WidgetType {
 
   override eq(other: CellOutputWidget) {
     return other.cell === this.cell;
+  }
+}
+
+function resultContent(result: REPL.REPLResult): string {
+  if (result.type === "ok") {
+    return result.ok ?? "";
+  } else if (result.type === "error") {
+    return result.error;
+  } else if (result.type === "notice") {
+    return result.notice;
+  } else {
+    return "";
   }
 }
 
@@ -822,6 +845,11 @@ class SessionBanner extends View.WidgetType {
   constructor(private readonly startTime: number) {
     super();
   }
+
+  override get estimatedHeight() {
+    return LINE_HEIGHT;
+  }
+
   toDOM() {
     let root = document.createElement("div");
     root.classList.add("SessionBanner");
