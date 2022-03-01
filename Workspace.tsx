@@ -133,75 +133,23 @@ export function Workspace({ manager }: WorkspaceProps) {
     manager.restart();
   }, [editor]);
 
-  let styles = UI.useStyles({
-    root: {
-      display: "flex",
-      flexDirection: "column",
-      height: "100%",
-      overflowY: "hidden",
-    },
-    header: {
-      display: "flex",
-      flexDirection: "column",
-      width: "100%",
-      paddingLeft: "5px",
-      paddingRight: "5px",
-      paddingTop: "5px",
-      paddingBottom: "5px",
-      borderBottomWidth: "2px",
-      borderBottomStyle: "solid",
-      borderBottomColor: "#BBB",
-    },
-    toolbar: {
-      fontWeight: "bold",
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      flexWrap: "wrap",
-    },
-    toolbarSection: {
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-      paddingRight: "10px",
-    },
-    title: {
-      fontSize: "20px",
-    },
-    glyphs: {},
-    label: {
-      color: "#888",
-    },
-    element: {
-      paddingLeft: "5px",
-      paddingRight: "5px",
-      paddingTop: "5px",
-      paddingBottom: "5px",
-    },
-    statusIdle: { color: "green" },
-    statusRunning: { color: "orange" },
-  });
-
   return (
-    <div className={styles.root}>
-      <div className={styles.header}>
-        <div className={styles.toolbar}>
-          <div className={styles.title}>
-            <span style={{ fontWeight: "bold" }}>
-              <a
-                target="_blank"
-                href="https://mlochbaum.github.io/BQN/index.html"
-              >
-                BQN
-              </a>
-              PAD
-            </span>
+    <div className="Workspace">
+      <div className="WorkspaceHeader">
+        <div className="Toolbar">
+          <div className="title">
+            <a
+              target="_blank"
+              href="https://mlochbaum.github.io/BQN/index.html"
+            >
+              BQN
+            </a>
+            PAD
           </div>
         </div>
-        <div className={styles.toolbar}>
-          <div className={styles.toolbarSection}>
-            <div className={styles.label}>SESSION: </div>
+        <div className="Toolbar">
+          <div className="Toolbar__section">
+            <div className="label">SESSION: </div>
             <UI.Button
               title="Create new session"
               onClick={() => {
@@ -224,21 +172,25 @@ export function Workspace({ manager }: WorkspaceProps) {
             </UI.Button>
           </div>
           {status != null && (
-            <div className={styles.toolbarSection}>
-              <div className={styles.label}>VM: </div>
+            <div className="Toolbar__section">
+              <div className="label">VM: </div>
               <div
-                className={UI.cx(
-                  styles.element,
-                  status === "idle" && styles.statusIdle,
-                  status === "running" && styles.statusRunning,
-                )}
+                className="Toolbar__element"
+                style={{
+                  color:
+                    status === "idle"
+                      ? "green"
+                      : status === "running"
+                      ? "orange"
+                      : undefined,
+                }}
               >
                 {status.toUpperCase().padEnd(7, "\u00A0")}
               </div>
             </div>
           )}
-          <div className={styles.toolbarSection}>
-            <div className={styles.label}>PREFERENCES: </div>
+          <div className="Toolbar__section">
+            <div className="label">PREFERENCES: </div>
             <UI.Checkbox
               value={enableLivePreview}
               onValue={setEnableLivePreview}
@@ -250,11 +202,7 @@ export function Workspace({ manager }: WorkspaceProps) {
             </UI.Checkbox>
           </div>
         </div>
-        {showGlyphbar && (
-          <div className={styles.glyphs}>
-            <GlyphsPalette onClick={onGlyph} />
-          </div>
-        )}
+        {showGlyphbar && <GlyphsPalette onClick={onGlyph} />}
       </div>
       <Editor.Editor
         api={editor}

@@ -41,20 +41,5 @@ function Index() {
 }
 
 function AppLoading(_props: ASAP.AppLoadingProps) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      Loading...
-    </div>
-  );
+  return <div className="AppLoading">Loading...</div>;
 }

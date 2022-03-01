@@ -15,8 +15,6 @@ specifiers:
   '@codemirror/text': ^0.19.6
   '@codemirror/view': ^0.19.44
   '@github/stable-socket': ^1.1.0
-  '@griffel/core': ^1.0.7
-  '@griffel/react': ^1.0.0
   '@lezer/common': ^0.15.11
   '@lezer/generator': ^0.15.4
   '@lezer/lr': ^0.15.8
@@ -28,6 +26,7 @@ specifiers:
   '@types/react': ^17.0.39
   '@types/react-dom': ^17.0.11
   '@types/ws': ^8.2.3
+  classnames: ^2.3.1
   debug: ^4.3.3
   eslint: ^8.9.0
   mocha: ^9.2.1
@@ -60,8 +59,6 @@ devDependencies:
   '@codemirror/text': 0.19.6
   '@codemirror/view': 0.19.44
   '@github/stable-socket': 1.1.0
-  '@griffel/core': 1.0.7
-  '@griffel/react': 1.0.0_react@18.0.0-rc.0
   '@lezer/common': 0.15.11
   '@lezer/generator': 0.15.4
   '@lezer/lr': 0.15.8
@@ -72,6 +69,7 @@ devDependencies:
   '@types/react': 17.0.39
   '@types/react-dom': 17.0.11
   '@types/ws': 8.2.3
+  classnames: 2.3.1
   eslint: 8.9.0
   mocha: 9.2.1
   nanoid: 3.3.1
@@ -257,13 +255,6 @@ packages:
     resolution: {integrity: sha512-7yJPvPV+ESz2IUTPbOL+YkIGyCqOyNIzdguKQuJGnH7bg1WTIifuM21YqokFt/THWh1AkCRn9IgoykTRCBVpzA==}
     engines: {node: '>=6.0.0'}
     hasBin: true
-    dev: true
-
-  /@babel/runtime/7.17.2:
-    resolution: {integrity: sha512-hzeyJyMA1YGdJTuWU0e/j4wKXrU4OMFvY2MSlaI9B7VQb0r5cxTE3EAIS2Q7Tn2RIcDkRvTA/v2JsAEhxe99uw==}
-    engines: {node: '>=6.9.0'}
-    dependencies:
-      regenerator-runtime: 0.13.9
     dev: true
 
   /@babel/template/7.16.7:
@@ -468,10 +459,6 @@ packages:
       w3c-keyname: 2.2.4
     dev: true
 
-  /@emotion/hash/0.8.0:
-    resolution: {integrity: sha512-kBJtf7PH6aWwZ6fka3zQ0p6SBYzx4fl1LoZXE2RrnYST9Xljm7WfKJrU4g/Xr3Beg72MLrp1AWNUmuYJTL7Cow==}
-    dev: true
-
   /@eslint/eslintrc/1.1.0:
     resolution: {integrity: sha512-C1DfL7XX4nPqGd6jcP01W9pVM1HYCuUkFk1432D7F0v3JSlUIeOYn9oCoi3eoLZ+iwBSb29BMFxxny0YrrEZqg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -491,24 +478,6 @@ packages:
 
   /@github/stable-socket/1.1.0:
     resolution: {integrity: sha512-kzLHnrWGvmXka7AIUnsyF+SO5dP4dxEXX2sMixXW5ngRf3i4RhvXzFNgXVy4qBKsIsg6V3fNb3NOto0z6o4XAw==}
-    dev: true
-
-  /@griffel/core/1.0.7:
-    resolution: {integrity: sha512-fj1eFqFiDsqBeEtPjLD39rmt9rlc/7y5QFzf26+cuXIhLN5fK1qFwBFJpuJkiVKKgYXqN2YmkYckZ36KHNUlBw==}
-    dependencies:
-      '@emotion/hash': 0.8.0
-      csstype: 2.6.19
-      rtl-css-js: 1.15.0
-      stylis: 4.0.13
-    dev: true
-
-  /@griffel/react/1.0.0_react@18.0.0-rc.0:
-    resolution: {integrity: sha512-iIPAZuIUSQDHphQZqqk7KuY9/+ql/s5ONGXijz9cyd+SfkTedbDJUwDotMEbVua1YObqwVypkKQFTEjJwqLkLA==}
-    peerDependencies:
-      react: '>=16.8.0 <18.0.0'
-    dependencies:
-      '@griffel/core': 1.0.7
-      react: 18.0.0-rc.0
     dev: true
 
   /@humanwhocodes/config-array/0.9.3:
@@ -820,6 +789,10 @@ packages:
       fsevents: 2.3.2
     dev: true
 
+  /classnames/2.3.1:
+    resolution: {integrity: sha512-OlQdbZ7gLfGarSqxesMesDa5uz7KFbID8Kpq/SxIoNGDqY8lSYs0D+hhtBXhcdB3rcbXArFr7vlHheLk1voeNA==}
+    dev: true
+
   /clean-stack/2.2.0:
     resolution: {integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==}
     engines: {node: '>=6'}
@@ -885,10 +858,6 @@ packages:
   /crypto-random-string/2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}
     engines: {node: '>=8'}
-    dev: true
-
-  /csstype/2.6.19:
-    resolution: {integrity: sha512-ZVxXaNy28/k3kJg0Fou5MiYpp88j7H9hLZp8PDC3jV0WFjfH5E9xHb56L0W59cPbKbcHXeP4qyT8PrHp8t6LcQ==}
     dev: true
 
   /csstype/3.0.10:
@@ -1939,10 +1908,6 @@ packages:
       picomatch: 2.3.1
     dev: true
 
-  /regenerator-runtime/0.13.9:
-    resolution: {integrity: sha512-p3VT+cOEgxFsRRA9X4lkI1E+k2/CtnKtU4gcxyaCUreilL/vqI6CdZ3wxVUx3UOUg+gnUOQQcRI7BmSI656MYA==}
-    dev: true
-
   /regexparam/2.0.0:
     resolution: {integrity: sha512-gJKwd2MVPWHAIFLsaYDZfyKzHNS4o7E/v8YmNf44vmeV2e4YfVoDToTOKTvE7ab68cRJ++kLuEXJBaEeJVt5ow==}
     engines: {node: '>=8'}
@@ -1973,12 +1938,6 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.0
-    dev: true
-
-  /rtl-css-js/1.15.0:
-    resolution: {integrity: sha512-99Cu4wNNIhrI10xxUaABHsdDqzalrSRTie4GeCmbGVuehm4oj+fIy8fTzB+16pmKe8Bv9rl+hxIBez6KxExTew==}
-    dependencies:
-      '@babel/runtime': 7.17.2
     dev: true
 
   /run-parallel/1.2.0:
@@ -2062,10 +2021,6 @@ packages:
 
   /style-mod/4.0.0:
     resolution: {integrity: sha512-OPhtyEjyyN9x3nhPsu76f52yUGXiZcgvsrFVtvTkyGRQJ0XK+GPc6ov1z+lRpbeabka+MYEQxOYRnt5nF30aMw==}
-    dev: true
-
-  /stylis/4.0.13:
-    resolution: {integrity: sha512-xGPXiFVl4YED9Jh7Euv2V220mriG9u4B2TA6Ybjc1catrstKD2PpIdU3U0RKpkVBC2EhmL/F0sPCr9vrFTNRag==}
     dev: true
 
   /supports-color/5.5.0:

@@ -8,32 +8,6 @@ export type GlyphsPaletteProps = {
 };
 
 export function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
-  let styles = UI.useStyles({
-    root: {
-      display: "flex",
-      flexDirection: "row",
-      fontSize: "20px",
-      width: "100%",
-      flexWrap: "wrap",
-    },
-    item: {
-      backgroundColor: "transparent",
-      borderLeftWidth: 0,
-      borderRightWidth: 0,
-      borderTopWidth: 0,
-      borderBottomWidth: 0,
-      paddingLeft: "5px",
-      paddingRight: "5px",
-      paddingTop: "5px",
-      paddingBottom: "5px",
-      "&:hover": {
-        backgroundColor: "#DDD",
-      },
-      "&:active": {
-        backgroundColor: "#CCC",
-      },
-    },
-  });
   let chars = React.useMemo(() => {
     return EditorBQN.glyphs.map((glyph) => {
       let className =
@@ -47,12 +21,12 @@ export function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
           title={title}
           key={glyph.glyph}
           onClick={() => onClick(glyph)}
-          className={UI.cx(styles.item, className)}
+          className={UI.cx("GlyphsPalette__item", className)}
         >
           {glyph.glyph}
         </button>
       );
     });
   }, [onClick]);
-  return <div className={styles.root}>{chars}</div>;
+  return <div className="GlyphsPalette">{chars}</div>;
 }

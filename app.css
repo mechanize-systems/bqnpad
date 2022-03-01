@@ -13,12 +13,41 @@ body,
   box-sizing: border-box;
 }
 
-.cm-tooltip-autocomplete {
+/**
+ * CodeMirror
+ */
+
+.Editor {
+  position: relative;
+  overflow-y: hidden;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.Editor .cm-content {
+  font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  font-size: 20px;
+  padding-top: 12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-bottom: 300px !important;
+  width: 100%;
+}
+.Editor .cm-editor {
+  width: 100%;
+  outline: none !important;
+}
+.Editor .cm-line {
+  padding: 0;
+}
+
+.Editor .cm-tooltip-autocomplete {
   border: none !important;
   background-color: #f3f3f3 !important;
 }
 
-.cm-tooltip-autocomplete ul li {
+.Editor .cm-tooltip-autocomplete ul li {
   color: #444 !important;
   font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
   font-size: 18px;
@@ -26,24 +55,39 @@ body,
   justify-content: space-between;
 }
 
-.cm-tooltip-autocomplete ul li[aria-selected] {
+.Editor .cm-tooltip-autocomplete ul li[aria-selected] {
   color: #444 !important;
   background-color: #ededed !important;
 }
 
-.cm-completionIcon {
+.Editor .cm-completionIcon {
   display: none !important;
 }
 
-.cm-completionMatchedText {
+.Editor .cm-completionMatchedText {
   text-decoration: none !important;
   background-color: yellow;
 }
 
-.cm-completionDetail {
+.Editor .cm-completionDetail {
   font-style: normal !important;
   font-size: 20px;
   padding-right: 10px;
+}
+
+/**
+ * Components
+ */
+
+.AppLoading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .Output {
@@ -72,4 +116,104 @@ body,
 
 .SessionBanner {
   color: #aaaaaa;
+}
+
+.Checkbox {
+  padding: 5px;
+  user-select: none;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+}
+.Checkbox:hover {
+  background-color: #ddd;
+}
+.Checkbox:active {
+  background-color: #ccc;
+}
+.Checkbox > input {
+  margin-right: 5px;
+}
+
+.Button {
+  padding: 5px;
+  font-weight: bold;
+  background-color: transparent;
+  border: none;
+}
+.Button:hover {
+  background-color: #ddd;
+}
+.Button:active {
+  background-color: #ccc;
+}
+
+.Toolbar {
+  font-weight: bold;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.Toolbar__section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-right: 10px;
+}
+
+.Toolbar__element {
+  padding: 5px;
+}
+
+.Workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: hidden;
+}
+
+.WorkspaceHeader {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 5px;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: #bbb;
+}
+
+.GlyphsPalette {
+  display: flex;
+  flex-direction: row;
+  font-size: 20px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.GlyphsPalette__item {
+  background-color: transparent;
+  border: none;
+  padding: 5px;
+}
+.GlyphsPalette__item:hover {
+  background-color: #ddd;
+}
+.GlyphsPalette__item:active {
+  background-color: #ccc;
+}
+
+/**
+ * TYPOGRAPHY
+ */
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.label {
+  color: #888;
 }

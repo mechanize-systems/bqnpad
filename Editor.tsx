@@ -91,28 +91,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
       if (api != null) api.current = null;
     };
   }, [keymap, onDocExt, keybindingsExt, placeholderExt, extensions]);
-  let styles = UI.useStyles({
-    root: {
-      position: "relative",
-      overflowY: "hidden",
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      "& .cm-content": {
-        fontFamily: `"Iosevka Term Web", Menlo, Monaco, monospace`,
-        fontSize: "20px",
-        padding: "12px",
-        paddingBottom: "300px",
-        width: "100%",
-      },
-      "& .cm-editor": { width: "100%", outline: "none !important" },
-      "& .cm-editor.cm-focused": {},
-      "& .cm-editor .cm-activeLine": {},
-      "& .cm-editor.cm-focused .cm-activeLine": {},
-      "& .cm-line": { padding: 0 },
-    },
-  });
-  return <div className={styles.root} ref={ref} />;
+  return <div className="Editor" ref={ref} />;
 });
 
 export function highlight(

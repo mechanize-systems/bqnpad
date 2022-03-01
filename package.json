@@ -10,6 +10,7 @@
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
   "devDependencies": {
+    "classnames": "^2.3.1",
     "@codemirror/autocomplete": "^0.19.13",
     "@codemirror/commands": "^0.19.8",
     "@codemirror/fold": "^0.19.3",
@@ -22,8 +23,6 @@
     "@codemirror/text": "^0.19.6",
     "@codemirror/view": "^0.19.44",
     "@github/stable-socket": "^1.1.0",
-    "@griffel/core": "^1.0.7",
-    "@griffel/react": "^1.0.0",
     "@lezer/common": "^0.15.11",
     "@lezer/generator": "^0.15.4",
     "@lezer/lr": "^0.15.8",
