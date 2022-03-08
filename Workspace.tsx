@@ -813,7 +813,10 @@ class CellOutputWidget extends View.WidgetType {
       button.classList.add("Output__gutter--disabled");
     }
     button.title = "Output is too long (fold/unfold)";
-    button.innerHTML = "&nbsp;&nbsp;&nbsp;⇅&nbsp;\n&nbsp;";
+    let innerHTML = "&nbsp;&nbsp;&nbsp;⇅&nbsp;";
+    if (this.needFold) innerHTML += "\n&nbsp;";
+    button.innerHTML = innerHTML;
+
     button.onclick = () => {
       this._folded = this._folded == null ? false : !this._folded;
       this.render();
