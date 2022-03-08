@@ -428,31 +428,21 @@ function workspace(
     return View.Decoration.set(ranges);
   });
 
-  let previewWidget: null | PreviewOutputWidget = null;
-
   let preview = View.EditorView.decorations.compute(
     ["doc", currentCellField, config],
     (state) => {
       let { enableLivePreview } = state.field(config);
       if (!enableLivePreview) {
-        previewWidget = null;
         return View.Decoration.none;
       }
       let cell = state.facet(currentCellField)[0]!;
       let code = state.doc.sliceString(cell.from, cell.to);
-      if (previewWidget == null)
-        previewWidget = new PreviewOutputWidget(cell, code, repl);
-      previewWidget.cell = cell;
-      previewWidget.code = code;
-      // TODO: investigate why CM doesn't update it
-      if (previewWidget.root != null)
-        previewWidget.updateDOM(previewWidget.root);
       let deco = View.Decoration.widget({
-        widget: previewWidget,
+        widget: new PreviewOutputWidget(cell, code, repl),
         block: true,
         side: 1,
       });
-      return View.Decoration.set([deco.range(previewWidget.cell.to)]);
+      return View.Decoration.set([deco.range(cell.to)]);
     },
   );
 
@@ -852,12 +842,9 @@ class CellOutputWidget extends View.WidgetType {
 class PreviewOutputWidget extends View.WidgetType {
   private mounted: boolean = true;
   private timer: NodeJS.Timer | null = null;
-  private prevCode: string | null = null;
-  root: HTMLDivElement | null = null;
-
-  override get estimatedHeight() {
-    return LINE_HEIGHT;
-  }
+  private root: HTMLDivElement | null = null;
+  private result: REPL.REPLResult;
+  private _numberOfLines: number | null = null;
 
   constructor(
     public cell: WorkspaceCell,
@@ -865,44 +852,69 @@ class PreviewOutputWidget extends View.WidgetType {
     readonly repl: REPL.IREPL,
   ) {
     super();
-  }
-
-  toDOM() {
-    this.root = document.createElement("div");
-    let result = this.cell.result?.isCompleted
+    this.result = this.cell.result?.isCompleted
       ? this.cell.result.value
-      : this.cell.resultPreview;
-    if (result != null) renderResult(this.root, result, true);
-    if (!this.cell.result?.isCompleted)
-      this.schedulePreview(this.cell, this.code);
-    return this.root;
+      : this.cell.resultPreview
+      ? this.cell.resultPreview
+      : { type: "notice", notice: "&nbsp;" };
   }
 
-  override updateDOM(_dom: HTMLElement): boolean {
-    if (!this.cell.result?.isCompleted)
-      this.schedulePreview(this.cell, this.code);
-    return true;
+  get numberOfLines(): number {
+    // TODO: consider storing this inside workspace?
+    if (this._numberOfLines == null) {
+      let content =
+        this.result != null ? resultContent(this.result).trim() : "";
+      this._numberOfLines = content.split("\n").length;
+    }
+    return this._numberOfLines;
   }
 
-  schedulePreview(cell: WorkspaceCell, code: string) {
-    if (this.prevCode === code) return;
-    this.prevCode = code;
-    if (code.trim() === "")
-      renderResult(this.root!, { type: "notice", notice: "&nbsp;" }, true);
+  override get estimatedHeight() {
+    return this.numberOfLines * LINE_HEIGHT;
+  }
+
+  render() {
+    let root = this.root!;
+    while (root.lastChild) root.removeChild(root.lastChild);
+    renderResult(root, this.result, true);
+  }
+
+  schedule() {
+    if (this.cell.result?.isCompleted) return;
+    if (this.code.trim() === "") {
+      this.result = { type: "notice", notice: "&nbsp;" };
+      this.render();
+      return;
+    }
+
+    this.result = { type: "notice", notice: "..." };
+    this.render();
+
     if (this.timer != null) clearTimeout(this.timer);
     let timer = setTimeout(() => {
-      this.repl.preview(code).then(cell.result!.resolve, cell.result!.reject);
-      cell.result!.then((result) => {
-        if (this.mounted && timer === this.timer) {
-          renderResult(this.root!, result, true);
+      if (this.timer !== timer) return;
+      this.repl
+        .preview(this.code)
+        .then(this.cell.result!.resolve, this.cell.result!.reject);
+      this.cell.result!.then((result) => {
+        if (this.mounted && this.timer === timer) {
+          this.result = result;
+          this.render();
         }
       });
     }, 400);
     this.timer = timer;
   }
 
+  toDOM() {
+    this.root = document.createElement("div");
+    this.render();
+    this.schedule();
+    return this.root;
+  }
+
   override eq(other: PreviewOutputWidget) {
-    return other.code === this.prevCode;
+    return other.code === this.code;
   }
 
   override destroy(_dom: HTMLElement) {
