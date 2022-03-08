@@ -369,7 +369,7 @@ function workspace(
       else
         return View.Decoration.set(
           cells.map((cell) => {
-            let widget = new CellOutputWidget(cell, false);
+            let widget = new CellOutputWidget(cell);
             let deco = View.Decoration.widget({
               widget,
               block: true,
@@ -389,7 +389,7 @@ function workspace(
       else
         return View.Decoration.set(
           cells.map((cell) => {
-            let widget = new CellOutputWidget(cell, true);
+            let widget = new CellOutputWidget(cell);
             let deco = View.Decoration.widget({
               widget,
               block: true,
@@ -755,10 +755,7 @@ class CellOutputWidget extends View.WidgetType {
   private root: HTMLDivElement = document.createElement("div");
   private result: REPL.REPLResult;
 
-  constructor(
-    private readonly cell: WorkspaceCell,
-    private readonly fetch: boolean = false,
-  ) {
+  constructor(private readonly cell: WorkspaceCell) {
     super();
     this.result = this.cell.result?.isCompleted
       ? this.cell.result.value
@@ -826,8 +823,13 @@ class CellOutputWidget extends View.WidgetType {
   }
 
   toDOM() {
+    this.result = this.cell.result?.isCompleted
+      ? this.cell.result.value
+      : this.cell.resultPreview != null
+      ? this.cell.resultPreview
+      : { type: "notice", notice: "..." };
     this.render();
-    if (this.fetch && this.cell.result?.isCompleted) {
+    if (this.cell.result && !this.cell.result.isCompleted) {
       this.cell.result.then((result) => {
         if (this.mounted) {
           this.result = result;
