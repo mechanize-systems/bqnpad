@@ -33,6 +33,41 @@ body,
 }
 
 /**
+ * UI elements
+ */
+
+.Checkbox {
+  padding: 5px;
+  user-select: none;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+}
+.Checkbox:hover {
+  background-color: var(--ui-background-hover);
+}
+.Checkbox:active {
+  background-color: var(--ui-background-active);
+}
+.Checkbox > input {
+  margin-right: 5px;
+}
+
+.Button {
+  padding: 5px;
+  font-weight: bold;
+  background-color: transparent;
+  border: none;
+  color: var(--ui-color);
+}
+.Button:hover {
+  background-color: var(--ui-background-hover);
+}
+.Button:active {
+  background-color: var(--ui-background-active);
+}
+
+/**
  * CodeMirror
  */
 
@@ -116,63 +151,48 @@ body,
 }
 
 .Output {
+  display: flex;
+  flex-direction: row;
   color: var(--editor-color-output);
   font-family: var(--editor-font-family);
   font-size: 20px;
   line-height: 1.4;
+}
+
+.Output__gutter {
+  padding: 0px;
+  flex-shrink: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: flex-end;
+  padding: 0px;
+  color: var(--ui-color-dimmed);
+  font-weight: normal;
+}
+.Output__gutter--disabled {
+  visibility: hidden;
+}
+
+.Output__output {
   overflow-y: hidden;
   overflow-x: hidden;
-  margin-top: 0px;
-  margin-bottom: 0px;
-  margin-left: 0px;
-  margin-right: 0px;
-  padding-left: 35px;
+  margin: 0px;
   text-overflow: ellipsis;
   white-space: pre;
+  flex-grow: 1;
 }
-.Output--error {
+.Output__output--error {
   color: var(--editor-color-output-error);
 }
-.Output--preview {
+.Output__output--preview {
   color: var(--editor-color-output-dimmed);
 }
-.Output--notice {
+.Output__output--notice {
   color: var(--editor-color-output-dimmed);
 }
 
 .SessionBanner {
   color: var(--ui-color-dimmed);
-}
-
-.Checkbox {
-  padding: 5px;
-  user-select: none;
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-}
-.Checkbox:hover {
-  background-color: var(--ui-background-hover);
-}
-.Checkbox:active {
-  background-color: var(--ui-background-active);
-}
-.Checkbox > input {
-  margin-right: 5px;
-}
-
-.Button {
-  padding: 5px;
-  font-weight: bold;
-  background-color: transparent;
-  border: none;
-  color: var(--ui-color);
-}
-.Button:hover {
-  background-color: var(--ui-background-hover);
-}
-.Button:active {
-  background-color: var(--ui-background-active);
 }
 
 .Toolbar {

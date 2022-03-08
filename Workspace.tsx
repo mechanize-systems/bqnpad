@@ -712,59 +712,127 @@ function renderResult(
   root: HTMLDivElement,
   result: REPL.REPLResult,
   preview: boolean = false,
+  foldCutoffLines: number | null = null,
 ) {
   root.classList.remove(...root.classList.values());
-  root.classList.add("Output");
-  if (preview) root.classList.add("Output--preview");
-  if (result.type === "ok") {
-    root.innerHTML = result.ok ?? "&nbsp;";
-  } else if (result.type === "error") {
-    root.innerHTML = result.error;
-    root.classList.add("Output--error");
+  root.classList.add("Output__output");
+  if (preview) root.classList.add("Output__output--preview");
+  if (result.type === "error") {
+    root.classList.add("Output__output--error");
   } else if (result.type === "notice") {
-    root.innerHTML = result.notice;
-    root.classList.add("Output--notice");
+    root.classList.add("Output__output--notice");
+  }
+
+  let content = resultContent(result);
+  if (foldCutoffLines != null) {
+    // TODO: Inefficient!
+    content = content
+      .split("\n")
+      .slice(0, foldCutoffLines - 1)
+      .join("\n");
+    content += "\n&nbsp;";
+  }
+  root.innerHTML = content;
+}
+
+function resultContent(result: REPL.REPLResult): string {
+  if (result.type === "ok") {
+    return result.ok ?? "&nbsp;";
+  } else if (result.type === "error") {
+    return result.error;
+  } else if (result.type === "notice") {
+    return result.notice;
+  } else {
+    return "&nbsp;";
   }
 }
 
 class CellOutputWidget extends View.WidgetType {
   private mounted: boolean = true;
+  private _folded: boolean | null = null;
+  private _numberOfLines: number | null = null;
+  private foldCutoffLines = 10;
+  private root: HTMLDivElement = document.createElement("div");
+  private result: REPL.REPLResult;
 
   constructor(
     private readonly cell: WorkspaceCell,
     private readonly fetch: boolean = false,
   ) {
     super();
+    this.result = this.cell.result?.isCompleted
+      ? this.cell.result.value
+      : this.cell.resultPreview != null
+      ? this.cell.resultPreview
+      : { type: "notice", notice: "..." };
+  }
+
+  get numberOfLines(): number {
+    // TODO: consider storing this inside workspace?
+    if (this._numberOfLines == null) {
+      let content =
+        this.result != null ? resultContent(this.result).trim() : "";
+      this._numberOfLines = content.split("\n").length;
+    }
+    return this._numberOfLines;
+  }
+
+  get needFold(): boolean {
+    return this.numberOfLines > this.foldCutoffLines;
+  }
+
+  get folded(): boolean {
+    if (this._folded != null) return this._folded;
+    return this.needFold;
   }
 
   override get estimatedHeight() {
-    let result = this.cell.result?.isCompleted
-      ? this.cell.result.value
-      : this.cell.resultPreview;
-    let content = result ? resultContent(result).trim() : "";
-    return content.split("\n").length * LINE_HEIGHT;
+    if (this.folded) {
+      return this.foldCutoffLines * LINE_HEIGHT;
+    } else {
+      return this.numberOfLines * LINE_HEIGHT;
+    }
+  }
+
+  render() {
+    while (this.root.lastChild) this.root.removeChild(this.root.lastChild);
+
+    this.root.classList.add("Output");
+    let output = document.createElement("div");
+    renderResult(
+      output,
+      this.result,
+      false,
+      this.folded ? this.foldCutoffLines : null,
+    );
+
+    let button = document.createElement("button");
+    button.classList.add("Button");
+    button.classList.add("Output__gutter");
+    if (!this.needFold) {
+      button.classList.add("Output__gutter--disabled");
+    }
+    button.title = "Output is too long (fold/unfold)";
+    button.innerHTML = "&nbsp;&nbsp;&nbsp;⇅&nbsp;\n&nbsp;";
+    button.onclick = () => {
+      this._folded = this._folded == null ? false : !this._folded;
+      this.render();
+    };
+    this.root.appendChild(button);
+    this.root.appendChild(output);
   }
 
   toDOM() {
-    let root = document.createElement("div");
-    let result = this.cell.result?.isCompleted
-      ? this.cell.result.value
-      : this.cell.resultPreview;
-    if (result != null) {
-      renderResult(root, result);
-    } else {
-      renderResult(root, { type: "notice", notice: "..." });
-    }
-    if (
-      this.fetch &&
-      this.cell.result != null &&
-      !this.cell.result.isCompleted
-    ) {
+    this.render();
+    if (this.fetch && this.cell.result?.isCompleted) {
       this.cell.result.then((result) => {
-        if (this.mounted) renderResult(root, result);
+        if (this.mounted) {
+          this.result = result;
+          this.render();
+        }
       });
     }
-    return root;
+    return this.root;
   }
 
   override destroy(_dom: HTMLElement) {
@@ -773,18 +841,6 @@ class CellOutputWidget extends View.WidgetType {
 
   override eq(other: CellOutputWidget) {
     return other.cell === this.cell;
-  }
-}
-
-function resultContent(result: REPL.REPLResult): string {
-  if (result.type === "ok") {
-    return result.ok ?? "";
-  } else if (result.type === "error") {
-    return result.error;
-  } else if (result.type === "notice") {
-    return result.notice;
-  } else {
-    return "";
   }
 }
 
