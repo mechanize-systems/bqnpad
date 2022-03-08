@@ -9,7 +9,6 @@ import * as History from "@codemirror/history";
 import type * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
-import * as Vim from "@replit/codemirror-vim";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -20,7 +19,6 @@ export type EditorProps = {
   onDoc?: (doc: State.Text, state: State.EditorState) => void;
   keybindings?: View.KeyBinding[];
   extensions?: (undefined | State.Extension)[];
-  keymap?: "default" | "vim";
   placeholder?: string | null | undefined;
   api?: React.MutableRefObject<null | View.EditorView>;
 };
@@ -29,7 +27,6 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
   {
     doc,
     onDoc,
-    keymap = "default",
     keybindings,
     extensions,
     placeholder,
@@ -66,7 +63,6 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
       History.history(),
       View.keymap.of(History.historyKeymap),
       keybindingsExt,
-      keymap === "vim" && Vim.vim(),
       onDocExt,
       View.keymap.of(Commands.defaultKeymap),
       placeholderExt,
@@ -90,7 +86,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
       view.current = null;
       if (api != null) api.current = null;
     };
-  }, [keymap, onDocExt, keybindingsExt, placeholderExt, extensions]);
+  }, [onDocExt, keybindingsExt, placeholderExt, extensions]);
   return <div className="Editor" ref={ref} />;
 });
 
@@ -166,7 +162,7 @@ export function useStateField<T>(
     let v = view instanceof View.EditorView ? view : view.current;
     if (v == null) return;
     v.dispatch({ effects: [effect.of(value)] });
-  }, [view, effect, value]); // eslint-disable-line
+  }, [view, effect, ...deps]); // eslint-disable-line
   return field;
 }
 
