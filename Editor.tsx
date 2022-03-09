@@ -12,8 +12,6 @@ import * as View from "@codemirror/view";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import * as UI from "./UI";
-
 export type EditorProps = {
   doc: State.Text;
   onDoc?: (doc: State.Text, state: State.EditorState) => void;
@@ -21,17 +19,11 @@ export type EditorProps = {
   extensions?: (undefined | State.Extension)[];
   placeholder?: string | null | undefined;
   api?: React.MutableRefObject<null | View.EditorView>;
+  className?: string;
 };
 
 export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
-  {
-    doc,
-    onDoc,
-    keybindings,
-    extensions,
-    placeholder,
-    api,
-  },
+  { doc, onDoc, keybindings, extensions, placeholder, api, className },
   ref0,
 ) {
   let ref = React.useRef<null | HTMLDivElement>(null);
@@ -87,7 +79,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
       if (api != null) api.current = null;
     };
   }, [onDocExt, keybindingsExt, placeholderExt, extensions]);
-  return <div className="Editor" ref={ref} />;
+  return <div className={className} ref={ref} />;
 });
 
 export function highlight(

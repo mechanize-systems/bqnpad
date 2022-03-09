@@ -209,6 +209,7 @@ export function Workspace({ manager }: WorkspaceProps) {
         {showGlyphbar && <GlyphsPalette onClick={onGlyph} />}
       </div>
       <Editor.Editor
+        className="Editor"
         api={editor}
         doc={doc0}
         onDoc={onDoc}
