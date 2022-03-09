@@ -341,7 +341,7 @@ packages:
     dependencies:
       '@codemirror/gutter': 0.19.9
       '@codemirror/language': 0.19.8
-      '@codemirror/rangeset': 0.19.8
+      '@codemirror/rangeset': 0.19.9
       '@codemirror/state': 0.19.9
       '@codemirror/view': 0.19.47
     dev: true
@@ -349,7 +349,7 @@ packages:
   /@codemirror/gutter/0.19.9:
     resolution: {integrity: sha512-PFrtmilahin1g6uL27aG5tM/rqR9DZzZYZsIrCXA5Uc2OFTFqx4owuhoU9hqfYxHp5ovfvBwQ+txFzqS4vog6Q==}
     dependencies:
-      '@codemirror/rangeset': 0.19.8
+      '@codemirror/rangeset': 0.19.9
       '@codemirror/state': 0.19.9
       '@codemirror/view': 0.19.47
     dev: true
@@ -358,7 +358,7 @@ packages:
     resolution: {integrity: sha512-3W32hBCY0pbbv/xidismw+RDMKuIag+fo4kZIbD7WoRj+Ttcaxjf+vP6RttRHXLaaqbWh031lTeON8kMlDhMYw==}
     dependencies:
       '@codemirror/language': 0.19.8
-      '@codemirror/rangeset': 0.19.8
+      '@codemirror/rangeset': 0.19.9
       '@codemirror/state': 0.19.9
       '@codemirror/view': 0.19.47
       '@lezer/common': 0.15.11
@@ -391,8 +391,8 @@ packages:
       '@lezer/common': 0.15.11
     dev: true
 
-  /@codemirror/rangeset/0.19.8:
-    resolution: {integrity: sha512-1vusIkxSD0vK5KQ22JO/4Ejfww5268PgM/CpKNBSpTpWZEFlZbmOPyRiY4HXO2oEzOpypbA/walMiNInWnrT0Q==}
+  /@codemirror/rangeset/0.19.9:
+    resolution: {integrity: sha512-V8YUuOvK+ew87Xem+71nKcqu1SXd5QROMRLMS/ljT5/3MCxtgrRie1Cvild0G/Z2f1fpWxzX78V0U4jjXBorBQ==}
     dependencies:
       '@codemirror/state': 0.19.9
     dev: true
@@ -415,7 +415,7 @@ packages:
   /@codemirror/view/0.19.47:
     resolution: {integrity: sha512-SfbagKvJQl5dtt+9wYpo9sa3ZkMgUxTq+/hXDf0KVwIx+zu3cJIqfEm9xSx6yXkq7it7RsPGHaPasApNffF/8g==}
     dependencies:
-      '@codemirror/rangeset': 0.19.8
+      '@codemirror/rangeset': 0.19.9
       '@codemirror/state': 0.19.9
       '@codemirror/text': 0.19.6
       style-mod: 4.0.0
