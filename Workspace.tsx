@@ -433,9 +433,7 @@ function workspace(
     ["doc", currentCellField, config],
     (state) => {
       let { enableLivePreview } = state.field(config);
-      if (!enableLivePreview) {
-        return View.Decoration.none;
-      }
+      if (!enableLivePreview) return View.Decoration.none;
       let cell = state.facet(currentCellField)[0]!;
       let code = state.doc.sliceString(cell.from, cell.to);
       let deco = View.Decoration.widget({
@@ -715,7 +713,9 @@ function renderResult(
   }
 
   let content = resultContent(result);
-  if (foldCutoffLines != null) {
+  if (content === "Empty program" && result.type === "error") {
+    content = "&nbsp;";
+  } else if (foldCutoffLines != null) {
     // TODO: Inefficient!
     content = content
       .split("\n")
