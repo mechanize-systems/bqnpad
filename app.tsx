@@ -33,6 +33,9 @@ function Index() {
   let manager = WorkspaceManager.useLocalWorkspaceManager(() =>
     Workspace0.make(INITIAL_DOC),
   );
+  React.useLayoutEffect(() => {
+    document.title = "BQNPAD";
+  }, []);
   return (
     <React.Suspense fallback={<AppLoading />}>
       <Workspace.Workspace manager={manager} />
