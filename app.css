@@ -9,8 +9,8 @@
   --ui-background-hover: #ddd;
   --ui-background-active: #ccc;
   --ui-border: #bbb;
-  --ui-color: #000;
-  --ui-color-dimmed: #888;
+  --ui-color: #333;
+  --ui-color-dimmed: #666;
 
   --editor-color: var(--ui-color);
   --editor-color-output: #444;
@@ -27,6 +27,7 @@ body,
   background-color: var(--ui-background);
   font-family: var(--ui-font-family);
   color: var(--ui-color);
+  font-size: 18px;
 }
 * {
   box-sizing: border-box;
@@ -42,6 +43,7 @@ body,
   display: flex;
   flex-direction: row;
   align-items: baseline;
+  position: relative;
 }
 .Checkbox:hover {
   background-color: var(--ui-background-hover);
@@ -50,12 +52,13 @@ body,
   background-color: var(--ui-background-active);
 }
 .Checkbox > input {
+  position: relative;
+  bottom: -1px;
   margin-right: 5px;
 }
 
 .Button {
   padding: 5px;
-  font-weight: bold;
   background-color: transparent;
   border: none;
   color: var(--ui-color);
@@ -157,6 +160,7 @@ body,
   font-family: var(--editor-font-family);
   font-size: 20px;
   line-height: 1.4;
+  position: relative;
 }
 
 .Output__gutter {
@@ -196,7 +200,7 @@ body,
 }
 
 .Toolbar {
-  font-weight: bold;
+  font-weight: 400;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -209,6 +213,9 @@ body,
   flex-direction: row;
   align-items: center;
   padding-right: 10px;
+}
+.Toolbar__section:last-child {
+  padding-right: 0px;
 }
 
 .Toolbar__element {
@@ -238,6 +245,7 @@ body,
   font-size: 20px;
   width: 100%;
   flex-wrap: wrap;
+  font-family: var(--editor-font-family);
 }
 
 .GlyphsPalette__item {
@@ -258,9 +266,10 @@ body,
 
 .title {
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .label {
   color: var(--ui-color-dimmed);
+  padding-right: 5px;
 }

@@ -153,31 +153,31 @@ export function Workspace({ manager }: WorkspaceProps) {
         </div>
         <div className="Toolbar">
           <div className="Toolbar__section">
-            <div className="label">SESSION: </div>
+            <div className="label">Session: </div>
             <UI.Button
               title="Create new session"
               onClick={() => {
                 onNew();
               }}
             >
-              NEW
+              New
             </UI.Button>
             <UI.Button
               title="Restart current session"
               onClick={() => manager.restart()}
             >
-              RESTART
+              Restart
             </UI.Button>
             <UI.Button
               title="Download workspace as .bqn source file"
               onClick={onSave}
             >
-              DOWNLOAD
+              Download
             </UI.Button>
           </div>
           {status != null && (
             <div className="Toolbar__section">
-              <div className="label">VM: </div>
+              <div className="label">VM:</div>
               <div
                 className="Toolbar__element"
                 style={{
@@ -194,15 +194,15 @@ export function Workspace({ manager }: WorkspaceProps) {
             </div>
           )}
           <div className="Toolbar__section">
-            <div className="label">PREFERENCES: </div>
+            <div className="label">Preferences: </div>
             <UI.Checkbox
               value={enableLivePreview}
               onValue={setEnableLivePreview}
             >
-              LIVE PREVIEW
+              Live preview
             </UI.Checkbox>
             <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
-              SHOW GLYPHBAR
+              Show glyphbar
             </UI.Checkbox>
           </div>
         </div>
