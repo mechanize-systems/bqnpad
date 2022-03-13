@@ -46,21 +46,20 @@ let listkeys = x => {
 
 let getv= (a,i) => { let v=a[i]; if (v===null) throw Error("Runtime: Variable referenced before definition"); return v; }
 let get = x => x.e ? getv(x.e,x.p) : arr(x.map(c=>get(c)), x.sh);
-let allowSideEffect = true;
-let allowSideEffectLocally = (fn) => {
-  let orig = allowSideEffect;
-  allowSideEffect = true;
-  try {
-    return fn();
-  } finally {
-    allowSideEffect = orig;
-  }
-}
+let preview = false;
+let inpreview = () => preview;
 
 let setc = (d, id, v) => {
-  if (!allowSideEffect)
-    throw {kind: 'sideEffect', message: 'side effects are not allowed'};
+  if (preview && seteff(id))
+    throw {kind: 'previewError', message: 'side effects are not allowed'};
   return set(d, id, v);
+}
+
+let seteff = (id) => {
+  if (id.e) return !id.e.inpreview;
+  else if (id.match) return false;
+  else if (Array.isArray(id)) return id.some(id => id.m ? seteff(id.m) : seteff(id));
+  else return false;
 }
 
 let set = (d, id, v) => {
@@ -126,10 +125,10 @@ let genjs = (B, p, L) => { // Bytecode -> Javascript compiler
       case 43:         { let m=rG(); r+=rP("{match:1,v:"+m+"}");                                                              break; }
       case 44:         {             r+=rP("{match:1}");                                                                      break; }
       case 47:         { let i=rG(),       v=rG(); r+="try{set(1,"+i+","+v+");}catch(e){break;}";                             break; }
-      case 48:         { let i=rG(),       v=rG(); r+=rP(set+"(1,"+i+","+v                       +")");                        break; }
-      case 49:         { let i=rG(),       v=rG(); r+=rP(set+"(0,"+i+","+v                       +")");                        break; }
-      case 50:         { let i=rG(),f=rG(),x=rG(); r+=rP(set+"(0,"+i+",call("+f+","+x+",get("+i+")))");                        break; }
-      case 51:         { let i=rG(),f=rG()       ; r+=rP(set+"(0,"+i+",call("+f+      ",get("+i+")))");                        break; }
+      case 48:         { let i=rG(),       v=rG(); r+=rP(set+"(1,"+i+","+v                       +")");                       break; }
+      case 49:         { let i=rG(),       v=rG(); r+=rP(set+"(0,"+i+","+v                       +")");                       break; }
+      case 50:         { let i=rG(),f=rG(),x=rG(); r+=rP(set+"(0,"+i+",call("+f+","+x+",get("+i+")))");                       break; }
+      case 51:         { let i=rG(),f=rG()       ; r+=rP(set+"(0,"+i+",call("+f+      ",get("+i+")))");                       break; }
       case 66:         { let m=rG(); r+=rP("{vid:e.vid,m:"+m+",a:"+num()+"}");                                                break; }
       case 64:         { let v=rG(); r+=rP("readns("+v+",e.vid,"+num()+")");                                                  break; }
     }
@@ -153,49 +152,50 @@ let run = (B,O,F,S,L,T,src,env) => { // Bytecode, Objects, Blocks, Bodies, Locat
       return [genjs(B, pos, L), vid];
     }
 
+    let ginpreview = e => L ? (e + ".inpreview=inpreview()") : "";
     let c,vid,def;
     if (isnum(ind)) {
       [c,vid] = gen(ind);
-      c="do {"+c+"} while (0);\nthrow Error('No matching case1');\n";
+      c="do {"+c+"} while (0);\nthrow Error('No matching case');\n";
       if (useenv) { c =          "const e=env;"+c; env.vid=vid; }
-      else if (imm) c =          "const e=[...e2];e.vid=vid;e.p=oe;"+c;
-      else c = "const fn=(x, w)=>{const e=[...e2];e.vid=vid;e.p=oe;e[0]=fn;e[1]=x;e[2]=w;"+c+"};"+repdf[type]+"return fn;";
+      else if (imm) c =          "const e=[...e2];"+ginpreview('e')+";e.vid=vid;e.p=oe;"+c;
+      else c = "const fn=(x, w)=>{const e=[...e2];"+ginpreview('e')+";e.vid=vid;e.p=oe;e[0]=fn;e[1]=x;e[2]=w;"+c+"};"+repdf[type]+"return fn;";
       def = useenv ? "env" : ("new Array("+vid.length+").fill(null)");
     } else {
       if (imm !== +(ind.length<2)) throw "Internal error: malformed block info";
       let cache=[]; // Avoid generating a shared case twice
       vid=[]; let g = j => {
         let [c,v] = cache[j] || (cache[j] = gen(j));
-        c = "const e=[...e1];e.vid=vid["+vid.length+"];e.p=oe;e.length="+v.length+";e.fill(null,"+sp+");"+c;
+        c = "const e=[...e1];"+ginpreview('e')+";e.vid=vid["+vid.length+"];e.p=oe;e.length="+v.length+";e.fill(null,"+sp+");"+c;
         vid.push(v);
         return "do {"+c+"} while (0);\n"
       }
       if (ind.length===3) ind[3]=[];
       let cases = ind.map((js,i) => {
-        let e = js.length?"No matching case2":"Left argument "+(i?"not allowed":"required");
+        let e = js.length?"No matching case":"Left argument "+(i?"not allowed":"required");
         return js.map(g).concat(["throw Error('"+e+"');\n"]).join("");
       });
-      let fn = b => "(x, w)=>{const e1=[...e2];e1[0]=fn;e1[1]=x;e1[2]=w;\n"+b+"\n};";
+      let fn = b => "(x, w)=>{const e1=[...e2];"+ginpreview('e1')+";e1[0]=fn;e1[1]=x;e1[2]=w;\n"+b+"\n};";
       let combine = ([mon,dy]) =>
         fn("if (w===undefined) {\n"+mon+"} else {\n"+dy+"}");
       def = "new Array("+sp+").fill(null)";
-      if (imm) c = "const e1=[...e2];"+cases[0];
+      if (imm) c = "const e1=[...e2];"+ginpreview('e1')+";"+cases[0];
       else {
         c = "const fn="+combine(cases)+repdf[type];
         if (cases.length > 2) {
           c += "fn.inverse="+combine(cases.slice(2));
-          if (cases[4]) c += "fn.sinverse="+fn("if(!has(w))throw Error('No matching case3');"+cases[4]);
+          if (cases[4]) c += "fn.sinverse="+fn("if(!has(w))throw Error('No matching case');"+cases[4]);
         }
         c += "return fn;";
       }
     }
 
-    let de2 = "let e2="+def+";"
+    let de2 = "let e2="+def+";"+ginpreview('e2')+";"
     if (type===0) c = de2+c;
     if (type===1) c = "const mod=(f  ) => {"+de2+" e2["+I+"]=mod;e2["+(I+1)+"]=f;"                +c+"}; mod.m=1;return mod;";
     if (type===2) c = "const mod=(f,g) => {"+de2+" e2["+I+"]=mod;e2["+(I+1)+"]=f;e2["+(I+2)+"]=g;"+c+"}; mod.m=2;return mod;";
-    return Function("'use strict'; return (chkM,has,call,getv,get,set,setc,llst,train2,train3,readns,O,L,env,vid) => D => oe => {"+c+"};")()
-                                          (chkM,has,call,getv,get,set,setc,llst,train2,train3,readns,O,L,env,vid);
+    return Function("'use strict'; return (chkM,has,call,getv,get,set,setc,llst,train2,train3,readns,O,L,env,vid,inpreview) => D => oe => {"+c+"};")()
+                                          (chkM,has,call,getv,get,set,setc,llst,train2,train3,readns,O,L,env,vid,inpreview);
   });
   D.forEach((d,i) => {D[i]=d(D)});
   return D[0]([]);
@@ -490,10 +490,7 @@ let compgen = sys => {
 }
 let sysargs = {runtime, glyphs:glyphs.map(str)};
 let compile = compgen(sysargs)(sysargs);
-let bqn = src => {
-  let c = allowSideEffectLocally(() => compile(src));
-  return run(...c);
-}
+let bqn = src => run(...compile(src));
 runtime[43] = rtAssert;
 
 // Formatter
@@ -602,21 +599,46 @@ let addprimitives = (state, p) => {
 }
 let rerepl = (repl, cmp, state) => {
   let rd = repl>1 ? 0 : -1;
+  let vars0, names0, redef0;
   let vars = [], names = [], redef = [];
+  vars.inpreview = true;
   state.addrt = [names,redef];
-  return (x,w) => {
-    let c = allowSideEffectLocally(() => {
-      names.sh=redef.sh=[names.length];
-      let c = cmp(x,w);
-      let pnames = c[5][2][0];
-      let newv = c[3][0][2].slice(vars.length);
-      names.push(...newv.map(i=>pnames[i]));
-      redef.push(...newv.map(i=>rd));
-      vars .push(...newv.map(i=>null));
-      return c;
-    });
-    return run(...c, vars);
+  let copyarr = (to,src) => {
+    to.length = src.length;
+    for (let i=0;i<to.length;i++) to[i] = src[i];
   }
+  let f = (x,w) => {
+    if (preview) {
+      vars0 = vars.slice(0);
+      names0 = names.slice(0);
+      redef0 = redef.slice(0);
+    }
+    names.sh=redef.sh=[names.length];
+    let c = cmp(x,w);
+    let pnames = c[5][2][0];
+    let newv = c[3][0][2].slice(vars.length);
+    names.push(...newv.map(i=>pnames[i]));
+    redef.push(...newv.map(i=>rd));
+    vars .push(...newv.map(i=>null));
+    try {
+      return run(...c, vars);
+    } finally {
+      if (preview) {
+        copyarr(vars, vars0);
+        copyarr(names, names0);
+        copyarr(redef, redef0);
+      }
+    }
+  }
+  f.preview = (x,w) => {
+    preview = true;
+    try {
+      return f(x,w);
+    } finally {
+      preview = false;
+    }
+  };
+  return f;
 }
 let primitives = dynsys(state => {
   let gl=state.glyphs.flat(), rt=state.runtime;
@@ -694,13 +716,13 @@ let rand = (() => {
       let j = i + randnat(x-i);
       let t=r[i]; r[i]=r[j]; r[j]=t;
     }
-    r.length = w; return list(r);
+    r.length = w; return list(r,0);
   };
   let deal = deal_err("Deal");
   let subset = (x,w) => {
     reqnat("Subset: 𝕩", x);
-    if (!has(w)) return list(iota(x).filter(_=>Math.random()<0.5));
-    return deal_err("Subset")(x,w).sort();
+    if (!has(w)) return list(iota(x).filter(_=>Math.random()<0.5), 0);
+    return deal_err("Subset")(x,w).sort((a,b)=>a-b);
   };
   return makens(["range", "deal", "subset"], [range, deal, subset]);
 })();
@@ -741,6 +763,5 @@ if (typeof module!=='undefined') {  // Node.js
   bqn.makerepl=(st,repl)=>rerepl(repl, makebqn(x=>x,r=>r)(st), st);
   bqn.util={has,list,str,unstr,dynsys,req1str,makens};
   bqn.setexec = (u,p) => { update_state=u; push_state=p; }
-  bqn.allowSideEffect = (is) => allowSideEffect = is;
   module.exports=bqn;
 }

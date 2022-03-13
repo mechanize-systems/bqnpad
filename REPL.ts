@@ -50,41 +50,17 @@ export class REPL implements IREPL {
     let res = this.ready.then((): REPLResult => {
       if (code.trim().length === 0) return { type: "ok", ok: null };
 
-      // Try to see if we can preview expressions which end with LHS←RHS
-      let tree = EditorBQN.language.parser.parse(code);
-      let c = tree.cursor();
-      if (c.lastChild()) {
-        // Skip nodes which won't influence result
-        let safeNodes = new Set(["DELIM", "COMMENT"]);
-        while (safeNodes.has(c.node.type.name)) c.prevSibling();
-        // If the last node is LHS←RHS
-        if (c.node.type.name === "ASSIGN" && c.firstChild()) {
-          let from = c.from;
-          if (c.nextSibling()) {
-            // Keep only RHS and replace LHS← with spaces (to preserve error
-            // locations).
-            let to = c.from;
-            let ws = new Array(to - from).fill(" ").join();
-            code = code.substring(0, from) + ws + code.substring(to);
-          }
-        }
-      }
-
       try {
-        BQN.allowSideEffect(false);
-        let value = this.repl(code);
-        BQN.allowSideEffect(true);
+        let value = this.repl.preview(code);
         return { type: "ok", ok: BQN.fmt(value).slice(0, FMTLIMIT) };
       } catch (e) {
-        if ((e as any).kind === "sideEffect")
+        if ((e as any).kind === "previewError")
           return {
             type: "notice",
             notice:
               "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
           };
         return { type: "error", error: BQN.fmtErr(e as any) };
-      } finally {
-        BQN.allowSideEffect(true);
       }
     });
     this.ready = res;
