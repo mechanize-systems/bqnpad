@@ -1,4 +1,4 @@
-import * as Lib from "@bqnpad/lib";
+import * as Base from "@mechanize/base";
 import type { Update } from "@codemirror/collab";
 import { ChangeSet, Text } from "@codemirror/state";
 import { nanoid } from "nanoid";
@@ -11,7 +11,7 @@ import { Connection } from "./Connection";
 class WorkspaceConnection {
   clientID: string;
   private conn: Connection;
-  initial: () => Lib.PromiseUtil.Suspendable<{
+  initial: () => Base.Promise.Suspendable<{
     doc: {
       version: number;
       doc: Text;
@@ -25,7 +25,7 @@ class WorkspaceConnection {
   constructor() {
     this.conn = new Connection();
     this.clientID = nanoid();
-    this.initial = Lib.PromiseUtil.suspendable(() => this._initial());
+    this.initial = Base.Promise.suspendable(() => this._initial());
   }
 
   open() {

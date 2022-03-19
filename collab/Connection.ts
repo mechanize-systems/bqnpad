@@ -2,11 +2,11 @@
  * Connection class implements request-response protocol on top of a WebSocket
  * transport.
  */
-import * as Lib from "@bqnpad/lib";
+import * as Base from "@mechanize/base";
 import * as StableSocket from "@github/stable-socket";
 
 export class Connection {
-  private _requests: Map<number, Lib.PromiseUtil.Deferred<any>>;
+  private _requests: Map<number, Base.Promise.Deferred<any>>;
   private _socket: StableSocket.Socket;
 
   constructor(
@@ -54,9 +54,9 @@ export class Connection {
     );
   }
 
-  request<T>(data: unknown): Lib.PromiseUtil.Deferred<T> {
+  request<T>(data: unknown): Base.Promise.Deferred<T> {
     let reqID = this._requests.size;
-    let d = Lib.PromiseUtil.deferred<T>();
+    let d = Base.Promise.deferred<T>();
     this._requests.set(reqID, d);
     this._socket.send(JSON.stringify({ data, reqID }));
     return d;

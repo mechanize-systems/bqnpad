@@ -23,11 +23,13 @@
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedIndexedAccess": true,
-    "paths": {
-      "@bqnpad/*": ["./*"]
-    }
+    "noUncheckedIndexedAccess": true
   },
   "include": ["**/*.js", "**/*.ts", "**/*.d.ts", "**/*.tsx"],
-  "exclude": []
+  "exclude": [],
+  "references": [
+    {
+      "path": "./base/tsconfig.json"
+    }
+  ]
 }

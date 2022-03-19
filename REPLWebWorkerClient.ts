@@ -1,4 +1,4 @@
-import * as Lib from "@bqnpad/lib";
+import * as Base from "@mechanize/base";
 import * as React from "react";
 
 import type { IREPL, REPLResult, REPLStatus } from "./REPL";
@@ -20,7 +20,7 @@ export class REPLWebWorkerClient implements IREPL {
     return this.inflght === 0 ? "idle" : "running";
   }
 
-  onStatus = new Lib.EventEmitter<REPLStatus>();
+  onStatus = new Base.EventEmitter<REPLStatus>();
 
   async eval(code: string) {
     this.inflghtInc();
@@ -51,7 +51,7 @@ declare var ASAPConfig: { basePath: string };
 let BASENAME_RE =
   /^(?:\/?|)(?:[\s\S]*?)((?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/;
 
-let bqnWorker = new Lib.WorkerUtil.WorkerManager<
+let bqnWorker = new Base.Worker.WorkerManager<
   [method: Method, code: string],
   REPLResult,
   Error

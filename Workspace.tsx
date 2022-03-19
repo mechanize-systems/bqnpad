@@ -1,10 +1,10 @@
 /// <reference types="react-dom/next" />
 /// <reference types="react/next" />
-import * as Lib from "@bqnpad/lib";
 import * as Autocomplete from "@codemirror/autocomplete";
 import * as History from "@codemirror/history";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
+import * as Base from "@mechanize/base";
 import * as React from "react";
 
 import * as Editor from "./Editor";
@@ -32,13 +32,13 @@ export function Workspace({ manager }: WorkspaceProps) {
   );
   let editor = React.useRef<null | View.EditorView>(null);
 
-  let [showGlyphbar, setShowGlyphbar] = Lib.ReactUtil.usePersistentState(
+  let [showGlyphbar, setShowGlyphbar] = Base.React.usePersistentState(
     "bqnpad-pref-showGlyphbar",
     () => true,
   );
 
   let [enableLivePreview, setEnableLivePreview] =
-    Lib.ReactUtil.usePersistentState(
+    Base.React.usePersistentState(
       "bqnpad-pref-enableLivePreview",
       () => true,
     );
@@ -54,7 +54,7 @@ export function Workspace({ manager }: WorkspaceProps) {
     workspace.commands.focusCurrentCell(editor.current!);
   }, [editor, workspace]);
 
-  let [onDoc, _onDocFlush, onDocCancel] = Lib.ReactUtil.useDebouncedCallback(
+  let [onDoc, _onDocFlush, onDocCancel] = Base.React.useDebouncedCallback(
     1000,
     (_doc, state: State.EditorState) => {
       manager.store((_) => workspace.toWorkspace0(state));
@@ -225,7 +225,7 @@ function useWorkspace(
   config: WorkspaceConfig | State.StateField<WorkspaceConfig>,
 ): readonly [WorkspaceState, Workspace] {
   let repl = React.useMemo(() => {
-    if (Lib.WorkerUtil.supportsWorkerModule()) {
+    if (Base.Worker.supportsWorkerModule()) {
       return new REPLWebWorkerClient();
     } else {
       // Those browsers (looking at you, Firefox) which don't support WebWorker
@@ -270,7 +270,7 @@ export type WorkspaceCell = {
   idx: number;
   from: number;
   to: number;
-  result: null | Lib.PromiseUtil.Deferred<REPL.REPLResult>;
+  result: null | Base.Promise.Deferred<REPL.REPLResult>;
   resultPreview: null | REPL.REPLResult;
 };
 
@@ -356,7 +356,7 @@ function workspace(
         idx: cells.length,
         from,
         to,
-        result: Lib.PromiseUtil.deferred(),
+        result: Base.Promise.deferred(),
         resultPreview: null,
       };
     },
@@ -484,7 +484,7 @@ function workspace(
         for (let cell of cells) {
           if (cell.result == null) {
             let code = state.doc.sliceString(cell.from, cell.to);
-            cell.result = Lib.PromiseUtil.deferred();
+            cell.result = Base.Promise.deferred();
             repl.eval(code).then(cell.result.resolve, cell.result.reject);
           }
         }
@@ -543,7 +543,7 @@ function workspace(
       idx: currentCell.idx,
       from: currentCell.from,
       to: currentCell.to + 1,
-      result: Lib.PromiseUtil.deferred(),
+      result: Base.Promise.deferred(),
       resultPreview: currentCell.result?.isResolved
         ? currentCell.result.value
         : null,

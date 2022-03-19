@@ -1,7 +1,7 @@
 /**
  * Editor support for BQN.
  */
-import { parser } from "@bqnpad/grammar";
+import { parser } from "./grammar";
 import * as Autocomplete from "@codemirror/autocomplete";
 import { HighlightStyle, Tag, styleTags } from "@codemirror/highlight";
 import { LRLanguage, LanguageSupport } from "@codemirror/language";
@@ -741,7 +741,7 @@ let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
   return {
     label: `\\${glyph.title}`,
     apply: glyph.glyph,
-    detail
+    detail,
   };
 });
 

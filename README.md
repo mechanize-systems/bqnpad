@@ -8,7 +8,7 @@ Make sure recent node and pnpm (`npm install -g pnpm`) are installed on your
 computer.
 
 ```
-pnpm
+make init
 make all
 make start
 ```

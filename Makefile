@@ -1,3 +1,10 @@
+.PHONY: init
+init:
+	git submodule init
+	git submodule update
+	pnpm install
+	make all
+
 .PHONY: all
 all: grammar/bqn.grammar.js grammar/bqn.grammar.terms.js
 

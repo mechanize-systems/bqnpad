@@ -1,4 +1,4 @@
-import * as Lib from "@bqnpad/lib";
+import * as Base from "@mechanize/base";
 import * as React from "react";
 
 import * as EditorBQN from "./EditorBQN";
@@ -13,7 +13,7 @@ export type REPLStatus = "running" | "idle";
 
 export interface IREPL {
   status: REPLStatus | null;
-  onStatus: Lib.EventEmitter<REPLStatus>;
+  onStatus: Base.EventEmitter<REPLStatus>;
   eval(code: string): Promise<REPLResult>;
   preview(code: string): Promise<REPLResult>;
 }
@@ -24,7 +24,7 @@ export class REPL implements IREPL {
   private repl: BQN.REPL;
   ready: Promise<unknown>;
 
-  onStatus = new Lib.EventEmitter<REPLStatus>();
+  onStatus = new Base.EventEmitter<REPLStatus>();
   status = null;
 
   constructor() {
@@ -70,7 +70,7 @@ export class REPL implements IREPL {
 
 export function useREPLStatus(repl: IREPL): REPLStatus | null {
   let [status, setStatus0] = React.useState<REPLStatus | null>(repl.status);
-  let [setStatus] = Lib.ReactUtil.useDebouncedCallback(1, setStatus0);
+  let [setStatus] = Base.React.useDebouncedCallback(1, setStatus0);
   React.useLayoutEffect(
     () => repl.onStatus.subscribe(setStatus),
     [repl, setStatus],

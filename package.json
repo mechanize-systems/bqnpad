@@ -10,6 +10,7 @@
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
   "devDependencies": {
+    "@mechanize/base": "workspace:*",
     "@codemirror/autocomplete": "^0.19.13",
     "@codemirror/commands": "^0.19.8",
     "@codemirror/fold": "^0.19.3",
@@ -42,8 +43,14 @@
   "dependencies": {
     "@codemirror/collab": "^0.19.0",
     "@codemirror/state": "^0.19.9",
-    "@mechanize/asap": "^0.0.5",
+    "@mechanize/asap": "^0.0.6",
     "debug": "^4.3.3",
     "ws": "^8.5.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "rc",
+      "react-dom": "rc"
+    }
   }
 }
