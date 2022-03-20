@@ -2,8 +2,8 @@
 @import "./font/index.css";
 
 :root {
-  --editor-font-family: BQN386, Menlo, Monaco, monospace;
-  --ui-font-family: Iosevka, Menlo, Monaco, monospace;
+  --editor-font-family: BQN, Menlo, Monaco, monospace;
+  --ui-font-family: BQN, Menlo, Monaco, monospace;
 
   --ui-background: #e3e7e7;
   --ui-background-hover: #ddd;
