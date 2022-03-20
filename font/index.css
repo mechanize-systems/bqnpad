@@ -1,0 +1,24 @@
+@font-face{
+  font-family: BQNMod;
+  src: url(./DejaVuBQNSansMono.ttf) format('truetype');
+}
+@font-face{
+  font-family: FFHD;
+  src: url(./FairfaxHD_sub.woff2) format('woff2');
+}
+@font-face{
+  font-family: BQN;
+  src: url(./BQN386.ttf) format('truetype');
+}
+@font-face{
+  font-family: Iosevka;
+  src: url(./Iosevka_sub.woff2) format('woff2');
+}
+@font-face{
+  font-family: JuliaMono;
+  src: url(./JuliaMono_sub.woff2) format('woff2');
+}
+@font-face{
+  font-family: f3270;
+  src: url(./3270_sub.woff2) format('woff2');
+}

@@ -9,6 +9,7 @@ import * as React from "react";
 
 import * as Editor from "./Editor";
 import * as EditorBQN from "./EditorBQN";
+import { FontSelect } from "./FontSelect";
 import { GlyphsPalette } from "./GlyphPalette";
 import * as REPL from "./REPL";
 import { REPLWebWorkerClient } from "./REPLWebWorkerClient";
@@ -38,10 +39,7 @@ export function Workspace({ manager }: WorkspaceProps) {
   );
 
   let [enableLivePreview, setEnableLivePreview] =
-    Base.React.usePersistentState(
-      "bqnpad-pref-enableLivePreview",
-      () => true,
-    );
+    Base.React.usePersistentState("bqnpad-pref-enableLivePreview", () => true);
 
   let config = Editor.useStateField<WorkspaceConfig>(
     editor,
@@ -204,6 +202,9 @@ export function Workspace({ manager }: WorkspaceProps) {
             <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
               Show glyphbar
             </UI.Checkbox>
+          </div>
+          <div className="Toolbar__section">
+            <FontSelect />
           </div>
         </div>
         {showGlyphbar && <GlyphsPalette onClick={onGlyph} />}

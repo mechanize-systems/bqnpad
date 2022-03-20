@@ -1,9 +1,9 @@
 @import "normalize.css/normalize.css";
-@import "./iosevka/index.css";
+@import "./font/index.css";
 
 :root {
-  --editor-font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
-  --ui-font-family: "Iosevka Term Web", Menlo, Monaco, monospace;
+  --editor-font-family: BQN386, Menlo, Monaco, monospace;
+  --ui-font-family: Iosevka, Menlo, Monaco, monospace;
 
   --ui-background: #e3e7e7;
   --ui-background-hover: #ddd;
@@ -67,6 +67,22 @@ body,
   background-color: var(--ui-background-hover);
 }
 .Button:active {
+  background-color: var(--ui-background-active);
+}
+
+.Select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 5px;
+  border: none;
+  background-color: transparent;
+  border-radius: 0;
+}
+.Select:hover {
+  background-color: var(--ui-background-hover);
+}
+.Select:active {
   background-color: var(--ui-background-active);
 }
 
