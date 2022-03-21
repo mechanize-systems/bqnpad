@@ -33,4 +33,65 @@ export function useLocalWorkspaceManager(
   }, []);
 }
 
+export function useURLWorkspaceManager(): WorkspaceManager {
+  return React.useMemo<WorkspaceManager>(() => {
+    let url = new URL(window.location.toString());
+    let code = decodeURIComponent(url.searchParams.get("bqn") ?? "");
+    let workspace = decodeWorkspace(code);
+    return {
+      load: Base.Promise.suspendable(() => workspace),
+      store(fn) {
+        workspace = fn(workspace);
+        let code = encodeWorkspace(workspace);
+        history.pushState(null, "", `/s?bqn=${encodeURIComponent(code)}`);
+      },
+      restart() {
+        window.location.reload();
+      },
+    };
+  }, []);
+}
+
+export function encodeWorkspace(
+  workspace: Workspace0.Workspace0,
+  session?: Workspace0.Session0,
+): string {
+  if (session == null) session = workspace.currentSession;
+  let isCurrent = session === workspace.currentSession;
+
+  let from = 0;
+  let to = 0;
+  if (session.cells.length > 0) from = session.cells[0]!.from;
+  if (isCurrent) to = workspace.currentCell.to;
+  else if (session.cells.length > 0)
+    to = session.cells[session.cells.length - 1]!.to;
+
+  let encodeCell = (cell: Workspace0.WorkspaceCell0) => ({
+    from: cell.from - from,
+    to: cell.to - from,
+    result: null,
+  });
+
+  workspace = {
+    doc: workspace.doc.slice(from, to),
+    prevSessions: [],
+    currentSession: {
+      cells: session.cells.map(encodeCell),
+      createdAt: session.createdAt,
+    },
+    currentCell: isCurrent
+      ? encodeCell(workspace.currentCell)
+      : encodeCell({ from: to, to, result: null }),
+  };
+  let data = JSON.stringify(workspace);
+  return btoa(String.fromCharCode(...new TextEncoder().encode(data)));
+}
+
+function decodeWorkspace(code: string): Workspace0.Workspace0 {
+  let data = new TextDecoder().decode(
+    new Uint8Array([...atob(code)].map((c) => c.charCodeAt(0))),
+  );
+  return JSON.parse(data) as Workspace0.Workspace0;
+}
+
 export let WORKSPACE_KEY = `bqn-workspace-v${Workspace0.version}`;

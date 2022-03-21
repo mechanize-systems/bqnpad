@@ -11,6 +11,7 @@ import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as ReactDOMClient from "react-dom/client";
 
 export type EditorProps = {
   doc: State.Text;
@@ -163,14 +164,14 @@ export abstract class ReactWidget extends View.WidgetType {
 
   protected _container: null | {
     dom: HTMLDivElement;
-    root: ReactDOM.Root;
+    root: ReactDOMClient.Root;
   } = null;
 
   get container() {
     if (this._container == null) {
       let dom = document.createElement("div");
       dom.setAttribute("aria-hidden", "true");
-      let root = ReactDOM.createRoot(dom);
+      let root = ReactDOMClient.createRoot(dom);
       this._container = { dom, root };
     }
     return this._container;

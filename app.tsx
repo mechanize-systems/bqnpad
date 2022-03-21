@@ -8,6 +8,7 @@ import "./app.css";
 
 export let routes = {
   index: ASAP.route("/", async () => ({ default: Index })),
+  shared: ASAP.route("/s", async () => ({ default: Shared })),
 };
 
 ASAP.boot({ routes, AppLoading });
@@ -33,14 +34,34 @@ function Index() {
   let manager = WorkspaceManager.useLocalWorkspaceManager(() =>
     Workspace0.make(INITIAL_DOC),
   );
+  return (
+    <Chrome>
+      <Workspace.Workspace manager={manager} />
+    </Chrome>
+  );
+}
+
+function Shared() {
+  let manager = WorkspaceManager.useURLWorkspaceManager();
   React.useLayoutEffect(() => {
     document.title = "BQNPAD";
   }, []);
   return (
-    <React.Suspense fallback={<AppLoading />}>
-      <Workspace.Workspace manager={manager} />
-    </React.Suspense>
+    <Chrome>
+      <Workspace.Workspace
+        manager={manager}
+        disableSessionBanner={true}
+        disableSessionControls={true}
+      />
+    </Chrome>
   );
+}
+
+function Chrome({ children }: { children: React.ReactNode }) {
+  React.useLayoutEffect(() => {
+    document.title = "BQNPAD";
+  }, []);
+  return <React.Suspense fallback={<AppLoading />}>{children}</React.Suspense>;
 }
 
 function AppLoading(_props: ASAP.AppLoadingProps) {

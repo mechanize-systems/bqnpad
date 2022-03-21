@@ -15,7 +15,7 @@ import * as REPL from "./REPL";
 import { REPLWebWorkerClient } from "./REPLWebWorkerClient";
 import * as UI from "./UI";
 import * as Workspace0 from "./Workspace0";
-import type { WorkspaceManager } from "./WorkspaceManager";
+import { WorkspaceManager, encodeWorkspace } from "./WorkspaceManager";
 
 // TODO: need to infer this from CSS
 // line-height (1.4) * fontSize (20)
@@ -23,9 +23,15 @@ const LINE_HEIGHT = 28;
 
 export type WorkspaceProps = {
   manager: WorkspaceManager;
+  disableSessionControls?: boolean;
+  disableSessionBanner?: boolean;
 };
 
-export function Workspace({ manager }: WorkspaceProps) {
+export function Workspace({
+  manager,
+  disableSessionControls,
+  disableSessionBanner = false,
+}: WorkspaceProps) {
   let workspace0 = manager.load().getOrSuspend();
   let doc0 = React.useMemo(
     () => State.Text.of(workspace0.doc.split("\n")),
@@ -43,10 +49,10 @@ export function Workspace({ manager }: WorkspaceProps) {
 
   let config = Editor.useStateField<WorkspaceConfig>(
     editor,
-    { enableLivePreview },
-    [enableLivePreview],
+    { enableLivePreview, disableSessionBanner },
+    [enableLivePreview, disableSessionBanner],
   );
-  let [{ status }, workspace] = useWorkspace(workspace0, config);
+  let [{ status }, workspace] = useWorkspace(workspace0, editor, config);
 
   React.useEffect(() => {
     workspace.commands.focusCurrentCell(editor.current!);
@@ -152,14 +158,11 @@ export function Workspace({ manager }: WorkspaceProps) {
         <div className="Toolbar">
           <div className="Toolbar__section">
             <div className="label">Session: </div>
-            <UI.Button
-              title="Create new session"
-              onClick={() => {
-                onNew();
-              }}
-            >
-              New
-            </UI.Button>
+            {!disableSessionControls && (
+              <UI.Button title="Create new session" onClick={() => onNew()}>
+                New
+              </UI.Button>
+            )}
             <UI.Button
               title="Restart current session"
               onClick={() => manager.restart()}
@@ -223,6 +226,7 @@ export function Workspace({ manager }: WorkspaceProps) {
 
 function useWorkspace(
   workspace0: Workspace0.Workspace0 = Workspace0.empty,
+  editor: { current: View.EditorView | null },
   config: WorkspaceConfig | State.StateField<WorkspaceConfig>,
 ): readonly [WorkspaceState, Workspace] {
   let repl = React.useMemo(() => {
@@ -237,7 +241,7 @@ function useWorkspace(
     }
   }, []);
   let w = React.useMemo(
-    () => workspace(repl, workspace0, config),
+    () => workspace(repl, workspace0, editor, config),
     [repl, workspace0],
   );
   let status = REPL.useREPLStatus(repl);
@@ -246,6 +250,7 @@ function useWorkspace(
 
 type WorkspaceConfig = {
   enableLivePreview: boolean;
+  disableSessionBanner: boolean;
 };
 
 type Workspace = {
@@ -282,6 +287,7 @@ type WorkspaceState = {
 function workspace(
   repl: REPL.IREPL,
   workspace0: Workspace0.Workspace0 = Workspace0.empty,
+  editor: { current: View.EditorView | null },
   config0: WorkspaceConfig | State.StateField<WorkspaceConfig>,
 ): Workspace {
   let config =
@@ -403,32 +409,46 @@ function workspace(
     },
   );
 
-  let sessionBanner = View.EditorView.decorations.compute([], (_state) => {
-    let ranges: View.Range<View.Decoration>[] = [];
+  let sessionBanner = View.EditorView.decorations.compute(
+    [config],
+    (state) => {
+      let { disableSessionBanner } = state.field(config);
+      if (disableSessionBanner) return View.Decoration.none;
 
-    let add = (
-      session: Workspace0.Session0,
-      pos: number | undefined = undefined,
-    ) => {
-      let firstCell = session.cells[0];
-      let from =
-        firstCell == null || firstCell.from === firstCell.to
-          ? pos
-          : firstCell.from;
-      if (from == null) return;
-      let deco = View.Decoration.widget({
-        widget: new SessionBanner(session.createdAt),
-        block: true,
-        side: -1,
-      });
-      ranges.push(deco.range(from));
-    };
+      let ranges: View.Range<View.Decoration>[] = [];
 
-    for (let session of workspace0.prevSessions) add(session);
-    add(workspace0.currentSession, workspace0.currentCell.from);
+      let add = (
+        session: Workspace0.Session0,
+        pos: number | undefined = undefined,
+      ) => {
+        let firstCell = session.cells[0];
+        let from =
+          firstCell == null || firstCell.from === firstCell.to
+            ? pos
+            : firstCell.from;
+        if (from == null) return;
+        let deco = View.Decoration.widget({
+          widget: new SessionBanner(
+            session,
+            getWorkspace,
+            session === workspace0.currentSession,
+          ),
+          block: true,
+          side: -1,
+        });
+        ranges.push(deco.range(from));
+      };
 
-    return View.Decoration.set(ranges);
-  });
+      for (let session of workspace0.prevSessions) add(session);
+      add(workspace0.currentSession, workspace0.currentCell.from);
+
+      return View.Decoration.set(ranges);
+    },
+  );
+
+  let getWorkspace = () => {
+    return toWorkspace0(editor.current!.state);
+  };
 
   let preview = View.EditorView.decorations.compute(
     ["doc", currentCellField, config],
@@ -926,7 +946,11 @@ class PreviewOutputWidget extends View.WidgetType {
 }
 
 class SessionBanner extends View.WidgetType {
-  constructor(private readonly startTime: number) {
+  constructor(
+    private readonly session: Workspace0.Session0,
+    private readonly getWorkspace: () => Workspace0.Workspace0,
+    private readonly isCurrent: boolean,
+  ) {
     super();
   }
 
@@ -936,12 +960,32 @@ class SessionBanner extends View.WidgetType {
 
   toDOM() {
     let root = document.createElement("div");
+    root.style.height = `${this.estimatedHeight}px`;
     root.classList.add("SessionBanner");
+
     let date = new Intl.DateTimeFormat(undefined, {
       dateStyle: "short",
       timeStyle: "short",
-    }).format(this.startTime);
-    root.innerText = `STARTED ${date}`;
+    }).format(this.session.createdAt);
+    let label = document.createElement("div");
+    label.innerText = `STARTED ${date}`;
+    root.appendChild(label);
+
+    let shareButton = document.createElement("button");
+    shareButton.classList.add("Button");
+    shareButton.classList.add("SessionBanner__link");
+    shareButton.textContent = "LINK↗";
+    shareButton.title = "Shareable link to this session";
+    shareButton.onclick = () => {
+      let workspace = this.getWorkspace();
+      let code = encodeWorkspace(
+        workspace,
+        this.isCurrent ? undefined : this.session,
+      );
+      let url = `${window.location.origin}/s?bqn=${encodeURIComponent(code)}`;
+      window.open(url);
+    };
+    root.appendChild(shareButton);
     return root;
   }
 }

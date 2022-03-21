@@ -213,6 +213,16 @@ body,
 
 .SessionBanner {
   color: var(--ui-color-dimmed);
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.SessionBanner__link {
+  padding-top: 0;
+  padding-bottom: 0;
+  color: var(--ui-color-dimmed);
 }
 
 .Toolbar {
