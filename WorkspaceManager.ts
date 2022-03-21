@@ -61,7 +61,9 @@ export function encodeWorkspace(
 
   let from = 0;
   let to = 0;
-  if (session.cells.length > 0) from = session.cells[0]!.from;
+  if (isCurrent && session.cells.length === 0)
+    from = workspace.currentCell.from;
+  else if (session.cells.length > 0) from = session.cells[0]!.from;
   if (isCurrent) to = workspace.currentCell.to;
   else if (session.cells.length > 0)
     to = session.cells[session.cells.length - 1]!.to;
@@ -84,6 +86,7 @@ export function encodeWorkspace(
       : encodeCell({ from: to, to, result: null }),
   };
   let data = JSON.stringify(workspace);
+  console.log(data);
   return btoa(String.fromCharCode(...new TextEncoder().encode(data)));
 }
 
