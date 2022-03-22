@@ -1,5 +1,6 @@
-import * as Base from "@mechanize/base";
 import * as React from "react";
+
+import * as Base from "@mechanize/base";
 
 import type { IREPL, REPLResult, REPLStatus } from "./REPL";
 import type { Method } from "./REPLWebWorker";

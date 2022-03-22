@@ -1,9 +1,10 @@
 import type { Update } from "@codemirror/collab";
 import { ChangeSet, Text } from "@codemirror/state";
-import * as API from "@mechanize/asap/api";
 import debug from "debug";
 import type * as http from "http";
 import ws from "ws";
+
+import * as API from "@mechanize/asap/api";
 
 import type * as Workspace0 from "./Workspace0";
 

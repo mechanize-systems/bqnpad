@@ -1,20 +1,23 @@
-import * as Base from "@mechanize/base";
 import * as React from "react";
 
-let FONTS = [
-  { fontFamily: "BQN", label: "BQN386" },
-  { fontFamily: "Iosevka", label: "Iosevka" },
-  { fontFamily: "BQNMod", label: "DejaVu Sans mono" },
-  { fontFamily: "FFHD", label: "Fairfax HD" },
-  { fontFamily: "JuliaMono", label: "Julia Mono" },
-  { fontFamily: "f3270", label: "3270" },
+import * as Base from "@mechanize/base";
+
+import * as UI from "./UI";
+
+let FONTS: UI.SelectOption[] = [
+  { value: "BQN", label: "BQN386" },
+  { value: "Iosevka", label: "Iosevka" },
+  { value: "BQNMod", label: "DejaVu Sans mono" },
+  { value: "FFHD", label: "Fairfax HD" },
+  { value: "JuliaMono", label: "Julia Mono" },
+  { value: "f3270", label: "3270" },
 ];
 let DEFAULT_FONT = "BQN";
 
 let fontCodec: Base.React.Codec<string> = {
   encode: (font) => font,
   decode: (font) =>
-    FONTS.some((f) => f.fontFamily === font) ? font : DEFAULT_FONT,
+    FONTS.some((f) => f.value === font) ? font : DEFAULT_FONT,
 };
 
 export function FontSelect() {
@@ -24,28 +27,17 @@ export function FontSelect() {
     fontCodec,
   );
   React.useLayoutEffect(() => {
-    document.documentElement.style.setProperty(
-      "--editor-font-family",
-      `${currentFont}, Menlo, Monaco, monospace`,
-    );
-    document.documentElement.style.setProperty(
-      "--ui-font-family",
-      `${currentFont}, Menlo, Monaco, monospace`,
-    );
+    UI.setEditorFont(currentFont);
+    UI.setUIFont(currentFont);
   }, [currentFont]);
-  let options = FONTS.map((font) => (
-    <option key={font.fontFamily} value={font.fontFamily}>
-      {font.label}
-    </option>
-  ));
-  let onChange: React.FormEventHandler = (ev) =>
-    setCurrentFont((ev.target as HTMLSelectElement).value);
   return (
     <>
       <div className="label">Font: </div>
-      <select value={currentFont} onChange={onChange} className="Select">
-        {options}
-      </select>
+      <UI.Select
+        value={currentFont}
+        onValue={setCurrentFont}
+        options={FONTS}
+      />
     </>
   );
 }

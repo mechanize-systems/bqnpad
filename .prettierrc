@@ -2,7 +2,7 @@
   "printWidth": 79,
   "trailingComma": "all",
   "plugins": ["@trivago/prettier-plugin-sort-imports"],
-  "importOrder": ["^[\\./]"],
+  "importOrder": ["^@mechanize/", "^[\\./]"],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true
 }

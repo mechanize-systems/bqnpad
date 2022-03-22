@@ -1,12 +1,13 @@
 /**
  * Editor support for BQN.
  */
-import { parser } from "./grammar";
 import * as Autocomplete from "@codemirror/autocomplete";
 import { HighlightStyle, Tag, styleTags } from "@codemirror/highlight";
 import { LRLanguage, LanguageSupport } from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
+
+import { parser } from "./grammar";
 
 let tags = {
   BQNstring: Tag.define(),

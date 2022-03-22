@@ -1,5 +1,6 @@
-import * as Base from "@mechanize/base";
 import * as React from "react";
+
+import * as Base from "@mechanize/base";
 
 import * as EditorBQN from "./EditorBQN";
 import * as BQN from "./bqn";
