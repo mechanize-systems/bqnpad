@@ -10,7 +10,6 @@
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
   "devDependencies": {
-    "@mechanize/base": "workspace:*",
     "@codemirror/autocomplete": "^0.19.13",
     "@codemirror/commands": "^0.19.8",
     "@codemirror/fold": "^0.19.3",
@@ -23,20 +22,24 @@
     "@lezer/common": "^0.15.11",
     "@lezer/generator": "^0.15.4",
     "@lezer/lr": "^0.15.8",
+    "@mechanize/base": "workspace:*",
     "@trivago/prettier-plugin-sort-imports": "^3.2.0",
     "@tsconfig/strictest": "^1.0.0",
     "@types/debug": "^4.1.7",
     "@types/react": "^17.0.39",
     "@types/react-dom": "^17.0.11",
     "@types/ws": "^8.2.3",
+    "@typescript-eslint/eslint-plugin": "^5.16.0",
+    "@typescript-eslint/parser": "^5.16.0",
     "classnames": "^2.3.1",
-    "eslint": "^8.9.0",
+    "eslint": "^8.11.0",
+    "eslint-plugin-react-hooks": "^4.3.0",
     "mocha": "^9.2.1",
     "nanoid": "^3.3.1",
     "normalize.css": "^8.0.1",
     "prettier": "^2.5.1",
-    "react": "^18.0.0-rc.0",
-    "react-dom": "^18.0.0-rc.0",
+    "react": "^18.0.0-rc.3",
+    "react-dom": "^18.0.0-rc.3",
     "typescript": "^4.5.5",
     "typescript-language-server": "^0.9.6"
   },
@@ -49,8 +52,8 @@
   },
   "pnpm": {
     "overrides": {
-      "react": "rc",
-      "react-dom": "rc"
+      "react": "18.0.0-rc.3",
+      "react-dom": "18.0.0-rc.3"
     }
   }
 }

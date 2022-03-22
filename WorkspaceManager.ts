@@ -21,9 +21,10 @@ export function useLocalWorkspaceManager(
       WORKSPACE_KEY,
       makeWorkspace,
     );
+  let workspace0 = Base.React.useMemoOnce(() => workspace);
   return React.useMemo<WorkspaceManager>((): WorkspaceManager => {
     return {
-      load: Base.Promise.suspendable(() => workspace),
+      load: Base.Promise.suspendable(() => workspace0),
       store(fn) {
         setWorkspace(fn);
       },
@@ -31,7 +32,7 @@ export function useLocalWorkspaceManager(
         window.location.reload();
       },
     };
-  }, []);
+  }, [workspace0, setWorkspace]);
 }
 
 export function useURLWorkspaceManager(): WorkspaceManager {

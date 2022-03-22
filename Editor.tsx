@@ -13,6 +13,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 
+import * as Base from "@mechanize/base";
+
 export type EditorProps = {
   doc: State.Text;
   onDoc?: (doc: State.Text, state: State.EditorState) => void;
@@ -27,6 +29,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
   { doc, onDoc, keybindings, extensions, placeholder, api, className },
   ref0,
 ) {
+  let doc0 = Base.React.useMemoOnce(() => doc);
   let ref = React.useRef<null | HTMLDivElement>(null);
   let view = React.useRef<null | View.EditorView>(null);
 
@@ -63,7 +66,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
       ...(extensions ?? []),
     ];
     let startState = State.EditorState.create({
-      doc,
+      doc: doc0,
       extensions: extensions0.filter(Boolean) as State.Extension[],
     });
     view.current = new View.EditorView({
@@ -79,7 +82,7 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
       view.current = null;
       if (api != null) api.current = null;
     };
-  }, [onDocExt, keybindingsExt, placeholderExt, extensions]);
+  }, [doc0, ref0, api, onDocExt, keybindingsExt, placeholderExt, extensions]);
   return <div className={className} ref={ref} />;
 });
 
@@ -138,11 +141,12 @@ export function useStateField<T>(
   value: T,
   deps: unknown[] = [value],
 ) {
+  let value0 = Base.React.useMemoOnce(() => value);
   let [field, effect] = React.useMemo(() => {
     let effect = State.StateEffect.define<T>();
     let field = State.StateField.define<T>({
       create() {
-        return value;
+        return value0;
       },
       update(state, tr) {
         for (let e of tr.effects) if (e.is(effect)) return e.value;
@@ -150,11 +154,10 @@ export function useStateField<T>(
       },
     });
     return [field, effect] as const;
-  }, []);
+  }, [value0]);
   React.useEffect(() => {
     let v = view instanceof View.EditorView ? view : view.current;
-    if (v == null) return;
-    v.dispatch({ effects: [effect.of(value)] });
+    v?.dispatch({ effects: [effect.of(value)] });
   }, [view, effect, ...deps]); // eslint-disable-line
   return field;
 }

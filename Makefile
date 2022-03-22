@@ -16,6 +16,10 @@ start:
 check:
 	pnpm tsc -b
 
+.PHONY: lint
+lint:
+	pnpm eslint . --ext .js,.jsx,.ts,.tsx
+
 .PHONY: fmt
 fmt:
 	prettier -w '*.ts' '*.d.ts' '*.json'

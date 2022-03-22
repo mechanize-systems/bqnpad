@@ -139,7 +139,7 @@ export function Workspace({
     onDocCancel();
     manager.store((_) => newW);
     manager.restart();
-  }, [editor]);
+  }, [editor, manager, onDocCancel, workspace]);
 
   return (
     <div className="Workspace">
@@ -254,7 +254,7 @@ function useWorkspace(
   }, []);
   let w = React.useMemo(
     () => workspace(repl, workspace0, editor, config),
-    [repl, workspace0],
+    [repl, workspace0, editor, config],
   );
   let status = REPL.useREPLStatus(repl);
   return [{ status }, w] as const;
