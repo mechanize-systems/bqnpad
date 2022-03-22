@@ -54,7 +54,7 @@ export function Workspace({
   );
   let [{ status }, workspace] = useWorkspace(workspace0, editor, config);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     workspace.commands.focusCurrentCell(editor.current!);
   }, [editor, workspace]);
 
