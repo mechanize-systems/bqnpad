@@ -146,13 +146,25 @@ export function Workspace({
       <div className="WorkspaceHeader">
         <div className="Toolbar">
           <div className="title">
+            <a className="Button" href={window.location.origin}>
+              BQNPAD
+            </a>
+          </div>
+          <div>
             <a
               target="_blank"
+              className="Button"
               href="https://mlochbaum.github.io/BQN/index.html"
             >
-              BQN
+              BQN Website↗
             </a>
-            PAD
+            <a
+              target="_blank"
+              className="Button"
+              href="https://mlochbaum.github.io/BQN/help/index.html"
+            >
+              Help↗
+            </a>
           </div>
         </div>
         <div className="Toolbar">

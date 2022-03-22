@@ -69,6 +69,9 @@ body,
 .Button:active {
   background-color: var(--ui-background-active);
 }
+a.Button {
+  text-decoration: none;
+}
 
 .Select {
   -webkit-appearance: none;
@@ -238,7 +241,8 @@ body,
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding-right: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 .Toolbar__section:last-child {
   padding-right: 0px;
