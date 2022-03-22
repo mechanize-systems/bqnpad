@@ -226,7 +226,7 @@ export function Workspace({
       </div>
       <Editor.Editor
         className="Editor"
-        api={editor}
+        editorRef={editor}
         doc={doc0}
         onDoc={onDoc}
         extensions={extensions}

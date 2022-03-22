@@ -15,25 +15,42 @@ import * as ReactDOMClient from "react-dom/client";
 
 import * as Base from "@mechanize/base";
 
-export type EditorProps = {
+export type EditorProps = EditorConfig & {
+  className?: string;
+  editorRef?: React.MutableRefObject<null | View.EditorView>;
+};
+
+export function Editor({ className, editorRef, ...config }: EditorProps) {
+  let ref = React.useRef<HTMLDivElement | null>(null);
+  useEditor(ref, {
+    ...config,
+    onEditorView(view) {
+      if (editorRef != null) editorRef.current = view;
+    },
+  });
+  return <div className={className} ref={ref} />;
+}
+
+export type EditorConfig = {
   doc: State.Text;
   onDoc?: (doc: State.Text, state: State.EditorState) => void;
   keybindings?: View.KeyBinding[];
   extensions?: (undefined | State.Extension)[];
   placeholder?: string | null | undefined;
-  api?: React.MutableRefObject<null | View.EditorView>;
-  className?: string;
+  onEditorView?: (view: View.EditorView) => void;
 };
 
-export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
-  { doc, onDoc, keybindings, extensions, placeholder, api, className },
-  ref0,
+export function useEditor<E extends HTMLElement>(
+  ref: React.MutableRefObject<E | null>,
+  config: EditorConfig,
 ) {
+  let { doc, onDoc, keybindings, extensions, placeholder, onEditorView } =
+    config;
   let doc0 = Base.React.useMemoOnce(() => doc);
-  let ref = React.useRef<null | HTMLDivElement>(null);
+  let onEditorView0 = Base.React.useMemoOnce(() => onEditorView);
   let view = React.useRef<null | View.EditorView>(null);
 
-  let onDocExt = useStateCompartment(
+  let onDocExtension = useStateCompartment(
     view,
     () =>
       View.EditorView.updateListener.of((update) => {
@@ -43,25 +60,25 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
       }),
     [onDoc],
   );
-  let keybindingsExt = useStateCompartment(
+  let keybindingsExtension = useStateCompartment(
     view,
     () => View.keymap.of(keybindings ?? []),
     [keybindings],
   );
-  let placeholderExt = useStateCompartment(
+  let placeholderExtension = useStateCompartment(
     view,
     () => View.placeholder(placeholder ?? ""),
     [placeholder],
   );
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     let extensions0 = [
       History.history(),
       View.keymap.of(History.historyKeymap),
-      keybindingsExt,
-      onDocExt,
+      keybindingsExtension,
+      onDocExtension,
       View.keymap.of(Commands.defaultKeymap),
-      placeholderExt,
+      placeholderExtension,
       View.EditorView.lineWrapping,
       ...(extensions ?? []),
     ];
@@ -71,20 +88,24 @@ export let Editor = React.forwardRef<HTMLElement, EditorProps>(function Editor(
     });
     view.current = new View.EditorView({
       state: startState,
-      parent: ref.current as HTMLDivElement,
+      parent: ref.current!,
     });
-    if (ref0 != null)
-      if (typeof ref0 === "function") ref0(view.current.contentDOM);
-      else ref0.current = view.current.contentDOM;
-    if (api != null) api.current = view.current;
+    onEditorView0?.(view.current);
     return () => {
       view.current?.destroy();
       view.current = null;
-      if (api != null) api.current = null;
     };
-  }, [doc0, ref0, api, onDocExt, keybindingsExt, placeholderExt, extensions]);
-  return <div className={className} ref={ref} />;
-});
+  }, [
+    ref,
+    doc0,
+    onDocExtension,
+    keybindingsExtension,
+    placeholderExtension,
+    extensions,
+    onEditorView0,
+  ]);
+  return view;
+}
 
 export function highlight(
   textContent: string,
