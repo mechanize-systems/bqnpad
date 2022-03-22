@@ -765,7 +765,7 @@ class CellOutputWidget extends View.WidgetType {
   private _numberOfLines: number | null = null;
   private foldCutoffLines = 10;
   private root: HTMLDivElement = document.createElement("div");
-  private result: REPL.REPLResult;
+  private _result: REPL.REPLResult | null = null;
 
   constructor(private readonly cell: WorkspaceCell) {
     super();
@@ -774,6 +774,15 @@ class CellOutputWidget extends View.WidgetType {
       : this.cell.resultPreview != null
       ? this.cell.resultPreview
       : { type: "notice", notice: "..." };
+  }
+
+  get result() {
+    return this._result!;
+  }
+
+  set result(result) {
+    this._result = result;
+    this._numberOfLines = null;
   }
 
   get numberOfLines(): number {
