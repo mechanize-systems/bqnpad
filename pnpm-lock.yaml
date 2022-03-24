@@ -36,6 +36,8 @@ importers:
       debug: ^4.3.3
       eslint: ^8.11.0
       eslint-plugin-react-hooks: ^4.3.0
+      lang-bqn: workspace:*
+      lezer-bqn: workspace:*
       mocha: ^9.2.1
       nanoid: ^3.3.1
       normalize.css: ^8.0.1
@@ -76,6 +78,8 @@ importers:
       classnames: 2.3.1
       eslint: 8.11.0
       eslint-plugin-react-hooks: 4.3.0_eslint@8.11.0
+      lang-bqn: link:lang-bqn
+      lezer-bqn: link:lezer-bqn
       mocha: 9.2.2
       nanoid: 3.3.1
       normalize.css: 8.0.1
@@ -106,6 +110,23 @@ importers:
       react-dom: 18.0.0-rc.3_react@18.0.0-rc.3
       typescript: 4.6.2
       typescript-language-server: 0.9.7
+
+  lang-bqn:
+    specifiers:
+      lezer-bqn: workspace:*
+    dependencies:
+      lezer-bqn: link:../lezer-bqn
+
+  lezer-bqn:
+    specifiers:
+      '@lezer/common': ^0.15.0
+      '@lezer/generator': ^0.15.0
+      '@lezer/lr': ^0.15.0
+    dependencies:
+      '@lezer/common': 0.15.12
+      '@lezer/lr': 0.15.8
+    devDependencies:
+      '@lezer/generator': 0.15.4
 
 packages:
 
@@ -495,7 +516,6 @@ packages:
 
   /@lezer/common/0.15.12:
     resolution: {integrity: sha512-edfwCxNLnzq5pBA/yaIhwJ3U3Kz8VAUOTRg0hhxaizaI1N+qxV7EXDv/kLCkLeq2RzSFvxexlaj5Mzfn2kY0Ig==}
-    dev: true
 
   /@lezer/generator/0.15.4:
     resolution: {integrity: sha512-9bBwU2TzKMBQ6OCEDevuMNWGOBKlkq5YIGEhjrz9pb3MLb+oYYR4dVFZ7ehwLcDoSecsSA7PdlAy0thJO5pt2w==}
@@ -509,7 +529,6 @@ packages:
     resolution: {integrity: sha512-bM6oE6VQZ6hIFxDNKk8bKPa14hqFrV07J/vHGOeiAbJReIaQXmkVb6xQu4MR+JBTLa5arGRyAAjJe1qaQt3Uvg==}
     dependencies:
       '@lezer/common': 0.15.12
-    dev: true
 
   /@mechanize/asap/0.0.6:
     resolution: {integrity: sha512-wzFfCAXH8Cw7+5WGrMSIfGFZ2HnwwWuCcHSghZA95in1rU/2MmrAyGuDNe/AQQC1rhPVlSKTINIIS6sFE6SCdA==}

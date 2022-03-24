@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import * as EditorBQN from "./EditorBQN";
+import * as EditorBQN from "lang-bqn";
 import * as UI from "./UI";
 
 export type GlyphsPaletteProps = {

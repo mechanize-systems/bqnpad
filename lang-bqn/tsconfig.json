@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2021",
-    "baseUrl": "./",
+    "baseUrl": ".",
+    "target": "es2020",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
     "emitDeclarationOnly": true,
     "declaration": true,
@@ -17,22 +18,9 @@
     "jsx": "preserve",
     "composite": true,
     "incremental": true,
-    "noImplicitAny": true,
-    "strict": true,
-    "alwaysStrict": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedIndexedAccess": true
+    "outDir": "node_modules/.cache/tsbuild",
+    "noEmit": false
   },
-  "include": ["**/*.js", "**/*.ts", "**/*.d.ts", "**/*.tsx"],
-  "exclude": [],
-  "references": [
-    {
-      "path": "./base/tsconfig.json"
-    },
-    {
-      "path": "./lang-bqn/tsconfig.json"
-    }
-  ]
+  "include": ["./**/*.ts", "./**/*.tsx"],
+  "exclude": ["./node_modules"]
 }

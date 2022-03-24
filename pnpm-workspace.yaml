@@ -1,3 +1,5 @@
 packages:
 - "."
 - "./base"
+- "./lezer-bqn"
+- "./lang-bqn"

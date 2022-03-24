@@ -4,11 +4,12 @@ import * as Autocomplete from "@codemirror/autocomplete";
 import * as History from "@codemirror/history";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
-import * as Base from "@mechanize/base";
+import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
+import * as Base from "@mechanize/base";
+
 import * as Editor from "./Editor";
-import * as EditorBQN from "./EditorBQN";
 import { FontSelect } from "./FontSelect";
 import { GlyphsPalette } from "./GlyphPalette";
 import * as REPL from "./REPL";
@@ -67,7 +68,7 @@ export function Workspace({
   );
 
   let extensions = React.useMemo(
-    () => [EditorBQN.bqn(), workspace.extension],
+    () => [LangBQN.bqn(), workspace.extension],
     [workspace],
   );
 
@@ -81,7 +82,7 @@ export function Workspace({
   }, [workspace]);
 
   let onGlyph = React.useCallback(
-    (glyph: EditorBQN.Glyph) => {
+    (glyph: LangBQN.Glyph) => {
       let view = editor.current!;
       if (!view.hasFocus) view.focus();
       let currentCell = workspace.query.currentCell(view.state);
