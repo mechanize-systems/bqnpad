@@ -9,6 +9,7 @@ importers:
   .:
     specifiers:
       '@codemirror/autocomplete': ^0.19.13
+      '@codemirror/closebrackets': ^0.19.1
       '@codemirror/collab': ^0.19.0
       '@codemirror/commands': ^0.19.8
       '@codemirror/fold': ^0.19.3
@@ -55,6 +56,7 @@ importers:
       ws: 8.5.0
     devDependencies:
       '@codemirror/autocomplete': 0.19.14
+      '@codemirror/closebrackets': 0.19.1
       '@codemirror/commands': 0.19.8
       '@codemirror/fold': 0.19.3
       '@codemirror/highlight': 0.19.7
@@ -373,6 +375,16 @@ packages:
       '@codemirror/tooltip': 0.19.16
       '@codemirror/view': 0.19.47
       '@lezer/common': 0.15.12
+    dev: true
+
+  /@codemirror/closebrackets/0.19.1:
+    resolution: {integrity: sha512-ZiLXT6u+VuBK5QnfBbt/Vmfd9Pg6449wn1DIOWFZHUOldg5eFn3VGGjYY2XWuHQz5WuK+7dXamV2KE885O1gyA==}
+    dependencies:
+      '@codemirror/language': 0.19.8
+      '@codemirror/rangeset': 0.19.9
+      '@codemirror/state': 0.19.9
+      '@codemirror/text': 0.19.6
+      '@codemirror/view': 0.19.47
     dev: true
 
   /@codemirror/collab/0.19.0:

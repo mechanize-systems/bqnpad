@@ -15,6 +15,7 @@
     "@codemirror/fold": "^0.19.3",
     "@codemirror/highlight": "^0.19.7",
     "@codemirror/history": "^0.19.2",
+    "@codemirror/closebrackets": "^0.19.1",
     "@codemirror/language": "^0.19.8",
     "@codemirror/text": "^0.19.6",
     "@codemirror/view": "^0.19.47",

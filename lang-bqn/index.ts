@@ -3,7 +3,12 @@
  */
 import * as Autocomplete from "@codemirror/autocomplete";
 import { HighlightStyle, Tag, styleTags } from "@codemirror/highlight";
-import { LRLanguage, LanguageSupport } from "@codemirror/language";
+import {
+  LRLanguage,
+  LanguageSupport,
+  delimitedIndent,
+  indentNodeProp,
+} from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 import { parser } from "lezer-bqn";
@@ -63,12 +68,17 @@ let bqnStyleTags = styleTags({
 
 export let language = LRLanguage.define({
   parser: parser.configure({
-    props: [bqnStyleTags],
+    props: [
+      bqnStyleTags,
+      indentNodeProp.add({
+        BLOCK: delimitedIndent({ closing: "}", align: true }),
+      }),
+    ],
   }),
   languageData: {
     commentTokens: { line: "#" },
-    indentOnInput: /^\s*(\]|\}|\))/,
-    closeBrackets: { brackets: ["(", "[", "{", "'", '"', "`"] },
+    indentOnInput: /^\s*(\]|}|⟩)$/,
+    closeBrackets: { brackets: ["(", "{", "⟨", "'", '"'] },
   },
 });
 

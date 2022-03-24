@@ -1,9 +1,11 @@
 /// <reference types="react-dom/next" />
 /// <reference types="react/next" />
 import * as Autocomplete from "@codemirror/autocomplete";
+import * as CloseBrackets from "@codemirror/closebrackets";
 import * as History from "@codemirror/history";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
+import * as Language from "@codemirror/language";
 import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
@@ -68,7 +70,12 @@ export function Workspace({
   );
 
   let extensions = React.useMemo(
-    () => [LangBQN.bqn(), workspace.extension],
+    () => [
+      LangBQN.bqn(),
+      CloseBrackets.closeBrackets(),
+      Language.indentOnInput(),
+      workspace.extension,
+    ],
     [workspace],
   );
 
@@ -78,6 +85,7 @@ export function Workspace({
       { key: "Shift-Enter", run: workspace.commands.addCell },
       { key: "Enter", run: workspace.commands.reuseCell },
       { key: "Tab", run: Autocomplete.startCompletion },
+      ...CloseBrackets.closeBracketsKeymap,
     ];
   }, [workspace]);
 
