@@ -1,0 +1,20 @@
+{
+  "name": "lezer-bqn",
+  "version": "0.0.1",
+  "description": "BQN grammar for Lezer",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "author": "Andrey Popp <me@andreypopp.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@lezer/generator": "^0.15.0"
+  },
+  "dependencies": {
+    "@lezer/lr": "^0.15.0",
+    "@lezer/common": "^0.15.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mechanize-systems/lezer-bqn.git"
+  }
+}

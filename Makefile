@@ -6,7 +6,7 @@ init:
 	make all
 
 .PHONY: all
-all: grammar/bqn.grammar.js grammar/bqn.grammar.terms.js
+all: lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js
 
 .PHONY: start
 start:
@@ -31,9 +31,9 @@ clean:
 
 .PHONY: test
 test:
-	mocha grammar/test/test-bqn-grammar.mjs
+	mocha lezer-bqn/test/test-bqn-grammar.mjs
 
-grammar/bqn.grammar.js grammar/bqn.grammar.terms.js: grammar/bqn.grammar
+lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js: lezer-bqn/bqn.grammar
 	pnpm lezer-generator $(<) --names --cjs --output $(@)
 
 .PHONY: deploy

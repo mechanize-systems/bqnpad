@@ -7,7 +7,7 @@ import { LRLanguage, LanguageSupport } from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 
-import { parser } from "./grammar";
+import { parser } from "./lezer-bqn";
 
 let tags = {
   BQNstring: Tag.define(),
