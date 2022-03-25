@@ -683,7 +683,7 @@ export let glyphs: Glyph[] = [
 export let keymap: Map<string, Glyph> = new Map();
 for (let glyph of glyphs) if (glyph.key != null) keymap.set(glyph.key, glyph);
 
-function bqnKeymap(): State.Extension {
+function glyphInput(): State.Extension {
   let expecting: NodeJS.Timeout | null = null;
 
   let resetExpecting = () => {
@@ -736,6 +736,7 @@ function bqnKeymap(): State.Extension {
       let insert = keymap.get(pos.ch);
       if (insert != null)
         return {
+          userEvent: "input",
           changes: { from: pos.from, to: pos.to, insert: insert.glyph },
         } as State.TransactionSpec;
     }
@@ -773,7 +774,7 @@ let glyphCompletion: Autocomplete.CompletionSource = (
 export function bqn() {
   let extensions: State.Extension[] = [
     highlight,
-    bqnKeymap(),
+    glyphInput(),
     Autocomplete.autocompletion({
       override: [glyphCompletion],
       activateOnTyping: false,
