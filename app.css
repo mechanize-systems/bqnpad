@@ -103,7 +103,6 @@ a.Button {
   border: none;
   background-color: transparent;
   border-radius: 0;
-  direction: rtl;
   font-weight: 400;
   border-radius: 3px;
 }
@@ -189,7 +188,6 @@ a.Button {
  */
 
 .title {
-  font-size: var(--app-title-font-size);
   font-weight: 600;
 }
 
@@ -306,15 +304,31 @@ a.Button {
 .WorkspaceHeader {
   display: flex;
   flex-direction: column;
-  width: 100%;
   padding: 5px;
+  margin: 10px;
+  margin-bottom: 0px;
+  border-radius: 3px;
+  border-width: 1px;
   border-bottom-width: 2px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--app-border);
+  border-style: solid;
+  border-color: var(--app-border);
 }
 
 .VMStatus {
+  padding: 4px;
+  font-size: 10px;
   font-weight: 500;
+  border-style: solid;
+  border-radius: 3px;
+  border-width: 1px;
+}
+.VMStatus--running {
+  border-color: orange;
+  color: orange;
+}
+.VMStatus--idle {
+  border-color: green;
+  color: green;
 }
 
 .GlyphsPalette {

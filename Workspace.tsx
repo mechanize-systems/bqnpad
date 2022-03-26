@@ -154,44 +154,42 @@ export function Workspace({
     <div className="Workspace">
       <div className="WorkspaceHeader">
         <div className="Toolbar">
-          <a className="title Button" href={window.location.origin}>
-            BQNPAD
-          </a>
-          {status != null && (
-            <div className="Toolbar__section">
-              <div
-                className="Toolbar__element VMStatus"
-                style={{
-                  color:
-                    status === "idle"
-                      ? "green"
-                      : status === "running"
-                      ? "orange"
-                      : undefined,
-                }}
-              >
-                {status.toUpperCase().padEnd(7, "\u00A0")}
-              </div>
-            </div>
-          )}
-          <div>
+          <div style={{ display: "flex", alignItems: "baseline" }}>
+            <a className="title Button" href={window.location.origin}>
+              BQNPAD
+            </a>
             <a
               target="_blank"
               className="Button"
               href="https://mlochbaum.github.io/BQN/index.html"
             >
-              BQN Website↗
+              BQN Website ↗
             </a>
             <a
               target="_blank"
               className="Button"
               href="https://mlochbaum.github.io/BQN/help/index.html"
             >
-              Help↗
+              Help ↗
             </a>
           </div>
+          <div style={{ display: "flex" }}>
+            {status != null && (
+              <div className="Toolbar__section">
+                <div
+                  className={UI.cx(
+                    "VMStatus",
+                    status === "idle" && "VMStatus--idle",
+                    status === "running" && "VMStatus--running",
+                  )}
+                >
+                  VM {status.toUpperCase()}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="Toolbar">
+        <div className="Toolbar" style={{ justifyContent: "flex-start" }}>
           <div className="Toolbar__section">
             <div className="label">Session: </div>
             {!disableSessionControls && (
