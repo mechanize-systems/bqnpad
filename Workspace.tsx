@@ -3,9 +3,9 @@
 import * as Autocomplete from "@codemirror/autocomplete";
 import * as CloseBrackets from "@codemirror/closebrackets";
 import * as History from "@codemirror/history";
+import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
-import * as Language from "@codemirror/language";
 import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
@@ -154,11 +154,26 @@ export function Workspace({
     <div className="Workspace">
       <div className="WorkspaceHeader">
         <div className="Toolbar">
-          <div className="title">
-            <a className="Button" href={window.location.origin}>
-              BQNPAD
-            </a>
-          </div>
+          <a className="title Button" href={window.location.origin}>
+            BQNPAD
+          </a>
+          {status != null && (
+            <div className="Toolbar__section">
+              <div
+                className="Toolbar__element VMStatus"
+                style={{
+                  color:
+                    status === "idle"
+                      ? "green"
+                      : status === "running"
+                      ? "orange"
+                      : undefined,
+                }}
+              >
+                {status.toUpperCase().padEnd(7, "\u00A0")}
+              </div>
+            </div>
+          )}
           <div>
             <a
               target="_blank"
@@ -197,24 +212,6 @@ export function Workspace({
               Download
             </UI.Button>
           </div>
-          {status != null && (
-            <div className="Toolbar__section">
-              <div className="label">VM:</div>
-              <div
-                className="Toolbar__element"
-                style={{
-                  color:
-                    status === "idle"
-                      ? "green"
-                      : status === "running"
-                      ? "orange"
-                      : undefined,
-                }}
-              >
-                {status.toUpperCase().padEnd(7, "\u00A0")}
-              </div>
-            </div>
-          )}
           <div className="Toolbar__section">
             <div className="label">Preferences: </div>
             <UI.Checkbox
@@ -785,7 +782,7 @@ class CellOutputWidget extends View.WidgetType {
   private _folded: boolean | null = null;
   private _numberOfLines: number | null = null;
   private foldCutoffLines = 10;
-  private root: HTMLDivElement = document.createElement("div");
+  private root: HTMLDivElement | null = null;
   private _result: REPL.REPLResult | null = null;
 
   constructor(private readonly cell: WorkspaceCell) {
@@ -834,9 +831,9 @@ class CellOutputWidget extends View.WidgetType {
   }
 
   render() {
-    while (this.root.lastChild) this.root.removeChild(this.root.lastChild);
+    let root = this.root!;
+    while (root.lastChild) root.removeChild(root.lastChild);
 
-    this.root.classList.add("Output");
     let output = document.createElement("div");
     renderResult(
       output,
@@ -852,19 +849,19 @@ class CellOutputWidget extends View.WidgetType {
       button.classList.add("Output__gutter--disabled");
     }
     button.title = "Output is too long (fold/unfold)";
-    let innerHTML = "&nbsp;&nbsp;&nbsp;⇅&nbsp;";
-    if (this.needFold) innerHTML += "\n&nbsp;";
-    button.innerHTML = innerHTML;
+    button.innerHTML = "⇅";
 
     button.onclick = () => {
       this._folded = this._folded == null ? false : !this._folded;
       this.render();
     };
-    this.root.appendChild(button);
-    this.root.appendChild(output);
+    root.appendChild(output);
+    root.appendChild(button);
   }
 
   toDOM() {
+    this.root = document.createElement("div");
+    this.root.classList.add("Output");
     this.result = this.cell.result?.isCompleted
       ? this.cell.result.value
       : this.cell.resultPreview != null
@@ -884,6 +881,7 @@ class CellOutputWidget extends View.WidgetType {
 
   override destroy(_dom: HTMLElement) {
     this.mounted = false;
+    this.root = null;
   }
 
   override eq(other: CellOutputWidget) {
@@ -960,6 +958,7 @@ class PreviewOutputWidget extends View.WidgetType {
 
   toDOM() {
     this.root = document.createElement("div");
+    this.root.classList.add("Output");
     this.render();
     this.schedule();
     return this.root;
@@ -971,6 +970,7 @@ class PreviewOutputWidget extends View.WidgetType {
 
   override destroy(_dom: HTMLElement) {
     this.mounted = false;
+    this.root = null;
     if (this.timer != null) clearTimeout(this.timer);
   }
 }

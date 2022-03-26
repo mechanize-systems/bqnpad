@@ -2,17 +2,35 @@
 @import "./font/index.css";
 
 :root {
+  --slate1: hsl(206, 30%, 98.8%);
+  --slate2: hsl(210, 16.7%, 97.6%);
+  --slate3: hsl(209, 13.3%, 95.3%);
+  --slate4: hsl(209, 12.2%, 93.2%);
+  --slate5: hsl(208, 11.7%, 91.1%);
+  --slate6: hsl(208, 11.3%, 88.9%);
+  --slate7: hsl(207, 11.1%, 85.9%);
+  --slate8: hsl(205, 10.7%, 78%);
+  --slate9: hsl(206, 6%, 56.1%);
+  --slate10: hsl(206, 5.8%, 52.3%);
+  --slate11: hsl(206, 6%, 43.5%);
+  --slate12: hsl(206, 24%, 9%);
+
+  --app-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --app-font-size: 14px;
+  --app-title-font-size: 18px;
+  --app-bg: var(--slate1);
+  --app-ui-bg: var(--slate3);
+  --app-ui-hover-bg: var(--slate4);
+  --app-ui-active-bg: var(--slate5);
+  --app-border: var(--slate6);
+  --app-color: var(--slate12);
+  --app-color-dimmed: var(--slate11);
+
   --editor-font-family: BQN, Menlo, Monaco, monospace;
-  --ui-font-family: BQN, Menlo, Monaco, monospace;
-
-  --ui-background: #e3e7e7;
-  --ui-background-hover: #ddd;
-  --ui-background-active: #ccc;
-  --ui-border: #bbb;
-  --ui-color: #333;
-  --ui-color-dimmed: #666;
-
-  --editor-color: var(--ui-color);
+  --editor-font-size: 20px;
+  --editor-bg: var(--slate1);
+  --editor-color: var(--app-color);
   --editor-color-output: #444;
   --editor-color-output-error: red;
   --editor-color-output-dimmed: #888;
@@ -24,10 +42,10 @@ body,
   overflow: hidden;
   height: 100%;
   width: 100%;
-  background-color: var(--ui-background);
-  font-family: var(--ui-font-family);
-  color: var(--ui-color);
-  font-size: 18px;
+  background-color: var(--app-bg);
+  font-family: var(--app-font-family);
+  color: var(--app-color);
+  font-size: var(--app-font-size);
 }
 * {
   box-sizing: border-box;
@@ -44,12 +62,14 @@ body,
   flex-direction: row;
   align-items: baseline;
   position: relative;
+  font-weight: 400;
+  border-radius: 3px;
 }
 .Checkbox:hover {
-  background-color: var(--ui-background-hover);
+  background-color: var(--app-ui-hover-bg);
 }
 .Checkbox:active {
-  background-color: var(--ui-background-active);
+  background-color: var(--app-ui-active-bg);
 }
 .Checkbox > input {
   position: relative;
@@ -61,13 +81,15 @@ body,
   padding: 5px;
   background-color: transparent;
   border: none;
-  color: var(--ui-color);
+  color: var(--app-color);
+  font-weight: 400;
+  border-radius: 3px;
 }
 .Button:hover {
-  background-color: var(--ui-background-hover);
+  background-color: var(--app-ui-hover-bg);
 }
 .Button:active {
-  background-color: var(--ui-background-active);
+  background-color: var(--app-ui-active-bg);
 }
 a.Button {
   text-decoration: none;
@@ -81,12 +103,15 @@ a.Button {
   border: none;
   background-color: transparent;
   border-radius: 0;
+  direction: rtl;
+  font-weight: 400;
+  border-radius: 3px;
 }
 .Select:hover {
-  background-color: var(--ui-background-hover);
+  background-color: var(--app-ui-hover-bg);
 }
 .Select:active {
-  background-color: var(--ui-background-active);
+  background-color: var(--app-ui-active-bg);
 }
 
 /**
@@ -100,11 +125,12 @@ a.Button {
   height: 100%;
   display: flex;
   color: var(--editor-color);
+  background: var(--editor-bg);
 }
 
 .Editor .cm-content {
   font-family: var(--editor-font-family);
-  font-size: 20px;
+  font-size: var(--editor-font-size);
   padding-top: 12px;
   padding-left: 12px;
   padding-right: 12px;
@@ -117,6 +143,7 @@ a.Button {
 }
 .Editor .cm-line {
   padding: 0;
+  padding-left: 47px;
 }
 .Editor .cm-focused .cm-cursor {
   color: var(--editor-color);
@@ -126,20 +153,20 @@ a.Button {
 
 .Editor .cm-tooltip-autocomplete {
   border: none !important;
-  background-color: var(--ui-background) !important;
+  background-color: var(--app-bg) !important;
 }
 
 .Editor .cm-tooltip-autocomplete ul li {
   color: var(--editor-color) !important;
   font-family: var(--editor-font-family);
-  font-size: 18px;
+  font-size: var(--editor-font-size);
   display: flex;
   justify-content: space-between;
 }
 
 .Editor .cm-tooltip-autocomplete ul li[aria-selected] {
   color: var(--editor-color) !important;
-  background-color: var(--ui-background-hover) !important;
+  background-color: var(--app-ui-hover-bg) !important;
 }
 
 .Editor .cm-completionIcon {
@@ -153,8 +180,23 @@ a.Button {
 
 .Editor .cm-completionDetail {
   font-style: normal !important;
-  font-size: 20px;
+  font-size: var(--editor-font-size);
   padding-right: 10px;
+}
+
+/**
+ * TYPOGRAPHY
+ */
+
+.title {
+  font-size: var(--app-title-font-size);
+  font-weight: 600;
+}
+
+.label {
+  color: var(--app-color-dimmed);
+  font-weight: 400;
+  padding-right: 5px;
 }
 
 /**
@@ -177,7 +219,7 @@ a.Button {
   flex-direction: row;
   color: var(--editor-color-output);
   font-family: var(--editor-font-family);
-  font-size: 20px;
+  font-size: var(--editor-font-size);
   line-height: 1.4;
   position: relative;
 }
@@ -189,11 +231,13 @@ a.Button {
   display: flex;
   align-items: flex-end;
   padding: 0px;
-  color: var(--ui-color-dimmed);
+  color: var(--app-color-dimmed);
   font-weight: normal;
+  padding: 5px;
+  width: 20px;
 }
 .Output__gutter--disabled {
-  visibility: hidden;
+  display: none;
 }
 
 .Output__output {
@@ -215,7 +259,7 @@ a.Button {
 }
 
 .SessionBanner {
-  color: var(--ui-color-dimmed);
+  color: var(--app-color-dimmed);
   display: flex;
   flex-direction: row;
   width: 100%;
@@ -225,11 +269,11 @@ a.Button {
 .SessionBanner__link {
   padding-top: 0;
   padding-bottom: 0;
-  color: var(--ui-color-dimmed);
+  color: var(--app-color-dimmed);
 }
 
 .Toolbar {
-  font-weight: 400;
+  font-weight: 300;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -266,13 +310,17 @@ a.Button {
   padding: 5px;
   border-bottom-width: 2px;
   border-bottom-style: solid;
-  border-bottom-color: var(--ui-border);
+  border-bottom-color: var(--app-border);
+}
+
+.VMStatus {
+  font-weight: 500;
 }
 
 .GlyphsPalette {
   display: flex;
   flex-direction: row;
-  font-size: 20px;
+  font-size: var(--editor-font-size);
   width: 100%;
   flex-wrap: wrap;
   font-family: var(--editor-font-family);
@@ -284,22 +332,8 @@ a.Button {
   padding: 5px;
 }
 .GlyphsPalette__item:hover {
-  background-color: var(--ui-background-hover);
+  background-color: var(--app-ui-hover-bg);
 }
 .GlyphsPalette__item:active {
-  background-color: var(--ui-background-active);
-}
-
-/**
- * TYPOGRAPHY
- */
-
-.title {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.label {
-  color: var(--ui-color-dimmed);
-  padding-right: 5px;
+  background-color: var(--app-ui-active-bg);
 }

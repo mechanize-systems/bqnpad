@@ -1,17 +1,11 @@
+import { default as cx } from "classnames";
 import * as React from "react";
 
-export { default as cx } from "classnames";
+export { cx };
 
 export function setEditorFont(font: string) {
   document.documentElement.style.setProperty(
     "--editor-font-family",
-    `${font}, Menlo, Monaco, monospace`,
-  );
-}
-
-export function setUIFont(font: string) {
-  document.documentElement.style.setProperty(
-    "--ui-font-family",
     `${font}, Menlo, Monaco, monospace`,
   );
 }
@@ -43,7 +37,10 @@ export function Checkbox(props: CheckboxProps) {
     props.onValue((ev.target as HTMLInputElement).checked);
   };
   return (
-    <label className="Checkbox" onMouseDown={onMouseDown}>
+    <label
+      className={cx("Checkbox", props.value && "Checkbox--checked")}
+      onMouseDown={onMouseDown}
+    >
       <input type="checkbox" checked={props.value} onChange={handleChange} />{" "}
       {props.children}
     </label>

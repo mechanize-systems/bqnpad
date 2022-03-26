@@ -28,7 +28,6 @@ export function FontSelect() {
   );
   React.useLayoutEffect(() => {
     UI.setEditorFont(currentFont);
-    UI.setUIFont(currentFont);
   }, [currentFont]);
   return (
     <>
