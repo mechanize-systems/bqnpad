@@ -79,6 +79,7 @@
 
   --editor-font-family: BQN, Menlo, Monaco, monospace;
   --editor-font-size: 20px;
+  --editor-font-size-xs: 16px;
   --editor-bg: var(--slate1);
   --editor-color: var(--app-color);
   --editor-color-output: var(--slate11);
@@ -198,14 +199,16 @@ a.Button {
 }
 
 .Editor .cm-tooltip-autocomplete {
-  border: none !important;
+  border: 1px solid var(--app-border);
+  font-size: var(--editor-font-size-xs);
+  border-bottom-width: 2px;
   background-color: var(--app-bg) !important;
 }
 
 .Editor .cm-tooltip-autocomplete ul li {
   color: var(--editor-color) !important;
   font-family: var(--editor-font-family);
-  font-size: var(--editor-font-size);
+  font-size: var(--editor-font-size-xs);
   display: flex;
   justify-content: space-between;
 }
