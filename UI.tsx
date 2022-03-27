@@ -91,3 +91,7 @@ export function useTheme() {
     theme === "system" ? (isDarkMode ? "dark" : "light") : theme;
   return [theme0, theme, setTheme] as const;
 }
+
+// TODO: need to infer this from CSS
+// line-height (1.4) * fontSize (20)
+export const LINE_HEIGHT = 28;

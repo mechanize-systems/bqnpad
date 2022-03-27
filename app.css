@@ -67,6 +67,7 @@
   --app-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   --app-font-size: 16px;
+  --app-font-size-xs: 14px;
   --app-title-font-size: 18px;
   --app-bg: var(--slate1);
   --app-ui-bg: var(--slate3);
@@ -303,16 +304,19 @@ a.Button {
 }
 
 .SessionBanner {
+  font-family: var(--app-font-family);
+  font-size: var(--app-font-size-xs);
   color: var(--app-color-dimmed);
   display: flex;
   flex-direction: row;
   width: 100%;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
+  border-radius: 3px;
+}
+.SessionBanner__title {
 }
 .SessionBanner__link {
-  padding-top: 0;
-  padding-bottom: 0;
   color: var(--app-color-dimmed);
 }
 

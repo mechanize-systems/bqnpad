@@ -16,13 +16,10 @@ import { FontSelect } from "./FontSelect";
 import { GlyphsPalette } from "./GlyphPalette";
 import * as REPL from "./REPL";
 import { REPLWebWorkerClient } from "./REPLWebWorkerClient";
+import { SessionBanner } from "./SessionBanner";
 import * as UI from "./UI";
 import * as Workspace0 from "./Workspace0";
-import { WorkspaceManager, encodeWorkspace } from "./WorkspaceManager";
-
-// TODO: need to infer this from CSS
-// line-height (1.4) * fontSize (20)
-const LINE_HEIGHT = 28;
+import type { WorkspaceManager } from "./WorkspaceManager";
 
 export type WorkspaceProps = {
   manager: WorkspaceManager;
@@ -732,7 +729,7 @@ class PlaceholderWidget extends View.WidgetType {
   }
 
   override get estimatedHeight() {
-    return LINE_HEIGHT;
+    return UI.LINE_HEIGHT;
   }
 
   toDOM() {
@@ -843,9 +840,9 @@ class CellOutputWidget extends View.WidgetType {
 
   override get estimatedHeight() {
     if (this.folded) {
-      return this.foldCutoffLines * LINE_HEIGHT;
+      return this.foldCutoffLines * UI.LINE_HEIGHT;
     } else {
-      return this.numberOfLines * LINE_HEIGHT;
+      return this.numberOfLines * UI.LINE_HEIGHT;
     }
   }
 
@@ -939,7 +936,7 @@ class PreviewOutputWidget extends View.WidgetType {
   }
 
   override get estimatedHeight() {
-    return this.numberOfLines * LINE_HEIGHT;
+    return this.numberOfLines * UI.LINE_HEIGHT;
   }
 
   render() {
@@ -991,51 +988,6 @@ class PreviewOutputWidget extends View.WidgetType {
     this.mounted = false;
     this.root = null;
     if (this.timer != null) clearTimeout(this.timer);
-  }
-}
-
-class SessionBanner extends View.WidgetType {
-  constructor(
-    private readonly session: Workspace0.Session0,
-    private readonly getWorkspace: () => Workspace0.Workspace0,
-    private readonly isCurrent: boolean,
-  ) {
-    super();
-  }
-
-  override get estimatedHeight() {
-    return LINE_HEIGHT;
-  }
-
-  toDOM() {
-    let root = document.createElement("div");
-    root.style.height = `${this.estimatedHeight}px`;
-    root.classList.add("SessionBanner");
-
-    let date = new Intl.DateTimeFormat(undefined, {
-      dateStyle: "short",
-      timeStyle: "short",
-    }).format(this.session.createdAt);
-    let label = document.createElement("div");
-    label.innerText = `STARTED ${date}`;
-    root.appendChild(label);
-
-    let shareButton = document.createElement("button");
-    shareButton.classList.add("Button");
-    shareButton.classList.add("SessionBanner__link");
-    shareButton.textContent = "LINK↗";
-    shareButton.title = "Shareable link to this session";
-    shareButton.onclick = () => {
-      let workspace = this.getWorkspace();
-      let code = encodeWorkspace(
-        workspace,
-        this.isCurrent ? undefined : this.session,
-      );
-      let url = `${window.location.origin}/s?bqn=${encodeURIComponent(code)}`;
-      window.open(url);
-    };
-    root.appendChild(shareButton);
-    return root;
   }
 }
 
