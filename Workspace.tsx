@@ -177,6 +177,13 @@ export function Workspace({
             <a
               target="_blank"
               className="Button"
+              href="https://mlochbaum.github.io/BQN/keymap.html"
+            >
+              Keymap ↗
+            </a>
+            <a
+              target="_blank"
+              className="Button"
               href="https://mlochbaum.github.io/BQN/help/index.html"
             >
               Help ↗
