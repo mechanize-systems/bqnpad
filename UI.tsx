@@ -1,6 +1,8 @@
 import { default as cx } from "classnames";
 import * as React from "react";
 
+import * as Base from "@mechanize/base";
+
 export { cx };
 
 export function setEditorFont(font: string) {
@@ -47,17 +49,20 @@ export function Checkbox(props: CheckboxProps) {
   );
 }
 
-export type SelectProps = {
-  value: string;
-  onValue: (value: string) => void;
-  options: SelectOption[];
+export type SelectProps<S extends string = string> = {
+  value: S;
+  onValue: (value: S) => void;
+  options: SelectOption<S>[];
 };
 
-export type SelectOption = { value: string; label: string };
+export type SelectOption<S extends string = string> = {
+  value: S;
+  label: string;
+};
 
-export function Select(props: SelectProps) {
+export function Select<S extends string = string>(props: SelectProps<S>) {
   let onChange: React.FormEventHandler = (ev) =>
-    props.onValue((ev.target as HTMLSelectElement).value);
+    props.onValue((ev.target as HTMLSelectElement).value as S);
   let options = props.options.map((option) => (
     <option key={option.value} value={option.value}>
       {option.label}
@@ -68,4 +73,21 @@ export function Select(props: SelectProps) {
       {options}
     </select>
   );
+}
+
+export function useTheme() {
+  let [theme, setTheme] = Base.React.usePersistentState<
+    "dark" | "light" | "system"
+  >("bqnpad-theme", () => "system");
+  React.useLayoutEffect(() => {
+    document.documentElement.removeAttribute("data-theme");
+    if (theme === "system") return;
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+  let [isDarkMode, setIsDarkMode] = React.useState<null | boolean>(null);
+  let isDarkMode0 = Base.React.usePrefersDarkMode(setIsDarkMode, []);
+  isDarkMode = isDarkMode ?? isDarkMode0;
+  let theme0: "dark" | "light" =
+    theme === "system" ? (isDarkMode ? "dark" : "light") : theme;
+  return [theme0, theme, setTheme] as const;
 }

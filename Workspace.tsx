@@ -69,14 +69,26 @@ export function Workspace({
     [manager, workspace],
   );
 
+  let [theme0, theme, setTheme] = UI.useTheme();
+  let themeExtension = Editor.useStateCompartment(
+    editor,
+    () => {
+      if (theme0 === "light") return LangBQN.highlight;
+      else if (theme0 === "dark") return LangBQN.highlightDark;
+      else Base.never(theme0);
+    },
+    [theme0],
+  );
+
   let extensions = React.useMemo(
     () => [
       LangBQN.bqn(),
+      themeExtension,
       CloseBrackets.closeBrackets(),
       Language.indentOnInput(),
       workspace.extension,
     ],
-    [workspace],
+    [workspace, themeExtension],
   );
 
   let keybindings: View.KeyBinding[] = React.useMemo<View.KeyBinding[]>(() => {
@@ -191,7 +203,7 @@ export function Workspace({
         </div>
         <div className="Toolbar" style={{ justifyContent: "flex-start" }}>
           <div className="Toolbar__section">
-            <div className="label">Session: </div>
+            <div className="label">Session:</div>
             {!disableSessionControls && (
               <UI.Button title="Create new session" onClick={() => onNew()}>
                 New
@@ -211,7 +223,6 @@ export function Workspace({
             </UI.Button>
           </div>
           <div className="Toolbar__section">
-            <div className="label">Preferences: </div>
             <UI.Checkbox
               value={enableLivePreview}
               onValue={setEnableLivePreview}
@@ -219,14 +230,24 @@ export function Workspace({
               Live preview
             </UI.Checkbox>
             <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
-              Show glyphbar
+              Show glyphs
             </UI.Checkbox>
           </div>
           <div className="Toolbar__section">
+            <div className="label">Theme:</div>
+            <UI.Select
+              value={theme}
+              onValue={setTheme}
+              options={[
+                { label: "System", value: "system" },
+                { label: "Light", value: "light" },
+                { label: "Dark", value: "dark" },
+              ]}
+            />
             <FontSelect />
           </div>
         </div>
-        {showGlyphbar && <GlyphsPalette onClick={onGlyph} />}
+        {showGlyphbar && <GlyphsPalette onClick={onGlyph} theme={theme0} />}
       </div>
       <Editor.Editor
         className="Editor"

@@ -14,6 +14,7 @@ import * as View from "@codemirror/view";
 import { parser } from "lezer-bqn";
 
 let tags = {
+  BQNval: Tag.define(),
   BQNstring: Tag.define(),
   BQNnumber: Tag.define(),
   BQNnothing: Tag.define(),
@@ -28,6 +29,22 @@ let tags = {
 };
 
 export let highlight = HighlightStyle.define([
+  { tag: tags.BQNval, color: "#444" },
+  { tag: tags.BQNstring, color: "#3e99ab" },
+  { tag: tags.BQNnumber, color: "#a73227" },
+  { tag: tags.BQNnothing, color: "#a73227" },
+  { tag: tags.BQNparen, color: "#5a524a" },
+  { tag: tags.BQNdelim, color: "#9c7dc1" },
+  { tag: tags.BQNlist, color: "#9c7dc1" },
+  { tag: tags.BQNblock, color: "#862f9e" },
+  { tag: tags.BQNfun, color: "#3aa548" },
+  { tag: tags.BQNmod1, color: "#93428b" },
+  { tag: tags.BQNmod2, color: "#998819" },
+  { tag: tags.BQNcomment, color: "#3f3daa" },
+]);
+
+export let highlightDark = HighlightStyle.define([
+  { tag: tags.BQNval, color: "#eee" },
   { tag: tags.BQNstring, color: "#3e99ab" },
   { tag: tags.BQNnumber, color: "#a73227" },
   { tag: tags.BQNnothing, color: "#a73227" },
@@ -64,6 +81,7 @@ let bqnStyleTags = styleTags({
   PRIMMOD2: tags.BQNmod2,
   SYSMOD2: tags.BQNmod2,
   SPECMOD2: tags.BQNmod2,
+  VAL: tags.BQNval,
 });
 
 export let language = LRLanguage.define({
@@ -85,7 +103,7 @@ export let language = LRLanguage.define({
 export type Glyph = {
   glyph: string;
   key: string | null;
-  tag: Tag | null;
+  tag: Tag;
   title: string;
 };
 
@@ -477,19 +495,19 @@ export let glyphs: Glyph[] = [
   {
     glyph: "←",
     title: "Define",
-    tag: null,
+    tag: tags.BQNval,
     key: "[",
   },
   {
     glyph: "⇐",
     title: "Export",
-    tag: null,
+    tag: tags.BQNval,
     key: "?",
   },
   {
     glyph: "↩",
     title: "Change",
-    tag: null,
+    tag: tags.BQNval,
     key: "'",
   },
   {
@@ -501,25 +519,25 @@ export let glyphs: Glyph[] = [
   {
     glyph: ",",
     title: "Separator",
-    tag: null,
+    tag: tags.BQNval,
     key: null,
   },
   {
     glyph: ".",
     title: "Namespace field",
-    tag: null,
+    tag: tags.BQNval,
     key: null,
   },
   {
     glyph: "(",
     title: "Begin expression",
-    tag: null,
+    tag: tags.BQNval,
     key: null,
   },
   {
     glyph: ")",
     title: "End expression",
-    tag: null,
+    tag: tags.BQNval,
     key: null,
   },
   {
@@ -537,19 +555,19 @@ export let glyphs: Glyph[] = [
   {
     glyph: ";",
     title: "Next body",
-    tag: null,
+    tag: tags.BQNval,
     key: null,
   },
   {
     glyph: ":",
     title: "Header",
-    tag: null,
+    tag: tags.BQNval,
     key: null,
   },
   {
     glyph: "?",
     title: "Predicate",
-    tag: null,
+    tag: tags.BQNval,
     key: null,
   },
   {
@@ -579,13 +597,13 @@ export let glyphs: Glyph[] = [
   {
     glyph: "•",
     title: "System",
-    tag: null,
+    tag: tags.BQNval,
     key: "0",
   },
   {
     glyph: "𝕨",
     title: "Left argument",
-    tag: null,
+    tag: tags.BQNval,
     key: "w",
   },
   {
@@ -597,7 +615,7 @@ export let glyphs: Glyph[] = [
   {
     glyph: "𝕩",
     title: "Right argument",
-    tag: null,
+    tag: tags.BQNval,
     key: "x",
   },
   {
@@ -609,7 +627,7 @@ export let glyphs: Glyph[] = [
   {
     glyph: "𝕗",
     title: "Modifier left operand",
-    tag: null,
+    tag: tags.BQNval,
     key: "f",
   },
   {
@@ -621,7 +639,7 @@ export let glyphs: Glyph[] = [
   {
     glyph: "𝕘",
     title: "Modifier right operand",
-    tag: null,
+    tag: tags.BQNval,
     key: "g",
   },
   {
@@ -633,7 +651,7 @@ export let glyphs: Glyph[] = [
   {
     glyph: "𝕤",
     title: "Current function (as subject)",
-    tag: null,
+    tag: tags.BQNval,
     key: "s",
   },
   {
@@ -773,7 +791,6 @@ let glyphCompletion: Autocomplete.CompletionSource = (
  */
 export function bqn() {
   let extensions: State.Extension[] = [
-    highlight,
     glyphInput(),
     Autocomplete.autocompletion({
       override: [glyphCompletion],

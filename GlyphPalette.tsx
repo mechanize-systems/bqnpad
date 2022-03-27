@@ -1,18 +1,21 @@
+import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
-import * as EditorBQN from "lang-bqn";
 import * as UI from "./UI";
 
 export type GlyphsPaletteProps = {
-  onClick: (glyph: EditorBQN.Glyph) => void;
+  theme: "dark" | "light";
+  onClick: (glyph: LangBQN.Glyph) => void;
 };
 
-export function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
+export function GlyphsPalette({ theme, onClick }: GlyphsPaletteProps) {
+  let hi = theme === "dark" ? LangBQN.highlightDark : LangBQN.highlight;
+  console.log(hi, theme);
   let chars = React.useMemo(() => {
-    return EditorBQN.glyphs.map((glyph) => {
+    return LangBQN.glyphs.map((glyph) => {
       let className =
         glyph.tag != null
-          ? EditorBQN.highlight.match(glyph.tag, null as any) ?? undefined
+          ? hi.match(glyph.tag, null as any) ?? undefined
           : undefined;
       let title =
         glyph.title + "\n\n" + (glyph.key ? `\\-${glyph.key}` : glyph.glyph);
@@ -27,6 +30,6 @@ export function GlyphsPalette({ onClick }: GlyphsPaletteProps) {
         </button>
       );
     });
-  }, [onClick]);
+  }, [hi, onClick]);
   return <div className="GlyphsPalette">{chars}</div>;
 }

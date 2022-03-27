@@ -30,13 +30,13 @@ export function FontSelect() {
     UI.setEditorFont(currentFont);
   }, [currentFont]);
   return (
-    <>
+    <div className="Toolbar__section">
       <div className="label">Font: </div>
       <UI.Select
         value={currentFont}
         onValue={setCurrentFont}
         options={FONTS}
       />
-    </>
+    </div>
   );
 }
