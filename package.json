@@ -10,10 +10,10 @@
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
   "devDependencies": {
-    "@codemirror/autocomplete": "^0.19.13",
+    "@codemirror/autocomplete": "^0.19.0",
     "@codemirror/commands": "^0.19.8",
     "@codemirror/fold": "^0.19.3",
-    "@codemirror/highlight": "^0.19.7",
+    "@codemirror/highlight": "^0.19.8",
     "@codemirror/history": "^0.19.2",
     "@codemirror/closebrackets": "^0.19.1",
     "@codemirror/language": "^0.19.8",

@@ -8,12 +8,12 @@ importers:
 
   .:
     specifiers:
-      '@codemirror/autocomplete': ^0.19.13
+      '@codemirror/autocomplete': ^0.19.0
       '@codemirror/closebrackets': ^0.19.1
       '@codemirror/collab': ^0.19.0
       '@codemirror/commands': ^0.19.8
       '@codemirror/fold': ^0.19.3
-      '@codemirror/highlight': ^0.19.7
+      '@codemirror/highlight': ^0.19.8
       '@codemirror/history': ^0.19.2
       '@codemirror/language': ^0.19.8
       '@codemirror/state': ^0.19.9
@@ -55,11 +55,11 @@ importers:
       debug: 4.3.4
       ws: 8.5.0
     devDependencies:
-      '@codemirror/autocomplete': 0.19.14
+      '@codemirror/autocomplete': 0.19.15
       '@codemirror/closebrackets': 0.19.1
       '@codemirror/commands': 0.19.8
       '@codemirror/fold': 0.19.3
-      '@codemirror/highlight': 0.19.7
+      '@codemirror/highlight': 0.19.8
       '@codemirror/history': 0.19.2
       '@codemirror/language': 0.19.8
       '@codemirror/text': 0.19.6
@@ -366,8 +366,8 @@ packages:
       to-fast-properties: 2.0.0
     dev: true
 
-  /@codemirror/autocomplete/0.19.14:
-    resolution: {integrity: sha512-4PqJG7GGTePc+FQF387RFebDV4ERvKj23gQBmzNtu64ZSHlYEGulwP5EIIfulBiaWEmei9TYVaMFmTdNfofpRQ==}
+  /@codemirror/autocomplete/0.19.15:
+    resolution: {integrity: sha512-GQWzvvuXxNUyaEk+5gawbAD8s51/v2Chb++nx0e2eGWrphWk42isBtzOMdc3DxrxrZtPZ55q2ldNp+6G8KJLIQ==}
     dependencies:
       '@codemirror/language': 0.19.8
       '@codemirror/state': 0.19.9
@@ -422,8 +422,8 @@ packages:
       '@codemirror/view': 0.19.47
     dev: true
 
-  /@codemirror/highlight/0.19.7:
-    resolution: {integrity: sha512-3W32hBCY0pbbv/xidismw+RDMKuIag+fo4kZIbD7WoRj+Ttcaxjf+vP6RttRHXLaaqbWh031lTeON8kMlDhMYw==}
+  /@codemirror/highlight/0.19.8:
+    resolution: {integrity: sha512-v/lzuHjrYR8MN2mEJcUD6fHSTXXli9C1XGYpr+ElV6fLBIUhMTNKR3qThp611xuWfXfwDxeL7ppcbkM/MzPV3A==}
     dependencies:
       '@codemirror/language': 0.19.8
       '@codemirror/rangeset': 0.19.9

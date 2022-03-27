@@ -3,6 +3,7 @@
  */
 import * as Autocomplete from "@codemirror/autocomplete";
 import { HighlightStyle, Tag, styleTags } from "@codemirror/highlight";
+import * as Highlight from "@codemirror/highlight";
 import {
   LRLanguage,
   LanguageSupport,
@@ -28,35 +29,41 @@ let tags = {
   BQNcomment: Tag.define(),
 };
 
-export let highlight = HighlightStyle.define([
-  { tag: tags.BQNval, color: "#444" },
-  { tag: tags.BQNstring, color: "#3e99ab" },
-  { tag: tags.BQNnumber, color: "#a73227" },
-  { tag: tags.BQNnothing, color: "#a73227" },
-  { tag: tags.BQNparen, color: "#5a524a" },
-  { tag: tags.BQNdelim, color: "#9c7dc1" },
-  { tag: tags.BQNlist, color: "#9c7dc1" },
-  { tag: tags.BQNblock, color: "#862f9e" },
-  { tag: tags.BQNfun, color: "#3aa548" },
-  { tag: tags.BQNmod1, color: "#93428b" },
-  { tag: tags.BQNmod2, color: "#998819" },
-  { tag: tags.BQNcomment, color: "#3f3daa" },
-]);
+export let highlightLight = HighlightStyle.define(
+  [
+    { tag: tags.BQNval, color: "#444" },
+    { tag: tags.BQNstring, color: "#3e99ab" },
+    { tag: tags.BQNnumber, color: "#a73227" },
+    { tag: tags.BQNnothing, color: "#a73227" },
+    { tag: tags.BQNparen, color: "#5a524a" },
+    { tag: tags.BQNdelim, color: "#9c7dc1" },
+    { tag: tags.BQNlist, color: "#9c7dc1" },
+    { tag: tags.BQNblock, color: "#862f9e" },
+    { tag: tags.BQNfun, color: "#3aa548" },
+    { tag: tags.BQNmod1, color: "#93428b" },
+    { tag: tags.BQNmod2, color: "#998819" },
+    { tag: tags.BQNcomment, color: "#3f3daa" },
+  ],
+  { themeType: "light" },
+);
 
-export let highlightDark = HighlightStyle.define([
-  { tag: tags.BQNval, color: "#eee" },
-  { tag: tags.BQNstring, color: "#3e99ab" },
-  { tag: tags.BQNnumber, color: "#a73227" },
-  { tag: tags.BQNnothing, color: "#a73227" },
-  { tag: tags.BQNparen, color: "#5a524a" },
-  { tag: tags.BQNdelim, color: "#9c7dc1" },
-  { tag: tags.BQNlist, color: "#9c7dc1" },
-  { tag: tags.BQNblock, color: "#862f9e" },
-  { tag: tags.BQNfun, color: "#3aa548" },
-  { tag: tags.BQNmod1, color: "#93428b" },
-  { tag: tags.BQNmod2, color: "#998819" },
-  { tag: tags.BQNcomment, color: "#3f3daa" },
-]);
+export let highlightDark = HighlightStyle.define(
+  [
+    { tag: tags.BQNval, color: "#eee" },
+    { tag: tags.BQNstring, color: "#3e99ab" },
+    { tag: tags.BQNnumber, color: "#a73227" },
+    { tag: tags.BQNnothing, color: "#a73227" },
+    { tag: tags.BQNparen, color: "#5a524a" },
+    { tag: tags.BQNdelim, color: "#9c7dc1" },
+    { tag: tags.BQNlist, color: "#9c7dc1" },
+    { tag: tags.BQNblock, color: "#862f9e" },
+    { tag: tags.BQNfun, color: "#3aa548" },
+    { tag: tags.BQNmod1, color: "#93428b" },
+    { tag: tags.BQNmod2, color: "#998819" },
+    { tag: tags.BQNcomment, color: "#3f3daa" },
+  ],
+  { themeType: "dark" },
+);
 
 let bqnStyleTags = styleTags({
   COMMENT: tags.BQNcomment,
@@ -698,6 +705,9 @@ export let glyphs: Glyph[] = [
   },
 ];
 
+export let glyphsMap: Map<string, Glyph> = new Map();
+for (let glyph of glyphs) glyphsMap.set(glyph.glyph, glyph);
+
 export let keymap: Map<string, Glyph> = new Map();
 for (let glyph of glyphs) if (glyph.key != null) keymap.set(glyph.key, glyph);
 
@@ -762,15 +772,67 @@ function glyphInput(): State.Extension {
   return [inputHandler, manageExpecting];
 }
 
-let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
-  let detail = glyph.glyph;
-  if (glyph.key != null) detail = `\\${glyph.key} ${detail}`;
-  return {
-    label: `\\${glyph.title}`,
-    apply: glyph.glyph,
-    detail,
+export function highlight(highlight: HighlightStyle, textContent: string) {
+  let nodes: HTMLElement[] = [];
+  let callback = (text: string, style: null | string): void => {
+    let node = document.createElement("span");
+    if (style) node.classList.add(style);
+    node.textContent = text;
+    nodes.push(node);
   };
-});
+  let tree = language.parser.parse(textContent);
+  let pos = 0;
+  Highlight.highlightTree(tree, highlight.match, (from, to, classes) => {
+    if (from > pos) callback(textContent.slice(pos, from), null);
+    callback(textContent.slice(from, to), classes);
+    pos = to;
+  });
+  pos != tree.length && callback(textContent.slice(pos, tree.length), null);
+  return nodes;
+}
+
+let glyphCompletionGlyph = (
+  completion: Autocomplete.Completion,
+  state: State.EditorState,
+) => {
+  let isDarkTheme = state.facet(View.EditorView.darkTheme);
+  let highlightStyle = isDarkTheme ? highlightDark : highlightLight;
+  const glyph = glyphsMap.get(completion.apply as string);
+  if (glyph == null) return null;
+  let dom = document.createElement("div");
+  dom.classList.add("cm-bqn-completion-glyph");
+  dom.append(...highlight(highlightStyle, glyph.glyph as string));
+  return dom;
+};
+
+let glyphCompletionKey = (
+  completion: Autocomplete.Completion,
+  state: State.EditorState,
+) => {
+  let isDarkTheme = state.facet(View.EditorView.darkTheme);
+  let highlightStyle = isDarkTheme ? highlightDark : highlightLight;
+  const glyph = glyphsMap.get(completion.apply as string);
+  if (glyph == null) return null;
+  if (glyph.key == null) return null;
+  let dom = document.createElement("span");
+  dom.classList.add("cm-bqn-completion-glyph-key");
+  let inner = document.createElement("span");
+  inner.classList.add("cm-bqn-completion-glyph-key-inner");
+  inner.textContent = `\\${glyph.key}`;
+  dom.appendChild(inner);
+  return dom;
+};
+
+let glyphCompletions = (
+  context: Autocomplete.CompletionContext,
+): Autocomplete.Completion[] => {
+  return glyphs.map((glyph) => {
+    return {
+      label: `\\${glyph.title}`,
+      apply: glyph.glyph,
+    };
+  });
+};
 
 let glyphCompletion: Autocomplete.CompletionSource = (
   context: Autocomplete.CompletionContext,
@@ -780,7 +842,8 @@ let glyphCompletion: Autocomplete.CompletionSource = (
   return {
     from: word.from,
     filter: true,
-    options: glyphCompletions,
+    options: glyphCompletions(context),
+    span: /\\[A-Za-z]*/,
   };
 };
 
@@ -813,6 +876,7 @@ export let sysCompletion =
       from: word.from,
       filter: true,
       options: items.map(formatSys),
+      span: /\u2022[A-Za-z]*/u,
     };
   };
 
@@ -829,9 +893,21 @@ export function bqn(cfg: { sysCompletion?: ListSys } = {}) {
     completions.push(sysCompletion(cfg.sysCompletion));
   let extensions: State.Extension[] = [
     glyphInput(),
+    highlightLight,
+    highlightDark,
     Autocomplete.autocompletion({
       override: completions,
       activateOnTyping: false,
+      addToOptions: [
+        {
+          render: glyphCompletionGlyph,
+          position: 5,
+        },
+        {
+          render: glyphCompletionKey,
+          position: 90,
+        },
+      ],
     }),
   ];
   return new LanguageSupport(language, extensions);
