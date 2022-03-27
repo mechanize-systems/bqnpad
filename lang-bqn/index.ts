@@ -784,14 +784,53 @@ let glyphCompletion: Autocomplete.CompletionSource = (
   };
 };
 
+type ValueType =
+  | "array"
+  | "number"
+  | "character"
+  | "function"
+  | "1-modifier"
+  | "2-modifier"
+  | "namespace";
+
+type SysItem = { name: string; type: ValueType };
+type ListSys = () => Promise<SysItem[]>;
+
+export let sysCompletion =
+  (listSys: ListSys): Autocomplete.CompletionSource =>
+  async (context: Autocomplete.CompletionContext) => {
+    let word = context.matchBefore(/\u2022[A-Za-z]*/u);
+    if (word == null || (word.from == word.to && !context.explicit))
+      return null;
+    let items = await listSys();
+    let formatSys = (item: SysItem) => ({
+      label:
+        item.type === "function"
+          ? `•${capitalize(item.name)}`
+          : `•${item.name}`,
+    });
+    return {
+      from: word.from,
+      filter: true,
+      options: items.map(formatSys),
+    };
+  };
+
+function capitalize(v: string) {
+  return v[0]!.toUpperCase() + v.slice(1);
+}
+
 /**
  * Configure extension for BQN.
  */
-export function bqn() {
+export function bqn(cfg: { sysCompletion?: ListSys } = {}) {
+  let completions = [glyphCompletion];
+  if (cfg.sysCompletion != null)
+    completions.push(sysCompletion(cfg.sysCompletion));
   let extensions: State.Extension[] = [
     glyphInput(),
     Autocomplete.autocompletion({
-      override: [glyphCompletion],
+      override: completions,
       activateOnTyping: false,
     }),
   ];
