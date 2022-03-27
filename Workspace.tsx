@@ -52,7 +52,28 @@ export function Workspace({
     { enableLivePreview, disableSessionBanner },
     [enableLivePreview, disableSessionBanner],
   );
-  let [{ status }, workspace] = useWorkspace(workspace0, editor, config);
+
+  let repl = React.useMemo(() => {
+    if (Base.Worker.supportsWorkerModule()) {
+      return new REPLWebWorkerClient();
+    } else {
+      // Those browsers (looking at you, Firefox) which don't support WebWorker
+      // type=module will get in process REPL.
+      //
+      // - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1247687
+      return new REPL.REPL();
+    }
+  }, []);
+
+  let listSys = React.useMemo(() => {
+    let sys: null | Promise<REPL.ValueDesc[]> = null;
+    return () => {
+      if (sys == null) sys = repl.listSys();
+      return sys;
+    };
+  }, [repl]);
+
+  let [{ status }, workspace] = useWorkspace(repl, workspace0, editor, config);
 
   React.useLayoutEffect(() => {
     workspace.commands.focusCurrentCell(editor.current!);
@@ -79,13 +100,13 @@ export function Workspace({
 
   let extensions = React.useMemo(
     () => [
-      LangBQN.bqn(),
+      LangBQN.bqn({ sysCompletion: listSys }),
       themeExtension,
       Language.indentOnInput(),
       workspace.extension,
       CloseBrackets.closeBrackets(),
     ],
-    [workspace, themeExtension],
+    [listSys, workspace, themeExtension],
   );
 
   let keybindings: View.KeyBinding[] = React.useMemo<View.KeyBinding[]>(() => {
@@ -266,21 +287,11 @@ export function Workspace({
 }
 
 function useWorkspace(
+  repl: REPL.IREPL,
   workspace0: Workspace0.Workspace0 = Workspace0.empty,
   editor: { current: View.EditorView | null },
   config: WorkspaceConfig | State.StateField<WorkspaceConfig>,
 ): readonly [WorkspaceState, Workspace] {
-  let repl = React.useMemo(() => {
-    if (Base.Worker.supportsWorkerModule()) {
-      return new REPLWebWorkerClient();
-    } else {
-      // Those browsers (looking at you, Firefox) which don't support WebWorker
-      // type=module will get in process REPL.
-      //
-      // - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1247687
-      return new REPL.REPL();
-    }
-  }, []);
   let w = React.useMemo(
     () => workspace(repl, workspace0, editor, config),
     [repl, workspace0, editor, config],

@@ -14,9 +14,34 @@ export type REPLStatus = "running" | "idle";
 export interface IREPL {
   status: REPLStatus | null;
   onStatus: Base.EventEmitter<REPLStatus>;
+  listSys(): Promise<ValueDesc[]>;
   eval(code: string): Promise<REPLResult>;
   preview(code: string): Promise<REPLResult>;
 }
+
+export type ValueDesc = {
+  name: string;
+  type: ValueType;
+};
+
+export type ValueType =
+  | "array"
+  | "number"
+  | "character"
+  | "function"
+  | "1-modifier"
+  | "2-modifier"
+  | "namespace";
+
+let valueTypes: { [code: number]: ValueType } = {
+  0: "array",
+  1: "number",
+  2: "character",
+  3: "function",
+  4: "1-modifier",
+  5: "2-modifier",
+  6: "namespace",
+};
 
 const FMTLIMIT = 5000;
 
@@ -30,6 +55,21 @@ export class REPL implements IREPL {
   constructor() {
     this.repl = BQN.makerepl(BQN.sysargs, 1);
     this.ready = Promise.resolve(null);
+  }
+
+  listSys() {
+    let res = this.ready.then(() => {
+      let value = this.repl('{⟨𝕩 ⋄ •Type •BQN ("•"∾𝕩)⟩}¨ •listSys') as any as [
+        string[],
+        number,
+      ][];
+      return value.map(([name, type]) => ({
+        name: name.join(""),
+        type: valueTypes[type]!,
+      }));
+    });
+    this.ready = res;
+    return res;
   }
 
   eval(code: string): Promise<REPLResult> {

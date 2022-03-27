@@ -4,12 +4,14 @@ import * as REPL from "./REPL";
 
 let repl = new REPL.REPL();
 
-export type Method = "eval" | "preview";
+export type Methods = {
+  eval: (code: string) => Promise<REPL.REPLResult>;
+  preview: (code: string) => Promise<REPL.REPLResult>;
+  listSys: () => Promise<REPL.ValueDesc[]>;
+};
 
-Base.Worker.defineWorker<[method: Method, code: string], REPL.REPLResult>(
-  (method, code) => {
-    if (method === "eval") return repl.eval(code);
-    else if (method === "preview") return repl.preview(code);
-    else throw new Error(`unknown method: ${method}`);
-  },
-);
+Base.Worker.defineWorker<Methods>({
+  eval: (code: string) => repl.eval(code),
+  preview: (code: string) => repl.preview(code),
+  listSys: () => repl.listSys(),
+});

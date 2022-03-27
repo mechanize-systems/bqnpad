@@ -2,8 +2,8 @@ import * as React from "react";
 
 import * as Base from "@mechanize/base";
 
-import type { IREPL, REPLResult, REPLStatus } from "./REPL";
-import type { Method } from "./REPLWebWorker";
+import type { IREPL, REPLResult, REPLStatus, ValueDesc } from "./REPL";
+import type { Methods } from "./REPLWebWorker";
 
 export class REPLWebWorkerClient implements IREPL {
   private inflght: number = 0;
@@ -23,16 +23,22 @@ export class REPLWebWorkerClient implements IREPL {
 
   onStatus = new Base.EventEmitter<REPLStatus>();
 
+  async listSys() {
+    let res = await bqnWorker.submit("listSys", []);
+    if (res.type === "error") throw res.error;
+    return res.value;
+  }
+
   async eval(code: string) {
     this.inflghtInc();
-    let res = await bqnWorker.submit("eval", code);
+    let res = await bqnWorker.submit("eval", [code]);
     this.inflghtDec();
     if (res.type === "error") throw res.error;
     return res.value;
   }
   async preview(code: string) {
     this.inflghtInc();
-    let res = await bqnWorker.submit("preview", code);
+    let res = await bqnWorker.submit("preview", [code]);
     this.inflghtDec();
     if (res.type === "error") throw res.error;
     return res.value;
@@ -52,11 +58,7 @@ declare var ASAPConfig: { basePath: string };
 let BASENAME_RE =
   /^(?:\/?|)(?:[\s\S]*?)((?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/;
 
-let bqnWorker = new Base.Worker.WorkerManager<
-  [method: Method, code: string],
-  REPLResult,
-  Error
->(async () => {
+let bqnWorker = new Base.Worker.WorkerManager<Methods, Error>(async () => {
   let resp = await fetch(ASAPConfig.basePath + "/__static/metafile.json");
   let json = await resp.json();
   for (let out in json.outputs) {
