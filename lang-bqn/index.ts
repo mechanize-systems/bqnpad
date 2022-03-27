@@ -96,7 +96,7 @@ export let language = LRLanguage.define({
   languageData: {
     commentTokens: { line: "#" },
     indentOnInput: /^\s*(\]|}|⟩)$/,
-    closeBrackets: { brackets: ["(", "{", "⟨", "'", '"'] },
+    closeBrackets: { brackets: ["(", "{", "⟨", "[", "'", '"'] },
   },
 });
 
