@@ -86,7 +86,7 @@ export function Workspace({
       themeExtension,
       Language.indentOnInput(),
       workspace.extension,
-      //CloseBrackets.closeBrackets(),
+      CloseBrackets.closeBrackets(),
     ],
     [workspace, themeExtension],
   );
@@ -97,7 +97,7 @@ export function Workspace({
       { key: "Shift-Enter", run: workspace.commands.addCell },
       { key: "Enter", run: workspace.commands.reuseCell },
       { key: "Tab", run: Autocomplete.startCompletion },
-      //...CloseBrackets.closeBracketsKeymap,
+      ...CloseBrackets.closeBracketsKeymap,
     ];
   }, [workspace]);
 

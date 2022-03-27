@@ -726,42 +726,40 @@ function glyphInput(): State.Extension {
     },
   );
 
-  let transactionFilter = State.EditorState.transactionFilter.of((tr) => {
-    if (!tr.isUserEvent("input")) return [tr] as State.TransactionSpec[];
+  let inputHandler = View.EditorView.inputHandler.of(
+    (view, from, to, insert) => {
+      let state = null as
+        | { type: "expect" }
+        | { type: "input"; from: number; to: number; insert: string }
+        | null;
 
-    let pos = null as
-      | { type: "expect" }
-      | { type: "input"; from: number; to: number; ch: string }
-      | null;
-
-    tr.changes.iterChanges((fa, ta, _fb, _tb, ins) => {
-      if (ins.length !== 1) return;
-      let ch = ins.sliceString(0);
-      if (ch === "\\") {
-        pos = { type: "expect" };
+      if (insert.length !== 1) return false;
+      if (insert === "\\") {
+        state = { type: "expect" };
       } else if (
-        tr.startState.doc.sliceString(fa - 1, ta) === "\\" &&
+        view.state.doc.sliceString(from - 1, to) === "\\" &&
         expecting != null
       ) {
         resetExpecting();
-        pos = { type: "input", from: fa - 1, to: ta, ch };
+        state = { type: "input", from: from - 1, to: to, insert };
       }
-    });
 
-    if (pos?.type === "expect") {
-      scheduleExpecting();
-    } else if (pos?.type === "input") {
-      let insert = keymap.get(pos.ch);
-      if (insert != null)
-        return {
-          userEvent: "input",
-          changes: { from: pos.from, to: pos.to, insert: insert.glyph },
-        } as State.TransactionSpec;
-    }
-    return [tr] as State.TransactionSpec[];
-  });
+      if (state?.type === "expect") {
+        scheduleExpecting();
+      } else if (state?.type === "input") {
+        let insert = keymap.get(state.insert);
+        if (insert != null)
+          view.dispatch({
+            userEvent: "input",
+            changes: { from: state.from, to: state.to, insert: insert.glyph },
+          } as State.TransactionSpec);
+        return true;
+      }
+      return false;
+    },
+  );
 
-  return [transactionFilter, manageExpecting];
+  return [inputHandler, manageExpecting];
 }
 
 let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
