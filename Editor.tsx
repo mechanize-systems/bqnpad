@@ -157,12 +157,20 @@ export function useStateCompartment(
   return extension;
 }
 
+type StateFieldConfig<T> = {
+  view: View.EditorView | React.RefObject<View.EditorView | null>;
+  value: T | (() => T);
+  provide?: (field: State.StateField<T>) => State.Extension;
+};
+
 export function useStateField<T>(
-  view: View.EditorView | React.RefObject<View.EditorView | null>,
-  value: T,
+  { view, value, provide }: StateFieldConfig<T>,
   deps: unknown[] = [value],
 ) {
-  let value0 = Base.React.useMemoOnce(() => value);
+  let value0 = Base.React.useMemoOnce<T>(
+    typeof value === "function" ? (value as () => T) : () => value,
+  );
+  let provide0 = Base.React.useMemoOnce(() => provide);
   let [field, effect] = React.useMemo(() => {
     let effect = State.StateEffect.define<T>();
     let field = State.StateField.define<T>({
@@ -173,12 +181,16 @@ export function useStateField<T>(
         for (let e of tr.effects) if (e.is(effect)) return e.value;
         return state;
       },
+      provide: provide0,
     });
     return [field, effect] as const;
-  }, [value0]);
+  }, [value0, provide0]);
   React.useEffect(() => {
     let v = view instanceof View.EditorView ? view : view.current;
-    v?.dispatch({ effects: [effect.of(value)] });
+    let newValue = typeof value === "function" ? (value as () => T)() : value;
+    v?.dispatch({
+      effects: [effect.of(newValue)],
+    });
   }, [view, effect, ...deps]); // eslint-disable-line
   return field;
 }

@@ -75,21 +75,30 @@ export function Select<S extends string = string>(props: SelectProps<S>) {
   );
 }
 
+export type Theme = "dark" | "light";
+export type ThemePreference = Theme | "system";
+
 export function useTheme() {
-  let [theme, setTheme] = Base.React.usePersistentState<
-    "dark" | "light" | "system"
-  >("bqnpad-theme", () => "system");
+  let [themePref, setThemePref] =
+    Base.React.usePersistentState<ThemePreference>(
+      "bqnpad-theme",
+      () => "system",
+    );
   React.useLayoutEffect(() => {
     document.documentElement.removeAttribute("data-theme");
-    if (theme === "system") return;
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+    if (themePref === "system") return;
+    document.documentElement.setAttribute("data-theme", themePref);
+  }, [themePref]);
+  let isDarkMode = useIsDarkMode();
+  let theme: Theme =
+    themePref === "system" ? (isDarkMode ? "dark" : "light") : themePref;
+  return [theme, themePref, setThemePref] as const;
+}
+
+export function useIsDarkMode() {
   let [isDarkMode, setIsDarkMode] = React.useState<null | boolean>(null);
   let isDarkMode0 = Base.React.usePrefersDarkMode(setIsDarkMode, []);
-  isDarkMode = isDarkMode ?? isDarkMode0;
-  let theme0: "dark" | "light" =
-    theme === "system" ? (isDarkMode ? "dark" : "light") : theme;
-  return [theme0, theme, setTheme] as const;
+  return isDarkMode ?? isDarkMode0;
 }
 
 // TODO: need to infer this from CSS

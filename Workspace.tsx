@@ -48,8 +48,10 @@ export function Workspace({
     Base.React.usePersistentState("bqnpad-pref-enableLivePreview", () => true);
 
   let config = Editor.useStateField<WorkspaceConfig>(
-    editor,
-    { enableLivePreview, disableSessionBanner },
+    {
+      view: editor,
+      value: { enableLivePreview, disableSessionBanner },
+    },
     [enableLivePreview, disableSessionBanner],
   );
 
@@ -87,26 +89,24 @@ export function Workspace({
     [manager, workspace],
   );
 
-  let [theme0, theme, setTheme] = UI.useTheme();
-  let themeExtension = Editor.useStateCompartment(
-    editor,
-    () => {
-      if (theme0 === "light") return LangBQN.highlight;
-      else if (theme0 === "dark") return LangBQN.highlightDark;
-      else Base.never(theme0);
+  let [theme, themePref, setThemePref] = UI.useTheme();
+  let darkThemeExtension = Editor.useStateField(
+    {
+      view: editor,
+      value: () => theme === "dark",
+      provide: (field) => View.EditorView.darkTheme.from(field),
     },
-    [theme0],
+    [theme],
   );
-
   let extensions = React.useMemo(
     () => [
       LangBQN.bqn({ sysCompletion: listSys }),
-      themeExtension,
       Language.indentOnInput(),
       workspace.extension,
+      darkThemeExtension,
       CloseBrackets.closeBrackets(),
     ],
-    [listSys, workspace, themeExtension],
+    [listSys, workspace, darkThemeExtension],
   );
 
   let keybindings: View.KeyBinding[] = React.useMemo<View.KeyBinding[]>(() => {
@@ -261,8 +261,8 @@ export function Workspace({
           <div className="Toolbar__section">
             <div className="label">Theme:</div>
             <UI.Select
-              value={theme}
-              onValue={setTheme}
+              value={themePref}
+              onValue={setThemePref}
               options={[
                 { label: "System", value: "system" },
                 { label: "Light", value: "light" },
@@ -272,7 +272,7 @@ export function Workspace({
             <FontSelect />
           </div>
         </div>
-        {showGlyphbar && <GlyphsPalette onClick={onGlyph} theme={theme0} />}
+        {showGlyphbar && <GlyphsPalette onClick={onGlyph} theme={theme} />}
       </div>
       <Editor.Editor
         className="Editor"

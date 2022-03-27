@@ -79,7 +79,7 @@
 
   --editor-font-family: BQN, Menlo, Monaco, monospace;
   --editor-font-size: 20px;
-  --editor-font-size-xs: 16px;
+  --editor-font-size-xs: 18px;
   --editor-bg: var(--slate1);
   --editor-color: var(--app-color);
   --editor-color-output: var(--slate11);
@@ -210,7 +210,31 @@ a.Button {
   font-family: var(--editor-font-family);
   font-size: var(--editor-font-size-xs);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+}
+
+.Editor .cm-bqn-completion-glyph {
+  padding-right: 5px;
+}
+.Editor .cm-bqn-completion-glyph-key {
+  flex-grow: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+.Editor .cm-bqn-completion-glyph-key-inner {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 3px;
+  border-color: var(--app-border);
+  background-color: var(--app-ui-bg);
+  color: var(--app-color-dimmed);
+  font-weight: 100;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 4px;
+  padding-right: 4px;
+  font-size: 80%;
+  white-space: pre;
 }
 
 .Editor .cm-tooltip-autocomplete ul li[aria-selected] {

@@ -45,7 +45,7 @@ export function useURLWorkspaceManager(): WorkspaceManager {
       store(fn) {
         workspace = fn(workspace);
         let code = encodeWorkspace(workspace);
-        history.pushState(null, "", `/s?bqn=${encodeURIComponent(code)}`);
+        history.replaceState(null, "", `/s?bqn=${encodeURIComponent(code)}`);
       },
       restart() {
         window.location.reload();

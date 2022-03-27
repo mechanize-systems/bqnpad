@@ -9,8 +9,7 @@ export type GlyphsPaletteProps = {
 };
 
 export function GlyphsPalette({ theme, onClick }: GlyphsPaletteProps) {
-  let hi = theme === "dark" ? LangBQN.highlightDark : LangBQN.highlight;
-  console.log(hi, theme);
+  let hi = theme === "dark" ? LangBQN.highlightDark : LangBQN.highlightLight;
   let chars = React.useMemo(() => {
     return LangBQN.glyphs.map((glyph) => {
       let className =
