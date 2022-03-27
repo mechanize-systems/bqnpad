@@ -58,11 +58,9 @@ export class REPL implements IREPL {
   }
 
   listSys() {
+    let code = `{𝕩 ⋈⟜•Type¨ •BQN 1↓∾"‿•"⊸∾¨𝕩} •listSys`;
     let res = this.ready.then(() => {
-      let value = this.repl('{⟨𝕩 ⋄ •Type •BQN ("•"∾𝕩)⟩}¨ •listSys') as any as [
-        string[],
-        number,
-      ][];
+      let value = this.repl(code) as any as [string[], number][];
       return value.map(([name, type]) => ({
         name: name.join(""),
         type: valueTypes[type]!,
