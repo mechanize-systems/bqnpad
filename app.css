@@ -304,15 +304,20 @@ a.Button {
 }
 
 .SessionBanner {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  padding-bottom: 10px;
+}
+.SessionBanner__inner {
   font-family: var(--app-font-family);
   font-size: var(--app-font-size-xs);
   color: var(--app-color-dimmed);
   display: flex;
   flex-direction: row;
   width: 100%;
-  align-items: center;
+  border-bottom: 1px solid var(--app-border);
   justify-content: space-between;
-  border-radius: 3px;
 }
 .SessionBanner__title {
 }

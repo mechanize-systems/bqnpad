@@ -14,13 +14,17 @@ export class SessionBanner extends View.WidgetType {
   }
 
   override get estimatedHeight() {
-    return UI.LINE_HEIGHT;
+    return 60;
   }
 
   toDOM() {
     let root = document.createElement("div");
     root.style.height = `${this.estimatedHeight}px`;
     root.classList.add("SessionBanner");
+
+    let inner = document.createElement("div");
+    inner.classList.add("SessionBanner__inner");
+    root.appendChild(inner);
 
     let date = new Intl.DateTimeFormat(undefined, {
       dateStyle: "short",
@@ -29,7 +33,7 @@ export class SessionBanner extends View.WidgetType {
     let label = document.createElement("div");
     label.classList.add("SessionBanner__title");
     label.innerText = `Session started ${date}`;
-    root.appendChild(label);
+    inner.appendChild(label);
 
     let shareButton = document.createElement("button");
     shareButton.classList.add("Button");
@@ -45,7 +49,8 @@ export class SessionBanner extends View.WidgetType {
       let url = `${window.location.origin}/s?bqn=${encodeURIComponent(code)}`;
       window.open(url);
     };
-    root.appendChild(shareButton);
+    inner.appendChild(shareButton);
+
     return root;
   }
 }
