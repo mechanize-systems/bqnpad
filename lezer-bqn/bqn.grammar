@@ -50,8 +50,8 @@ simpleAtom {
   | SYSMOD1 { sys mod1 }
   | SYSMOD2 { sys mod2 }
   | LIST { "⟨" exprM? "⟩" }
-  | BLOCK { "{" exprM "}" }
-  | PAREN { "(" exprM ")" }
+  | BLOCK { "{" exprM? "}" }
+  | PAREN { "(" exprM? ")" }
 }
 
 name {
