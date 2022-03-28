@@ -395,6 +395,7 @@ a.Button {
   border-bottom-width: 2px;
   border-style: solid;
   border-color: var(--app-border);
+  background: var(--app-ui-bg);
 }
 
 .VMStatus {
