@@ -5,9 +5,9 @@ import * as REPL from "./REPL";
 let repl = new REPL.REPL();
 
 export type Methods = {
-  eval: (code: string) => Promise<REPL.REPLResult>;
-  preview: (code: string) => Promise<REPL.REPLResult>;
-  listSys: () => Promise<REPL.ValueDesc[]>;
+  eval: REPL.IREPL["eval"];
+  preview: REPL.IREPL["preview"];
+  listSys: REPL.IREPL["listSys"];
 };
 
 Base.Worker.defineWorker<Methods>({

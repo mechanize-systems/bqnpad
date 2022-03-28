@@ -731,7 +731,8 @@ let sysvals = {
   bqn:dynsys_copy(makebqnfn("•BQN",r=>run(...r))), rebqn, primitives,
   type, glyph, decompose, fmt:fmt1, repr, currenterror, unixtime,
   js:dojs, math:mathns, ns:nsns, rand,
-  listsys: dynsys(_ => list(Object.keys(sysvals).sort().map(str)))
+  listsys: dynsys(_ => list(Object.keys(sysvals).sort().map(str))),
+  show: (x,w) => { self.bqnShow(unstr(fmt1(x)));return x; }
 };
 
 let make_timed = tfn => {

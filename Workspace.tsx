@@ -328,8 +328,8 @@ export type WorkspaceCell = {
   idx: number;
   from: number;
   to: number;
-  result: null | Base.Promise.Deferred<REPL.REPLResult>;
-  resultPreview: null | REPL.REPLResult;
+  result: null | Base.Promise.Deferred<readonly [REPL.REPLResult, string[]]>;
+  resultPreview: null | readonly [REPL.REPLResult, string[]];
 };
 
 type WorkspaceState = {
@@ -354,18 +354,27 @@ function workspace(
           },
         });
 
+  let fromWorkspaceCell0 = (
+    cell: Workspace0.WorkspaceCell0,
+    idx: number,
+  ): WorkspaceCell => {
+    let resultPreview: WorkspaceCell["resultPreview"] =
+      cell.result != null && !Array.isArray(cell.result)
+        ? ([cell.result as REPL.REPLResult, [] as string[]] as const)
+        : (cell.result as null | readonly [REPL.REPLResult, string[]]);
+    return {
+      idx,
+      from: cell.from,
+      to: cell.to,
+      result: null,
+      resultPreview,
+    };
+  };
+
   let prevCellsField = State.StateField.define<WorkspaceCell[]>({
     create() {
       return workspace0.prevSessions.flatMap((session) =>
-        session.cells.map(
-          (cell, idx): WorkspaceCell => ({
-            idx,
-            from: cell.from,
-            to: cell.to,
-            result: null,
-            resultPreview: cell.result,
-          }),
-        ),
+        session.cells.map(fromWorkspaceCell0),
       );
     },
     update(state) {
@@ -376,15 +385,7 @@ function workspace(
   let addCellEffect = State.StateEffect.define<WorkspaceCell>();
   let cellsField = State.StateField.define<WorkspaceCell[]>({
     create() {
-      return workspace0.currentSession.cells.map(
-        (cell, idx): WorkspaceCell => ({
-          idx,
-          from: cell.from,
-          to: cell.to,
-          result: null,
-          resultPreview: cell.result,
-        }),
-      );
+      return workspace0.currentSession.cells.map(fromWorkspaceCell0);
     },
     update(state, tr) {
       let nextState = state;
@@ -770,80 +771,64 @@ class PlaceholderWidget extends View.WidgetType {
   }
 }
 
-function renderResult(
-  root: HTMLDivElement,
-  result: REPL.REPLResult,
-  preview: boolean = false,
-  foldCutoffLines: number | null = null,
-) {
-  root.classList.remove(...root.classList.values());
-  root.classList.add("Output__output");
-  if (preview) root.classList.add("Output__output--preview");
-  if (result.type === "error") {
-    root.classList.add("Output__output--error");
-  } else if (result.type === "notice") {
-    root.classList.add("Output__output--notice");
-  }
-
-  let content = resultContent(result);
-  if (content === "Empty program" && result.type === "error") {
-    content = "&nbsp;";
-  } else if (foldCutoffLines != null) {
-    // TODO: Inefficient!
-    content = content
-      .split("\n")
-      .slice(0, foldCutoffLines - 1)
-      .join("\n");
-    content += "\n&nbsp;";
-  }
-  root.innerHTML = content;
-}
-
-function resultContent(result: REPL.REPLResult): string {
+function resultContent([result, logs]: readonly [
+  REPL.REPLResult,
+  string[],
+]): readonly [string, string] {
+  let output: string;
   if (result.type === "ok") {
-    return result.ok ?? "&nbsp;";
-  } else if (result.type === "error") {
-    return result.error;
+    output = result.ok ?? "&nbsp;";
+  } else if (result.type === "error" && result.error !== "Empty program") {
+    output = result.error;
   } else if (result.type === "notice") {
-    return result.notice;
+    output = result.notice;
   } else {
-    return "&nbsp;";
+    output = "";
   }
+  return [output.trim(), logs.join("\n").trim()] as const;
 }
 
-class CellOutputWidget extends View.WidgetType {
-  private mounted: boolean = true;
-  private _folded: boolean | null = null;
-  private _numberOfLines: number | null = null;
-  private foldCutoffLines = 10;
-  private root: HTMLDivElement | null = null;
-  private _result: REPL.REPLResult | null = null;
-
-  constructor(private readonly cell: WorkspaceCell) {
-    super();
-    this.result = this.cell.result?.isCompleted
-      ? this.cell.result.value
-      : this.cell.resultPreview != null
-      ? this.cell.resultPreview
-      : { type: "notice", notice: "..." };
+class FoldedOutputView {
+  _content: string;
+  _numberOfLines: null | number = null;
+  _folded: boolean | null;
+  _root: HTMLElement | null = null;
+  onRender: null | ((root: HTMLElement) => void) = null;
+  constructor(
+    content: string,
+    public readonly foldCutoffLines: number,
+    folded: boolean | null = null,
+  ) {
+    this._content = content;
+    this._folded = folded;
   }
 
-  get result() {
-    return this._result!;
+  get root() {
+    if (this._root == null) this._root = document.createElement("div");
+    return this._root;
   }
 
-  set result(result) {
-    this._result = result;
+  get content() {
+    return this._content!;
+  }
+
+  set content(content: string) {
+    this._content = content;
     this._numberOfLines = null;
   }
 
-  get numberOfLines(): number {
-    // TODO: consider storing this inside workspace?
-    if (this._numberOfLines == null) {
-      let content =
-        this.result != null ? resultContent(this.result).trim() : "";
-      this._numberOfLines = content.split("\n").length;
+  get estimatedHeight(): number {
+    if (this.folded) {
+      return this.foldCutoffLines * UI.LINE_HEIGHT;
+    } else {
+      return this.numberOfLines * UI.LINE_HEIGHT;
     }
+  }
+
+  get numberOfLines(): number {
+    if (this.content === "") return 0;
+    if (this._numberOfLines == null)
+      this._numberOfLines = this.content.split("\n").length;
     return this._numberOfLines;
   }
 
@@ -856,52 +841,146 @@ class CellOutputWidget extends View.WidgetType {
     return this.needFold;
   }
 
-  override get estimatedHeight() {
-    if (this.folded) {
-      return this.foldCutoffLines * UI.LINE_HEIGHT;
-    } else {
-      return this.numberOfLines * UI.LINE_HEIGHT;
-    }
+  toDOM(): HTMLElement {
+    this.render();
+    return this._root!;
   }
 
   render() {
-    let root = this.root!;
-    while (root.lastChild) root.removeChild(root.lastChild);
+    let root;
+    if (this._root == null) {
+      this._root = document.createElement("div");
+      root = this._root;
+    } else {
+      root = this._root!;
+      while (root.lastChild) root.removeChild(root.lastChild);
+    }
+    this._root.classList.add("FoldedOutput");
+    root.style.height = `${this.estimatedHeight}px`;
 
-    let output = document.createElement("div");
-    renderResult(
-      output,
-      this.result,
-      false,
-      this.folded ? this.foldCutoffLines : null,
-    );
-
+    // button
     let button = document.createElement("button");
     button.classList.add("Button");
-    button.classList.add("Output__gutter");
-    if (!this.needFold) {
-      button.classList.add("Output__gutter--disabled");
-    }
+    button.classList.add("FoldedOutput__button");
+    if (!this.needFold || this.content === "")
+      button.classList.add("FoldedOutput__button--disabled");
     button.title = "Output is too long (fold/unfold)";
-    button.innerHTML = "⇅";
-
+    button.textContent = "⇅";
     button.onclick = () => {
       this._folded = this._folded == null ? false : !this._folded;
       this.render();
     };
+
+    // output
+    let output = document.createElement("div");
+    output.classList.add("FoldedOutput__output");
+    let content = this.content;
+    if (this.folded) {
+      content = content
+        .split("\n")
+        .slice(0, this.foldCutoffLines - 1)
+        .join("\n");
+      if (content !== "") content += "\n";
+      content = content + "…";
+    }
+    output.textContent = content;
+
     root.appendChild(output);
     root.appendChild(button);
+
+    if (this.onRender) this.onRender(root);
+  }
+}
+
+abstract class BaseOutputWidget extends View.WidgetType {
+  private _result: readonly [REPL.REPLResult, string[]] | null = null;
+  private _resultContent: readonly [string, string] | null = null;
+  private _numberOfLines: number | null = null;
+
+  onResultUpdate(): void {}
+
+  get result() {
+    return this._result!;
   }
 
-  toDOM() {
-    this.root = document.createElement("div");
-    this.root.classList.add("Output");
+  set result(result) {
+    this._result = result;
+    this._numberOfLines = null;
+    this._resultContent = null;
+    this.onResultUpdate();
+  }
+
+  get resultContent(): readonly [string, string] {
+    if (this._resultContent == null) {
+      if (this._result == null) return ["", ""];
+      this._resultContent = resultContent(this._result!);
+    }
+    return this._resultContent;
+  }
+
+  get numberOfLines(): number {
+    // TODO: consider storing this inside workspace?
+    if (this._numberOfLines == null) {
+      let [p1, p2] = this.resultContent;
+      this._numberOfLines = p1.split("\n").length + p2.split("\n").length;
+    }
+    return this._numberOfLines;
+  }
+}
+
+class CellOutputWidget extends BaseOutputWidget {
+  private mounted: boolean = true;
+  private root: HTMLDivElement | null = null;
+  private logsView: FoldedOutputView;
+  private outputView: FoldedOutputView;
+
+  constructor(private readonly cell: WorkspaceCell) {
+    super();
+    this.logsView = new FoldedOutputView("", 1);
+    this.outputView = new FoldedOutputView("", 10);
     this.result = this.cell.result?.isCompleted
       ? this.cell.result.value
       : this.cell.resultPreview != null
       ? this.cell.resultPreview
-      : { type: "notice", notice: "..." };
+      : [{ type: "notice", notice: "..." }, [] as string[]];
+  }
+
+  override onResultUpdate(): void {
+    this.outputView.content =
+      this.resultContent[0] === "Empty program" ? "" : this.resultContent[0];
+    this.logsView.content = this.resultContent[1];
+  }
+
+  override get estimatedHeight() {
+    return this.outputView.estimatedHeight + this.logsView.estimatedHeight;
+  }
+
+  render() {
+    if (this.root == null) {
+      this.root = document.createElement("div");
+      this.root.classList.add("Output");
+    }
+
+    this.outputView.onRender = (root) => {
+      if (this.result[0].type === "error") {
+        root.classList.add("FoldedOutput--error");
+      } else if (this.result[0].type === "notice") {
+        root.classList.add("FoldedOutput--notice");
+      }
+    };
+    this.logsView.render();
+    this.outputView.render();
+  }
+
+  toDOM() {
+    this.result = this.cell.result?.isCompleted
+      ? this.cell.result.value
+      : this.cell.resultPreview != null
+      ? this.cell.resultPreview
+      : [{ type: "notice", notice: "..." }, []];
     this.render();
+    this.root!.appendChild(this.logsView.root);
+    this.root!.appendChild(this.outputView.root);
     if (this.cell.result && !this.cell.result.isCompleted) {
       this.cell.result.then((result) => {
         if (this.mounted) {
@@ -910,7 +989,7 @@ class CellOutputWidget extends View.WidgetType {
         }
       });
     }
-    return this.root;
+    return this.root!;
   }
 
   override destroy(_dom: HTMLElement) {
@@ -923,12 +1002,12 @@ class CellOutputWidget extends View.WidgetType {
   }
 }
 
-class PreviewOutputWidget extends View.WidgetType {
+class PreviewOutputWidget extends BaseOutputWidget {
   private mounted: boolean = true;
   private timer: NodeJS.Timer | null = null;
   private root: HTMLDivElement | null = null;
-  private result: REPL.REPLResult;
-  private _numberOfLines: number | null = null;
+  private logsView: FoldedOutputView;
+  private outputView: FoldedOutputView;
 
   constructor(
     public cell: WorkspaceCell,
@@ -936,21 +1015,19 @@ class PreviewOutputWidget extends View.WidgetType {
     readonly repl: REPL.IREPL,
   ) {
     super();
+    this.logsView = new FoldedOutputView("", 1, false);
+    this.outputView = new FoldedOutputView("", Infinity);
     this.result = this.cell.result?.isCompleted
       ? this.cell.result.value
       : this.cell.resultPreview
       ? this.cell.resultPreview
-      : { type: "notice", notice: "&nbsp;" };
+      : [{ type: "notice", notice: "..." }, []];
   }
 
-  get numberOfLines(): number {
-    // TODO: consider storing this inside workspace?
-    if (this._numberOfLines == null) {
-      let content =
-        this.result != null ? resultContent(this.result).trim() : "";
-      this._numberOfLines = content.split("\n").length;
-    }
-    return this._numberOfLines;
+  override onResultUpdate(): void {
+    this.outputView.content =
+      this.resultContent[0] === "Empty program" ? "" : this.resultContent[0];
+    this.logsView.content = this.resultContent[1];
   }
 
   override get estimatedHeight() {
@@ -958,20 +1035,19 @@ class PreviewOutputWidget extends View.WidgetType {
   }
 
   render() {
-    let root = this.root!;
-    while (root.lastChild) root.removeChild(root.lastChild);
-    renderResult(root, this.result, true);
+    this.logsView.render();
+    this.outputView.render();
   }
 
   schedule() {
     if (this.cell.result?.isCompleted) return;
     if (this.code.trim() === "") {
-      this.result = { type: "notice", notice: "&nbsp;" };
+      this.result = [{ type: "notice", notice: "" }, []];
       this.render();
       return;
     }
 
-    this.result = { type: "notice", notice: "..." };
+    this.result = [{ type: "notice", notice: "..." }, []];
     this.render();
 
     if (this.timer != null) clearTimeout(this.timer);
@@ -994,6 +1070,8 @@ class PreviewOutputWidget extends View.WidgetType {
     this.root = document.createElement("div");
     this.root.classList.add("Output");
     this.render();
+    this.root.appendChild(this.logsView.root);
+    this.root.appendChild(this.outputView.root);
     this.schedule();
     return this.root;
   }

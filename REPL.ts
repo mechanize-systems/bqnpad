@@ -15,8 +15,8 @@ export interface IREPL {
   status: REPLStatus | null;
   onStatus: Base.EventEmitter<REPLStatus>;
   listSys(): Promise<ValueDesc[]>;
-  eval(code: string): Promise<REPLResult>;
-  preview(code: string): Promise<REPLResult>;
+  eval(code: string): Promise<readonly [REPLResult, string[]]>;
+  preview(code: string): Promise<readonly [REPLResult, string[]]>;
 }
 
 export type ValueDesc = {
@@ -45,6 +45,21 @@ let valueTypes: { [code: number]: ValueType } = {
 
 const FMTLIMIT = 5000;
 
+const LOGS: string[] = [];
+
+declare global {
+  interface Window {
+    bqnShow(v: string): void;
+  }
+}
+self.bqnShow = (v: string) => LOGS.push(v);
+
+let consumeLogs = (): string[] => {
+  let logs = LOGS.slice(0);
+  LOGS.length = 0;
+  return logs;
+};
+
 export class REPL implements IREPL {
   private repl: BQN.REPL;
   ready: Promise<unknown>;
@@ -70,35 +85,50 @@ export class REPL implements IREPL {
     return res;
   }
 
-  eval(code: string): Promise<REPLResult> {
-    let res = this.ready.then((): REPLResult => {
-      if (code.trim().length === 0) return { type: "ok", ok: null };
+  eval(code: string): Promise<readonly [REPLResult, string[]]> {
+    let res = this.ready.then(() => {
+      if (code.trim().length === 0)
+        return [{ type: "ok", ok: null }, [] as string[]] as const;
       try {
         let value = this.repl(code);
-        return { type: "ok", ok: BQN.fmt(value).slice(0, FMTLIMIT) };
+        let logs = consumeLogs();
+        return [
+          { type: "ok", ok: BQN.fmt(value).slice(0, FMTLIMIT) },
+          logs,
+        ] as const;
       } catch (e) {
-        return { type: "error", error: BQN.fmtErr(e as any) };
+        let logs = consumeLogs();
+        return [{ type: "error", error: BQN.fmtErr(e as any) }, logs] as const;
       }
     });
     this.ready = res;
     return res;
   }
 
-  preview(code: string): Promise<REPLResult> {
-    let res = this.ready.then((): REPLResult => {
-      if (code.trim().length === 0) return { type: "ok", ok: null };
+  preview(code: string): Promise<readonly [REPLResult, string[]]> {
+    let res = this.ready.then(() => {
+      if (code.trim().length === 0)
+        return [{ type: "ok", ok: null }, [] as string[]] as const;
 
       try {
         let value = this.repl.preview(code);
-        return { type: "ok", ok: BQN.fmt(value).slice(0, FMTLIMIT) };
+        let logs = consumeLogs();
+        return [
+          { type: "ok", ok: BQN.fmt(value).slice(0, FMTLIMIT) },
+          logs,
+        ] as const;
       } catch (e) {
+        let logs = consumeLogs();
         if ((e as any).kind === "previewError")
-          return {
-            type: "notice",
-            notice:
-              "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
-          };
-        return { type: "error", error: BQN.fmtErr(e as any) };
+          return [
+            {
+              type: "notice",
+              notice:
+                "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
+            },
+            logs,
+          ] as const;
+        return [{ type: "error", error: BQN.fmtErr(e as any) }, logs] as const;
       }
     });
     this.ready = res;
