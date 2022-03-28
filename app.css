@@ -416,6 +416,7 @@ a.Button {
 }
 
 .GlyphsPalette {
+  border-top: 1px solid var(--app-border);
   display: flex;
   flex-direction: row;
   font-size: var(--editor-font-size);
