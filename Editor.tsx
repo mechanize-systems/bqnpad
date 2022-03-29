@@ -79,7 +79,6 @@ export function useEditor<E extends HTMLElement>(
       onDocExtension,
       View.keymap.of(Commands.defaultKeymap),
       placeholderExtension,
-      View.EditorView.lineWrapping,
       ...(extensions ?? []),
     ];
     let startState = State.EditorState.create({
