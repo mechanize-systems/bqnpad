@@ -195,7 +195,9 @@ a.Button {
 }
 .Editor .cm-line {
   padding: 0;
-  padding-left: 47px;
+}
+.Editor .cm-line:before {
+  content: '    ';
 }
 
 .Editor .cm-tooltip-autocomplete {
