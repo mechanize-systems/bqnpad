@@ -19,7 +19,7 @@ const INITIAL_DOC = `
 # How to enter BQN glyphs:
 # - Use glyph bar at the top
 # - Use '\\'-prefix to enter glyphs from keyboard.
-# - Enter '\\' and press Tab for completions
+# - Press 'Tab' for completions
 # 
 # Expressions are being evaluated as you type. Press 'Shift+Enter'
 # to create a new cell (the current code is being preserved in the

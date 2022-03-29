@@ -711,65 +711,110 @@ for (let glyph of glyphs) glyphsMap.set(glyph.glyph, glyph);
 export let keymap: Map<string, Glyph> = new Map();
 for (let glyph of glyphs) if (glyph.key != null) keymap.set(glyph.key, glyph);
 
-function glyphInput(): State.Extension {
-  let expecting: NodeJS.Timeout | null = null;
+/**
+ * BQN glyph input method using \-key as a dead key prefix.
+ */
+function glyphInputMethod(): State.Extension {
+  type InputState = {
+    timeout: NodeJS.Timeout;
+    editorState: State.EditorState;
+  };
+
+  type DeadKeyState = null | {
+    phase: "dead" | "after-dead";
+    editorState: State.EditorState;
+  };
+
+  let thisView: View.EditorView | null = null;
+  let prevEditorState: State.EditorState | null = null;
+  let deadKeyState: DeadKeyState | null = null;
+  let inputState: InputState | null = null;
 
   let resetExpecting = () => {
-    if (expecting != null) {
-      clearTimeout(expecting);
-      expecting = null;
+    if (inputState != null) {
+      clearTimeout(inputState.timeout);
+      inputState = null;
     }
   };
 
-  let scheduleExpecting = () => {
+  let scheduleExpecting = (editorState: State.EditorState) => {
     resetExpecting();
-    expecting = setTimeout(() => {
-      expecting = null;
-    }, 500);
+    inputState = {
+      editorState,
+      timeout: setTimeout(() => {
+        let editorState = inputState?.editorState;
+        inputState = null;
+        if (thisView != null && editorState === thisView.state)
+          document.execCommand("insertText", false, "\\");
+      }, 1000),
+    };
   };
 
-  let manageExpecting = View.ViewPlugin.fromClass(
+  let lifecycle = View.ViewPlugin.fromClass(
     class {
+      constructor(view: View.EditorView) {
+        thisView = view;
+      }
       destroy() {
         resetExpecting();
+        thisView = null;
       }
     },
   );
 
-  let inputHandler = View.EditorView.inputHandler.of(
-    (view, from, to, insert) => {
-      let state = null as
-        | { type: "expect" }
-        | { type: "input"; from: number; to: number; insert: string }
-        | null;
+  let updateListener = View.EditorView.updateListener.of((up) => {
+    prevEditorState = up.startState;
+  });
 
-      if (insert.length !== 1) return false;
-      if (insert === "\\") {
-        state = { type: "expect" };
-      } else if (
-        view.state.doc.sliceString(from - 1, to) === "\\" &&
-        expecting != null
-      ) {
+  function skipDueToDeadKey(ev: KeyboardEvent, view: View.EditorView) {
+    if (ev.key === "Dead") {
+      deadKeyState = { phase: "dead", editorState: view.state };
+      return true;
+    }
+    if (
+      deadKeyState?.phase === "dead" &&
+      deadKeyState?.editorState === prevEditorState
+    ) {
+      deadKeyState = { phase: "after-dead", editorState: view.state };
+      return true;
+    }
+    if (
+      deadKeyState?.phase === "after-dead" &&
+      deadKeyState?.editorState === prevEditorState
+    ) {
+      deadKeyState = null;
+      return true;
+    }
+    deadKeyState = null;
+    return false;
+  }
+
+  let eventHandlers = View.EditorView.domEventHandlers({
+    keydown(ev, view) {
+      if (
+        ev.key === "Shift" ||
+        ev.key === "Control" ||
+        ev.key === "Alt" ||
+        ev.key === "Meta"
+      )
+        return;
+      if (skipDueToDeadKey(ev, view)) return;
+      if (inputState == null && ev.key === "\\") {
+        ev.preventDefault();
+        scheduleExpecting(view.state);
+      } else if (inputState != null && inputState.editorState === view.state) {
         resetExpecting();
-        state = { type: "input", from: from - 1, to: to, insert };
+        let key = ev.key;
+        if (ev.shiftKey) key = key.toUpperCase();
+        let glyph = keymap.get(key);
+        if (glyph == null) return;
+        ev.preventDefault();
+        document.execCommand("insertText", false, glyph.glyph);
       }
-
-      if (state?.type === "expect") {
-        scheduleExpecting();
-      } else if (state?.type === "input") {
-        let insert = keymap.get(state.insert);
-        if (insert != null)
-          view.dispatch({
-            userEvent: "input",
-            changes: { from: state.from, to: state.to, insert: insert.glyph },
-          } as State.TransactionSpec);
-        return true;
-      }
-      return false;
     },
-  );
+  });
 
-  return [inputHandler, manageExpecting];
+  return [updateListener, eventHandlers, lifecycle];
 }
 
 export function highlight(highlight: HighlightStyle, textContent: string) {
@@ -807,10 +852,8 @@ let glyphCompletionGlyph = (
 
 let glyphCompletionKey = (
   completion: Autocomplete.Completion,
-  state: State.EditorState,
+  _state: State.EditorState,
 ) => {
-  let isDarkTheme = state.facet(View.EditorView.darkTheme);
-  let highlightStyle = isDarkTheme ? highlightDark : highlightLight;
   const glyph = glyphsMap.get(completion.apply as string);
   if (glyph == null) return null;
   if (glyph.key == null) return null;
@@ -823,27 +866,36 @@ let glyphCompletionKey = (
   return dom;
 };
 
-let glyphCompletions = (
-  context: Autocomplete.CompletionContext,
-): Autocomplete.Completion[] => {
-  return glyphs.map((glyph) => {
+let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
+  return {
+    label: `${glyph.title}`,
+    apply: glyph.glyph,
+  };
+});
+
+let glyphCompletionsPrefixed: Autocomplete.Completion[] = glyphs.map(
+  (glyph) => {
     return {
       label: `\\${glyph.title}`,
       apply: glyph.glyph,
     };
-  });
-};
+  },
+);
 
 let glyphCompletion: Autocomplete.CompletionSource = (
   context: Autocomplete.CompletionContext,
 ) => {
-  let word = context.matchBefore(/\\[A-Za-z]*/);
+  let re = /\\?[A-Za-z]*/;
+  let word = context.matchBefore(re);
   if (word == null || (word.from == word.to && !context.explicit)) return null;
+  let options = word.text.startsWith("\\")
+    ? glyphCompletionsPrefixed
+    : glyphCompletions;
   return {
     from: word.from,
     filter: true,
-    options: glyphCompletions(context),
-    span: /\\[A-Za-z]*/,
+    options,
+    span: re,
   };
 };
 
@@ -892,7 +944,7 @@ export function bqn(cfg: { sysCompletion?: ListSys } = {}) {
   if (cfg.sysCompletion != null)
     completions.push(sysCompletion(cfg.sysCompletion));
   let extensions: State.Extension[] = [
-    glyphInput(),
+    glyphInputMethod(),
     highlightLight,
     highlightDark,
     Autocomplete.autocompletion({
