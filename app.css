@@ -203,25 +203,30 @@ a.Button {
 .Editor .cm-tooltip-autocomplete {
   border: 1px solid var(--app-border);
   font-size: var(--editor-font-size-xs);
-  border-bottom-width: 2px;
+  border-bottom-width: 3px;
   background-color: var(--app-bg) !important;
+  border-radius: 3px;
 }
 
 .Editor .cm-tooltip-autocomplete ul li {
   color: var(--editor-color) !important;
-  font-family: var(--editor-font-family);
-  font-size: var(--editor-font-size-xs);
   display: flex;
   justify-content: flex-start;
+  align-items: baseline;
 }
 
 .Editor .cm-bqn-completion-glyph {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
   padding-right: 5px;
 }
 .Editor .cm-bqn-completion-glyph-key {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size);
   flex-grow: 1;
   display: flex;
   justify-content: flex-end;
+  padding-right: 10px;
 }
 .Editor .cm-bqn-completion-glyph-key-inner {
   border-width: 1px;
@@ -253,10 +258,11 @@ a.Button {
   background-color: transparent;
 }
 
-.Editor .cm-completionDetail {
-  font-style: normal !important;
-  font-size: var(--editor-font-size);
-  padding-right: 10px;
+.Editor .cm-completionLabel {
+  font-family: var(--editor-font-family);
+  font-size: var(--editor-font-size-xs);
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 /**
