@@ -745,7 +745,7 @@ function glyphInputMethod(): State.Extension {
         let editorState = inputState?.editorState;
         inputState = null;
         if (thisView != null && editorState === thisView.state)
-          document.execCommand("insertText", false, "\\");
+          Autocomplete.startCompletion(thisView);
       }, 1000),
     };
   };
