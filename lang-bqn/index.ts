@@ -873,28 +873,16 @@ let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
   };
 });
 
-let glyphCompletionsPrefixed: Autocomplete.Completion[] = glyphs.map(
-  (glyph) => {
-    return {
-      label: `\\${glyph.title}`,
-      apply: glyph.glyph,
-    };
-  },
-);
-
 let glyphCompletion: Autocomplete.CompletionSource = (
   context: Autocomplete.CompletionContext,
 ) => {
-  let re = /\\?[A-Za-z]*/;
+  let re = /[A-Za-z]*/;
   let word = context.matchBefore(re);
   if (word == null || (word.from == word.to && !context.explicit)) return null;
-  let options = word.text.startsWith("\\")
-    ? glyphCompletionsPrefixed
-    : glyphCompletions;
   return {
     from: word.from,
     filter: true,
-    options,
+    options: glyphCompletions,
     span: re,
   };
 };
