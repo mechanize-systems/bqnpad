@@ -876,6 +876,7 @@ let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
 let glyphCompletion: Autocomplete.CompletionSource = (
   context: Autocomplete.CompletionContext,
 ) => {
+  if (context.matchBefore(/\u2022[A-Za-z]*/u) != null) return null;
   let re = /[A-Za-z]*/;
   let word = context.matchBefore(re);
   if (word == null || (word.from == word.to && !context.explicit)) return null;
