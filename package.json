@@ -11,11 +11,11 @@
   "license": "MIT",
   "devDependencies": {
     "@codemirror/autocomplete": "^0.19.0",
+    "@codemirror/closebrackets": "^0.19.1",
     "@codemirror/commands": "^0.19.8",
     "@codemirror/fold": "^0.19.3",
     "@codemirror/highlight": "^0.19.8",
     "@codemirror/history": "^0.19.2",
-    "@codemirror/closebrackets": "^0.19.1",
     "@codemirror/language": "^0.19.8",
     "@codemirror/text": "^0.19.6",
     "@codemirror/view": "^0.19.47",
@@ -24,8 +24,6 @@
     "@lezer/generator": "^0.15.4",
     "@lezer/lr": "^0.15.8",
     "@mechanize/base": "workspace:*",
-    "lezer-bqn": "workspace:*",
-    "lang-bqn": "workspace:*",
     "@trivago/prettier-plugin-sort-imports": "^3.2.0",
     "@tsconfig/strictest": "^1.0.0",
     "@types/debug": "^4.1.7",
@@ -37,6 +35,8 @@
     "classnames": "^2.3.1",
     "eslint": "^8.11.0",
     "eslint-plugin-react-hooks": "^4.3.0",
+    "lang-bqn": "workspace:*",
+    "lezer-bqn": "workspace:*",
     "mocha": "^9.2.1",
     "nanoid": "^3.3.1",
     "normalize.css": "^8.0.1",
@@ -44,7 +44,7 @@
     "react": "^18.0.0-rc.3",
     "react-dom": "^18.0.0-rc.3",
     "typescript": "^4.5.5",
-    "typescript-language-server": "^0.9.6"
+    "typescript-language-server": "^0.9.7"
   },
   "dependencies": {
     "@codemirror/collab": "^0.19.0",
