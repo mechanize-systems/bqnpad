@@ -856,12 +856,12 @@ let glyphCompletionKey = (
 ) => {
   const glyph = glyphsMap.get(completion.apply as string);
   if (glyph == null) return null;
-  if (glyph.key == null) return null;
+  let key = glyph.key != null ? `\\${glyph.key}` : `${glyph.glyph}`;
   let dom = document.createElement("span");
   dom.classList.add("cm-bqn-completion-glyph-key");
   let inner = document.createElement("span");
   inner.classList.add("cm-bqn-completion-glyph-key-inner");
-  inner.textContent = `\\${glyph.key}`;
+  inner.textContent = key;
   dom.appendChild(inner);
   return dom;
 };
