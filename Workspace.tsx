@@ -59,8 +59,18 @@ export function Workspace({
       "bqnpad-pref-enableLivePreview",
       () => true,
     );
-  // CBQN does not support live preview yet
-  if (vm === "cbqn") enableLivePreview = null;
+  let enableLivePreviewTitle;
+  if (!Base.Worker.supportsWorkerModule()) {
+    // If the browser doesn't support WebWorker type=module we disable live
+    // preview as it might freeze the UI.
+    enableLivePreview = null;
+    enableLivePreviewTitle = "Live Preview is not supported in Firefox yet";
+  } else if (vm === "cbqn") {
+    // CBQN does not support live preview yet
+    enableLivePreview = null;
+    enableLivePreviewTitle =
+      "Live Preview is not support while using CBQN VM yet";
+  }
 
   let config = Editor.useStateField<WorkspaceConfig>(
     {
@@ -270,6 +280,7 @@ export function Workspace({
               disabled={enableLivePreview === null}
               value={enableLivePreview ?? false}
               onValue={setEnableLivePreview}
+              title={enableLivePreviewTitle}
             >
               Live preview
             </UI.Checkbox>
