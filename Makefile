@@ -2,11 +2,16 @@
 init:
 	git submodule init
 	git submodule update
+	(cd emsdk && ./emsdk install latest)
+	(cd emsdk && ./emsdk activate latest)
 	pnpm install
 	make all
 
 .PHONY: all
-all: lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js
+all: lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js CBQN/BQN.wasm
+
+CBQN/BQN.wasm:
+	bash -c '(source ./emsdk/emsdk_env.sh && make -C CBQN emcc-o3)'
 
 .PHONY: start
 start:

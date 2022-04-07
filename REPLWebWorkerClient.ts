@@ -7,6 +7,11 @@ import type { Methods } from "./REPLWebWorker";
 
 export class REPLWebWorkerClient implements IREPL {
   private inflght: number = 0;
+  private bqnWorker: Base.Worker.WorkerManager<Methods, Error>;
+
+  constructor(vm: "bqnjs" | "cbqn") {
+    this.bqnWorker = bqnWorker(vm);
+  }
 
   private inflghtInc() {
     this.inflght += 1;
@@ -24,21 +29,21 @@ export class REPLWebWorkerClient implements IREPL {
   onStatus = new Base.EventEmitter<REPLStatus>();
 
   async listSys() {
-    let res = await bqnWorker.submit("listSys", []);
+    let res = await this.bqnWorker.submit("listSys", []);
     if (res.type === "error") throw res.error;
     return res.value;
   }
 
   async eval(code: string) {
     this.inflghtInc();
-    let res = await bqnWorker.submit("eval", [code]);
+    let res = await this.bqnWorker.submit("eval", [code]);
     this.inflghtDec();
     if (res.type === "error") throw res.error;
     return res.value;
   }
   async preview(code: string) {
     this.inflghtInc();
-    let res = await bqnWorker.submit("preview", [code]);
+    let res = await this.bqnWorker.submit("preview", [code]);
     this.inflghtDec();
     if (res.type === "error") throw res.error;
     return res.value;
@@ -58,23 +63,24 @@ declare var ASAPConfig: { basePath: string };
 let BASENAME_RE =
   /^(?:\/?|)(?:[\s\S]*?)((?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/;
 
-let bqnWorker = new Base.Worker.WorkerManager<Methods, Error>(async () => {
-  let resp = await fetch(ASAPConfig.basePath + "/__static/metafile.json");
-  let json = await resp.json();
-  for (let out in json.outputs) {
-    let m = BASENAME_RE.exec(out);
-    if (m == null) continue;
-    let basename = m[1];
-    if (
-      !(
-        basename &&
-        basename.startsWith("REPLWebWorker") &&
-        basename.endsWith(".js")
+let bqnWorker = (vm: "cbqn" | "bqnjs") =>
+  new Base.Worker.WorkerManager<Methods, Error>(async () => {
+    let resp = await fetch(ASAPConfig.basePath + "/__static/metafile.json");
+    let json = await resp.json();
+    for (let out in json.outputs) {
+      let m = BASENAME_RE.exec(out);
+      if (m == null) continue;
+      let basename = m[1];
+      if (
+        !(
+          basename &&
+          basename.startsWith("REPLWebWorker") &&
+          basename.endsWith(".js")
+        )
       )
-    )
-      continue;
-    let url = `${ASAPConfig.basePath}/__static/${basename}`;
-    return new Worker(url, { type: "module" });
-  }
-  return new Worker(new URL("./REPLWebWorker", import.meta.url));
-});
+        continue;
+      let url = `${ASAPConfig.basePath}/__static/${basename}?vm=${vm}`;
+      return new Worker(url, { type: "module" });
+    }
+    return new Worker(new URL("./REPLWebWorker", import.meta.url));
+  });

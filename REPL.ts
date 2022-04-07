@@ -114,7 +114,7 @@ export class REPL implements IREPL {
       } catch (e) {
         let logs = consumeLogs();
         return [
-          { type: "error", error: BQN.BQN.fmtErr(e as any) },
+          { type: "error", error: `Error: ${BQN.BQN.fmtErr(e as any)}` },
           logs,
         ] as const;
       }
@@ -147,7 +147,7 @@ export class REPL implements IREPL {
             logs,
           ] as const;
         return [
-          { type: "error", error: BQN.BQN.fmtErr(e as any) },
+          { type: "error", error: `Error: ${BQN.BQN.fmtErr(e as any)}` },
           logs,
         ] as const;
       }

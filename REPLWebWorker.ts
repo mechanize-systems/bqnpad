@@ -1,8 +1,23 @@
 import * as Base from "@mechanize/base";
 
+import * as CBQNREPL from "./CBQNREPL";
 import * as REPL from "./REPL";
 
-let repl = new REPL.REPL();
+let vm = (new URL(self.location.href).searchParams.get("vm") ?? "bqnjs") as
+  | "bqnjs"
+  | "cbqn";
+
+let repl: REPL.IREPL;
+switch (vm) {
+  case "bqnjs":
+    repl = new REPL.REPL();
+    break;
+  case "cbqn":
+    repl = new CBQNREPL.CBQNREPL();
+    break;
+  default:
+    Base.never(vm);
+}
 
 export type Methods = {
   eval: REPL.IREPL["eval"];

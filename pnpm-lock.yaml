@@ -1,8 +1,8 @@
 lockfileVersion: 5.3
 
 overrides:
-  react: 18.0.0-rc.3
-  react-dom: 18.0.0-rc.3
+  react: 18.0.0
+  react-dom: 18.0.0
 
 importers:
 
@@ -23,7 +23,7 @@ importers:
       '@lezer/common': ^0.15.11
       '@lezer/generator': ^0.15.4
       '@lezer/lr': ^0.15.8
-      '@mechanize/asap': ^0.0.6
+      '@mechanize/asap': ^0.0.8
       '@mechanize/base': workspace:*
       '@trivago/prettier-plugin-sort-imports': ^3.2.0
       '@tsconfig/strictest': ^1.0.0
@@ -43,15 +43,15 @@ importers:
       nanoid: ^3.3.1
       normalize.css: ^8.0.1
       prettier: ^2.5.1
-      react: 18.0.0-rc.3
-      react-dom: 18.0.0-rc.3
+      react: 18.0.0
+      react-dom: 18.0.0
       typescript: ^4.5.5
       typescript-language-server: ^0.9.7
       ws: ^8.5.0
     dependencies:
       '@codemirror/collab': 0.19.0
       '@codemirror/state': 0.19.9
-      '@mechanize/asap': 0.0.6
+      '@mechanize/asap': 0.0.8
       debug: 4.3.4
       ws: 8.5.0
     devDependencies:
@@ -86,8 +86,8 @@ importers:
       nanoid: 3.3.1
       normalize.css: 8.0.1
       prettier: 2.6.0
-      react: 18.0.0-rc.3
-      react-dom: 18.0.0-rc.3_react@18.0.0-rc.3
+      react: 18.0.0
+      react-dom: 18.0.0_react@18.0.0
       typescript: 4.6.2
       typescript-language-server: 0.9.7
 
@@ -98,8 +98,8 @@ importers:
       '@types/react-dom': ^17.0.14
       eslint: ^8.11.0
       prettier: ^2.6.0
-      react: 18.0.0-rc.3
-      react-dom: 18.0.0-rc.3
+      react: 18.0.0
+      react-dom: 18.0.0
       typescript: ^4.6.2
       typescript-language-server: ^0.9.7
     devDependencies:
@@ -108,8 +108,8 @@ importers:
       '@types/react-dom': 17.0.14
       eslint: 8.11.0
       prettier: 2.6.0
-      react: 18.0.0-rc.3
-      react-dom: 18.0.0-rc.3_react@18.0.0-rc.3
+      react: 18.0.0
+      react-dom: 18.0.0_react@18.0.0
       typescript: 4.6.2
       typescript-language-server: 0.9.7
 
@@ -542,8 +542,8 @@ packages:
     dependencies:
       '@lezer/common': 0.15.12
 
-  /@mechanize/asap/0.0.6:
-    resolution: {integrity: sha512-wzFfCAXH8Cw7+5WGrMSIfGFZ2HnwwWuCcHSghZA95in1rU/2MmrAyGuDNe/AQQC1rhPVlSKTINIIS6sFE6SCdA==}
+  /@mechanize/asap/0.0.8:
+    resolution: {integrity: sha512-m4VcgHR1vAiviJm2dZzKjyOa3dbzeFDH4Lkb9PKln/gLtOOgnOHWR9eY8SOZc/Lpz0MtnWN5BTLedOIVms0O0Q==}
     hasBin: true
     dependencies:
       esbuild: 0.14.27
@@ -2038,18 +2038,18 @@ packages:
       safe-buffer: 5.2.1
     dev: true
 
-  /react-dom/18.0.0-rc.3_react@18.0.0-rc.3:
-    resolution: {integrity: sha512-WPlWXyzZp22+uGUNNNoZnAPWAcr5sSeaEj0S1lLqKc2DkovKugJl1VgnBfk6gQX9llTb5/qkRNVtW31WdhG8iA==}
+  /react-dom/18.0.0_react@18.0.0:
+    resolution: {integrity: sha512-XqX7uzmFo0pUceWFCt7Gff6IyIMzFUn7QMZrbrQfGxtaxXZIcGQzoNpRLE3fQLnS4XzLLPMZX2T9TRcSrasicw==}
     peerDependencies:
-      react: ^18.0.0-rc.3
+      react: ^18.0.0
     dependencies:
       loose-envify: 1.4.0
-      react: 18.0.0-rc.3
-      scheduler: 0.21.0-rc.2-next-b9de50d2f-20220308
+      react: 18.0.0
+      scheduler: 0.21.0
     dev: true
 
-  /react/18.0.0-rc.3:
-    resolution: {integrity: sha512-2NzSty8Dtq+5lnOdnP5MNA2iSn51PmvAuqgHLmUoXU3ohEtL+r0a1Az1iWvurMBIqW9cz49fJ42AM/+ziPmlWg==}
+  /react/18.0.0:
+    resolution: {integrity: sha512-x+VL6wbT4JRVPm7EGxXhZ8w8LTROaxPXOqhlGyVSrv0sB1jkyFGgXxJ8LVoPRLvPR6/CIZGFmfzqUa2NYeMr2A==}
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
@@ -2108,8 +2108,8 @@ packages:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
     dev: true
 
-  /scheduler/0.21.0-rc.2-next-b9de50d2f-20220308:
-    resolution: {integrity: sha512-aBVNOtcCn7k8FUi0lsIY34DZN1SUeuAjAQB6Y55Cxrhtrx9mggUepmF5gTWn7Z2RkEhQtrp7fzmRA/24bxxNJQ==}
+  /scheduler/0.21.0:
+    resolution: {integrity: sha512-1r87x5fz9MXqswA2ERLo0EbOAU74DpIUO090gIasYTqlVoJeMcl+Z1Rg7WHz+qtPujhS/hGIt9kxZOYBV3faRQ==}
     dependencies:
       loose-envify: 1.4.0
     dev: true

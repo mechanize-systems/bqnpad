@@ -43,21 +43,39 @@ export function Workspace({
     "bqnpad-pref-showGlyphbar",
     () => true,
   );
+  let [vm, setVm_] = Base.React.usePersistentState<"bqnjs" | "cbqn">(
+    "bqnpad-vm",
+    () => "bqnjs",
+  );
+  let setVm = (newVm: typeof vm) => {
+    let state = editor.current!.state;
+    manager.store((_) => workspace.toWorkspace0(state));
+    setVm_(newVm);
+    manager.restart();
+  };
 
   let [enableLivePreview, setEnableLivePreview] =
-    Base.React.usePersistentState("bqnpad-pref-enableLivePreview", () => true);
+    Base.React.usePersistentState<boolean | null>(
+      "bqnpad-pref-enableLivePreview",
+      () => true,
+    );
+  // CBQN does not support live preview yet
+  if (vm === "cbqn") enableLivePreview = null;
 
   let config = Editor.useStateField<WorkspaceConfig>(
     {
       view: editor,
-      value: { enableLivePreview, disableSessionBanner },
+      value: {
+        enableLivePreview: enableLivePreview ?? false,
+        disableSessionBanner,
+      },
     },
     [enableLivePreview, disableSessionBanner],
   );
 
   let repl = React.useMemo(() => {
     if (Base.Worker.supportsWorkerModule()) {
-      return new REPLWebWorkerClient();
+      return new REPLWebWorkerClient(vm);
     } else {
       // Those browsers (looking at you, Firefox) which don't support WebWorker
       // type=module will get in process REPL.
@@ -65,7 +83,7 @@ export function Workspace({
       // - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1247687
       return new REPL.REPL();
     }
-  }, []);
+  }, [vm]);
 
   let listSys = React.useMemo(() => {
     let sys: null | Promise<REPL.ValueDesc[]> = null;
@@ -249,7 +267,8 @@ export function Workspace({
           </div>
           <div className="Toolbar__section">
             <UI.Checkbox
-              value={enableLivePreview}
+              disabled={enableLivePreview === null}
+              value={enableLivePreview ?? false}
               onValue={setEnableLivePreview}
             >
               Live preview
@@ -259,6 +278,15 @@ export function Workspace({
             </UI.Checkbox>
           </div>
           <div className="Toolbar__section">
+            <div className="label">VM:</div>
+            <UI.Select
+              value={vm}
+              onValue={setVm}
+              options={[
+                { label: "BQN.js", value: "bqnjs" },
+                { label: "CBQN", value: "cbqn" },
+              ]}
+            />
             <div className="label">Theme:</div>
             <UI.Select
               value={themePref}

@@ -30,6 +30,8 @@ export type CheckboxProps = {
   children: string;
   value: boolean;
   onValue: (value: boolean) => void;
+  disabled?: boolean;
+  title?: string;
 };
 
 export function Checkbox(props: CheckboxProps) {
@@ -40,10 +42,20 @@ export function Checkbox(props: CheckboxProps) {
   };
   return (
     <label
-      className={cx("Checkbox", props.value && "Checkbox--checked")}
+      className={cx(
+        "Checkbox",
+        props.value && "Checkbox--checked",
+        props.disabled && "Checkbox--disabled",
+      )}
       onMouseDown={onMouseDown}
+      title={props.title}
     >
-      <input type="checkbox" checked={props.value} onChange={handleChange} />{" "}
+      <input
+        type="checkbox"
+        disabled={props.disabled}
+        checked={props.value}
+        onChange={handleChange}
+      />{" "}
       {props.children}
     </label>
   );

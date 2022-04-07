@@ -122,6 +122,12 @@ body,
 .Checkbox:active {
   background-color: var(--app-ui-active-bg);
 }
+.Checkbox--disabled,
+.Checkbox--disabled:active,
+.Checkbox--disabled:hover {
+  background-color: transparent;
+  color: var(--app-color-dimmed);
+}
 .Checkbox > input {
   position: relative;
   bottom: -1px;
@@ -197,7 +203,7 @@ a.Button {
   padding: 0;
 }
 .Editor .cm-line:before {
-  content: '    ';
+  content: "    ";
 }
 
 .Editor .cm-tooltip-autocomplete {
