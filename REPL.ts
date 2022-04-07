@@ -2,7 +2,7 @@ import * as React from "react";
 
 import * as Base from "@mechanize/base";
 
-import * as BQN from "./bqn";
+import type * as BQN from "./bqn";
 
 export type REPLResult =
   | { type: "ok"; ok: null | string }
@@ -61,60 +61,78 @@ let consumeLogs = (): string[] => {
 };
 
 export class REPL implements IREPL {
-  private repl: BQN.REPL;
-  ready: Promise<unknown>;
+  private _BQN: Promise<{ repl: BQN.REPL; BQN: typeof BQN }>;
+  private _ready: Promise<any>;
 
   onStatus = new Base.EventEmitter<REPLStatus>();
   status = null;
 
   constructor() {
-    this.repl = BQN.makerepl(BQN.sysargs, 1);
-    this.ready = Promise.resolve(null);
+    this._BQN = (
+      import("./bqn") as any as Promise<{ default: typeof BQN }>
+    ).then(({ default: BQN }) => {
+      return {
+        repl: BQN.makerepl(BQN.sysargs, 1),
+        BQN,
+      };
+    });
+    this._ready = this._BQN;
+  }
+
+  BQN(): Promise<{ repl: BQN.REPL; BQN: typeof BQN }> {
+    let ready = this._ready;
+    return this._BQN.then(async (BQN) => {
+      await ready;
+      return BQN;
+    });
   }
 
   listSys() {
     let code = `{𝕩 ⋈⟜•Type¨ •BQN 1↓∾"‿•"⊸∾¨𝕩} •listSys`;
-    let res = this.ready.then(() => {
-      let value = this.repl(code) as any as [string[], number][];
+    let res = this.BQN().then((BQN) => {
+      let value = BQN.repl(code) as any as [string[], number][];
       return value.map(([name, type]) => ({
         name: name.join(""),
         type: valueTypes[type]!,
       }));
     });
-    this.ready = res;
+    this._ready = res;
     return res;
   }
 
   eval(code: string): Promise<readonly [REPLResult, string[]]> {
-    let res = this.ready.then(() => {
+    let res = this.BQN().then((BQN) => {
       if (code.trim().length === 0)
         return [{ type: "ok", ok: null }, [] as string[]] as const;
       try {
-        let value = this.repl(code);
+        let value = BQN.repl(code);
         let logs = consumeLogs();
         return [
-          { type: "ok", ok: BQN.fmt(value).slice(0, FMTLIMIT) },
+          { type: "ok", ok: BQN.BQN.fmt(value).slice(0, FMTLIMIT) },
           logs,
         ] as const;
       } catch (e) {
         let logs = consumeLogs();
-        return [{ type: "error", error: BQN.fmtErr(e as any) }, logs] as const;
+        return [
+          { type: "error", error: BQN.BQN.fmtErr(e as any) },
+          logs,
+        ] as const;
       }
     });
-    this.ready = res;
+    this._ready = res;
     return res;
   }
 
   preview(code: string): Promise<readonly [REPLResult, string[]]> {
-    let res = this.ready.then(() => {
+    let res = this.BQN().then((BQN) => {
       if (code.trim().length === 0)
         return [{ type: "ok", ok: null }, [] as string[]] as const;
 
       try {
-        let value = this.repl.preview(code);
+        let value = BQN.repl.preview(code);
         let logs = consumeLogs();
         return [
-          { type: "ok", ok: BQN.fmt(value).slice(0, FMTLIMIT) },
+          { type: "ok", ok: BQN.BQN.fmt(value).slice(0, FMTLIMIT) },
           logs,
         ] as const;
       } catch (e) {
@@ -128,10 +146,13 @@ export class REPL implements IREPL {
             },
             logs,
           ] as const;
-        return [{ type: "error", error: BQN.fmtErr(e as any) }, logs] as const;
+        return [
+          { type: "error", error: BQN.BQN.fmtErr(e as any) },
+          logs,
+        ] as const;
       }
     });
-    this.ready = res;
+    this._ready = res;
     return res;
   }
 }
