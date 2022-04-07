@@ -3,7 +3,13 @@ import * as React from "react";
 import * as Base from "@mechanize/base";
 
 import * as REPL from "./REPL";
-import type * as BQN from "./bqn";
+
+const FMTLIMIT = 5000;
+
+function fmt(s: string) {
+  if (s.length > FMTLIMIT) s = s.slice(0, FMTLIMIT);
+  return s;
+}
 
 type CBQN = {
   eval(code: string): void;
@@ -73,11 +79,11 @@ export class CBQNREPL implements REPL.IREPL {
         if (stderr.length > 0) {
           return [
             { type: "error", error: String(stderr.join("\n")) },
-            stdout,
+            stdout.map(fmt),
           ] as const;
         }
         let ok = stdout.pop() ?? "";
-        return [{ type: "ok", ok }, stdout] as const;
+        return [{ type: "ok", ok: fmt(ok) }, stdout.map(fmt)] as const;
       } catch (e) {
         let stderr = CBQN.consumeStderr();
         return [
