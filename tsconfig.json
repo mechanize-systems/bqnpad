@@ -26,7 +26,7 @@
     "noUncheckedIndexedAccess": true
   },
   "include": ["**/*.js", "**/*.ts", "**/*.d.ts", "**/*.tsx"],
-  "exclude": [],
+  "exclude": ["node_modules/**", "emsdk/**"],
   "references": [
     {
       "path": "./base/tsconfig.json"

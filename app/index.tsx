@@ -4,7 +4,7 @@ import * as React from "react";
 import * as Workspace from "./Workspace";
 import * as Workspace0 from "./Workspace0";
 import * as WorkspaceManager from "./WorkspaceManager";
-import "./app.css";
+import "./index.css";
 
 export let routes = {
   index: ASAP.route("/", async () => ({ default: Index })),
