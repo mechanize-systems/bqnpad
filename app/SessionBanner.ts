@@ -1,6 +1,7 @@
 import * as View from "@codemirror/view";
 
-import * as UI from "./UI";
+import * as UI from "@mechanize/ui";
+
 import * as Workspace0 from "./Workspace0";
 import { encodeWorkspace } from "./WorkspaceManager";
 

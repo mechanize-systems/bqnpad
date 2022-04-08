@@ -10,6 +10,7 @@ import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
 import * as Base from "@mechanize/base";
+import * as UI from "@mechanize/ui";
 
 import * as Editor from "./Editor";
 import { FontSelect } from "./FontSelect";
@@ -17,7 +18,6 @@ import { GlyphsPalette } from "./GlyphPalette";
 import * as REPL from "./REPL";
 import { REPLWebWorkerClient } from "./REPLWebWorkerClient";
 import { SessionBanner } from "./SessionBanner";
-import * as UI from "./UI";
 import * as Workspace0 from "./Workspace0";
 import type { WorkspaceManager } from "./WorkspaceManager";
 
@@ -782,7 +782,7 @@ class PlaceholderWidget extends View.WidgetType {
   }
 
   override get estimatedHeight() {
-    return UI.LINE_HEIGHT;
+    return LINE_HEIGHT;
   }
 
   toDOM() {
@@ -856,9 +856,9 @@ class FoldedOutputView {
 
   get estimatedHeight(): number {
     if (this.folded) {
-      return this.foldCutoffLines * UI.LINE_HEIGHT;
+      return this.foldCutoffLines * LINE_HEIGHT;
     } else {
-      return this.numberOfLines * UI.LINE_HEIGHT;
+      return this.numberOfLines * LINE_HEIGHT;
     }
   }
 
@@ -1072,7 +1072,7 @@ class PreviewOutputWidget extends BaseOutputWidget {
   }
 
   override get estimatedHeight() {
-    return this.numberOfLines * UI.LINE_HEIGHT;
+    return this.numberOfLines * LINE_HEIGHT;
   }
 
   render() {
@@ -1136,3 +1136,7 @@ function download(blob: Blob, filename: string) {
   a.click();
   document.body.removeChild(a);
 }
+
+// TODO: need to infer this from CSS
+// line-height (1.4) * fontSize (20)
+const LINE_HEIGHT = 28;

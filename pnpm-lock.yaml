@@ -25,6 +25,7 @@ importers:
       '@lezer/lr': ^0.15.8
       '@mechanize/asap': ^0.0.8
       '@mechanize/base': workspace:*
+      '@mechanize/ui': workspace:*
       '@trivago/prettier-plugin-sort-imports': ^3.2.0
       '@tsconfig/strictest': ^1.0.0
       '@types/debug': ^4.1.7
@@ -69,6 +70,7 @@ importers:
       '@lezer/generator': 0.15.4
       '@lezer/lr': 0.15.8
       '@mechanize/base': link:base
+      '@mechanize/ui': link:ui
       '@trivago/prettier-plugin-sort-imports': 3.2.0_prettier@2.6.0
       '@tsconfig/strictest': 1.0.0
       '@types/debug': 4.1.7
@@ -129,6 +131,16 @@ importers:
       '@lezer/lr': 0.15.8
     devDependencies:
       '@lezer/generator': 0.15.4
+
+  ui:
+    specifiers:
+      '@mechanize/base': workspace:*
+      react: 18.0.0
+      react-dom: 18.0.0
+    dependencies:
+      '@mechanize/base': link:../base
+      react: 18.0.0
+      react-dom: 18.0.0_react@18.0.0
 
 packages:
 
@@ -1714,7 +1726,6 @@ packages:
 
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
-    dev: true
 
   /js-yaml/4.1.0:
     resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
@@ -1797,7 +1808,6 @@ packages:
     hasBin: true
     dependencies:
       js-tokens: 4.0.0
-    dev: true
 
   /lru-cache/6.0.0:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
@@ -2046,14 +2056,12 @@ packages:
       loose-envify: 1.4.0
       react: 18.0.0
       scheduler: 0.21.0
-    dev: true
 
   /react/18.0.0:
     resolution: {integrity: sha512-x+VL6wbT4JRVPm7EGxXhZ8w8LTROaxPXOqhlGyVSrv0sB1jkyFGgXxJ8LVoPRLvPR6/CIZGFmfzqUa2NYeMr2A==}
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
-    dev: true
 
   /readdirp/3.6.0:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
@@ -2112,7 +2120,6 @@ packages:
     resolution: {integrity: sha512-1r87x5fz9MXqswA2ERLo0EbOAU74DpIUO090gIasYTqlVoJeMcl+Z1Rg7WHz+qtPujhS/hGIt9kxZOYBV3faRQ==}
     dependencies:
       loose-envify: 1.4.0
-    dev: true
 
   /semver/6.3.0:
     resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}

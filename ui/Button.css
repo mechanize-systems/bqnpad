@@ -1,0 +1,17 @@
+.Button {
+  padding: 5px;
+  background-color: transparent;
+  border: none;
+  color: var(--app-color);
+  font-weight: 400;
+  border-radius: 3px;
+}
+.Button:hover {
+  background-color: var(--app-ui-hover-bg);
+}
+.Button:active {
+  background-color: var(--app-ui-active-bg);
+}
+a.Button {
+  text-decoration: none;
+}

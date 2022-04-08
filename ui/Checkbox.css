@@ -1,0 +1,27 @@
+.Checkbox {
+  padding: 5px;
+  user-select: none;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  position: relative;
+  font-weight: 400;
+  border-radius: 3px;
+}
+.Checkbox:hover {
+  background-color: var(--app-ui-hover-bg);
+}
+.Checkbox:active {
+  background-color: var(--app-ui-active-bg);
+}
+.Checkbox--disabled,
+.Checkbox--disabled:active,
+.Checkbox--disabled:hover {
+  background-color: transparent;
+  color: var(--app-color-dimmed);
+}
+.Checkbox > input {
+  position: relative;
+  bottom: -1px;
+  margin-right: 5px;
+}

@@ -1,0 +1,18 @@
+.Select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 5px;
+  border: none;
+  background-color: transparent;
+  border-radius: 0;
+  font-weight: 400;
+  border-radius: 3px;
+  color: var(--app-color);
+}
+.Select:hover {
+  background-color: var(--app-ui-hover-bg);
+}
+.Select:active {
+  background-color: var(--app-ui-active-bg);
+}

@@ -1,5 +1,6 @@
 packages:
 - "."
 - "./base"
+- "./ui"
 - "./lezer-bqn"
 - "./lang-bqn"

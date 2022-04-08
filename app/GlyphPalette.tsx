@@ -1,7 +1,7 @@
 import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
-import * as UI from "./UI";
+import * as UI from "@mechanize/ui";
 
 export type GlyphsPaletteProps = {
   theme: "dark" | "light";

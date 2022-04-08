@@ -1,0 +1,14 @@
+{
+  "name": "@mechanize/ui",
+  "version": "0.0.1",
+  "description": "UI toolkit",
+  "main": "index",
+  "types": "index.d.ts",
+  "author": "Andrey Popp <me@andreypopp.com>",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@mechanize/base": "workspace:*"
+  }
+}

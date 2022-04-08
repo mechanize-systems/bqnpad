@@ -1,8 +1,7 @@
 import * as React from "react";
 
 import * as Base from "@mechanize/base";
-
-import * as UI from "./UI";
+import * as UI from "@mechanize/ui";
 
 let FONTS: UI.SelectOption[] = [
   { value: "BQN", label: "BQN386" },
@@ -27,7 +26,7 @@ export function FontSelect() {
     fontCodec,
   );
   React.useLayoutEffect(() => {
-    UI.setEditorFont(currentFont);
+    setEditorFont(currentFont);
   }, [currentFont]);
   return (
     <div className="Toolbar__section">
@@ -38,5 +37,12 @@ export function FontSelect() {
         options={FONTS}
       />
     </div>
+  );
+}
+
+function setEditorFont(font: string) {
+  document.documentElement.style.setProperty(
+    "--editor-font-family",
+    `${font}, Menlo, Monaco, monospace`,
   );
 }
