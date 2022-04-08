@@ -119,7 +119,6 @@ export function Workspace({
       View.keymap.of(keybindings),
       View.keymap.of(History.historyKeymap),
       View.keymap.of(Commands.defaultKeymap),
-      View.placeholder("..."),
       LangBQN.bqn({ sysCompletion: listSys }),
       Language.indentOnInput(),
       darkThemeExtension,
