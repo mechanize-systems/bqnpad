@@ -88,7 +88,6 @@ export function encodeWorkspace(
       : encodeCell({ from: to, to, result: null }),
   };
   let data = JSON.stringify(workspace);
-  console.log(data);
   return btoa(String.fromCharCode(...new TextEncoder().encode(data)));
 }
 

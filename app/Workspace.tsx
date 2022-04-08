@@ -2,6 +2,7 @@
 /// <reference types="react/next" />
 import * as Autocomplete from "@codemirror/autocomplete";
 import * as CloseBrackets from "@codemirror/closebrackets";
+import * as Commands from "@codemirror/commands";
 import * as History from "@codemirror/history";
 import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
@@ -10,9 +11,9 @@ import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
 import * as Base from "@mechanize/base";
+import * as Editor from "@mechanize/editor";
 import * as UI from "@mechanize/ui";
 
-import * as Editor from "./Editor";
 import { FontSelect } from "./FontSelect";
 import { GlyphsPalette } from "./GlyphPalette";
 import * as REPL from "./REPL";
@@ -68,12 +69,10 @@ export function Workspace({
   }
 
   let config = Editor.useStateField<WorkspaceConfig>(
+    editor,
     {
-      view: editor,
-      value: {
-        enableLivePreview: enableLivePreview ?? false,
-        disableSessionBanner,
-      },
+      enableLivePreview: enableLivePreview ?? false,
+      disableSessionBanner,
     },
     [enableLivePreview, disableSessionBanner],
   );
@@ -100,37 +99,19 @@ export function Workspace({
 
   let [{ status }, workspace] = useWorkspace(repl, workspace0, editor, config);
 
-  React.useLayoutEffect(() => {
-    workspace.commands.focusCurrentCell(editor.current!);
-  }, [editor, workspace]);
-
-  let [onDoc, _onDocFlush, onDocCancel] = Base.React.useDebouncedCallback(
-    1000,
-    (_doc, state: State.EditorState) => {
-      manager.store((_) => workspace.toWorkspace0(state));
-    },
-    [manager, workspace],
-  );
+  let [onUpdate, _onUpdateFlush, onUpdateCancel] =
+    Base.React.useDebouncedCallback(
+      1000,
+      (update: View.ViewUpdate) => {
+        manager.store((_) => workspace.toWorkspace0(update.state));
+      },
+      [manager, workspace],
+    );
 
   let [theme, themePref, setThemePref] = UI.useTheme();
-  let darkThemeExtension = Editor.useStateField(
-    {
-      view: editor,
-      value: () => theme === "dark",
-      provide: (field) => View.EditorView.darkTheme.from(field),
-    },
-    [theme],
-  );
-  let extensions = React.useMemo(
-    () => [
-      LangBQN.bqn({ sysCompletion: listSys }),
-      Language.indentOnInput(),
-      workspace.extension,
-      darkThemeExtension,
-      CloseBrackets.closeBrackets(),
-    ],
-    [listSys, workspace, darkThemeExtension],
-  );
+  let darkThemeExtension = Editor.useStateField(editor, theme === "dark", [
+    theme,
+  ]);
 
   let keybindings: View.KeyBinding[] = React.useMemo<View.KeyBinding[]>(() => {
     return [
@@ -141,6 +122,23 @@ export function Workspace({
       ...CloseBrackets.closeBracketsKeymap,
     ];
   }, [workspace]);
+
+  let extensions = React.useMemo(
+    () => [
+      History.history(),
+      workspace.extension,
+      View.keymap.of(keybindings),
+      View.keymap.of(History.historyKeymap),
+      View.keymap.of(Commands.defaultKeymap),
+      View.placeholder("..."),
+      LangBQN.bqn({ sysCompletion: listSys }),
+      Language.indentOnInput(),
+      darkThemeExtension,
+      View.EditorView.darkTheme.from(darkThemeExtension),
+      CloseBrackets.closeBrackets(),
+    ],
+    [listSys, workspace, darkThemeExtension, keybindings],
+  );
 
   let onGlyph = React.useCallback(
     (glyph: LangBQN.Glyph) => {
@@ -198,10 +196,20 @@ export function Workspace({
         result: null,
       },
     };
-    onDocCancel();
+    onUpdateCancel();
     manager.store((_) => newW);
     manager.restart();
-  }, [editor, manager, onDocCancel, workspace]);
+  }, [editor, manager, onUpdateCancel, workspace]);
+
+  let editorElement = React.useRef<null | HTMLDivElement>(null);
+  Editor.useEditor(editorElement, editor, {
+    doc: doc0,
+    onUpdate,
+    extensions,
+  });
+  React.useLayoutEffect(() => {
+    workspace.commands.focusCurrentCell(editor.current!);
+  }, [editor, workspace]);
 
   return (
     <div className="Workspace">
@@ -308,14 +316,7 @@ export function Workspace({
         </div>
         {showGlyphbar && <GlyphsPalette onClick={onGlyph} theme={theme} />}
       </div>
-      <Editor.Editor
-        className="Editor"
-        editorRef={editor}
-        doc={doc0}
-        onDoc={onDoc}
-        extensions={extensions}
-        keybindings={keybindings}
-      />
+      <div ref={editorElement} className="Editor" />
     </div>
   );
 }

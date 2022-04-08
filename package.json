@@ -25,6 +25,7 @@
     "@lezer/lr": "^0.15.8",
     "@mechanize/base": "workspace:*",
     "@mechanize/ui": "workspace:*",
+    "@mechanize/editor": "workspace:*",
     "@trivago/prettier-plugin-sort-imports": "^3.2.0",
     "@tsconfig/strictest": "^1.0.0",
     "@types/debug": "^4.1.7",

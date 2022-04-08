@@ -2,5 +2,6 @@ packages:
 - "."
 - "./base"
 - "./ui"
+- "./editor"
 - "./lezer-bqn"
 - "./lang-bqn"

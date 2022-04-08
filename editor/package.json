@@ -1,0 +1,14 @@
+{
+  "name": "@mechanize/editor",
+  "version": "0.0.1",
+  "description": "Code Editor on top of CodeMirror and React",
+  "main": "index",
+  "types": "index.d.ts",
+  "author": "Andrey Popp <me@andreypopp.com>",
+  "license": "AGPLv3",
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@mechanize/base": "workspace:*"
+  }
+}
