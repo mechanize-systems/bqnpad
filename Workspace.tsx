@@ -57,15 +57,10 @@ export function Workspace({
   let [enableLivePreview, setEnableLivePreview] =
     Base.React.usePersistentState<boolean | null>(
       "bqnpad-pref-enableLivePreview",
-      () => true,
+      () => Base.Worker.supportsWorkerModule(),
     );
   let enableLivePreviewTitle;
-  if (!Base.Worker.supportsWorkerModule()) {
-    // If the browser doesn't support WebWorker type=module we disable live
-    // preview as it might freeze the UI.
-    enableLivePreview = null;
-    enableLivePreviewTitle = "Live Preview is not supported in Firefox yet";
-  } else if (vm === "cbqn") {
+  if (vm === "cbqn") {
     // CBQN does not support live preview yet
     enableLivePreview = null;
     enableLivePreviewTitle =
