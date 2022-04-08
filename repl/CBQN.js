@@ -1483,7 +1483,7 @@ function createExportWrapper(name, fixedasm) {
 }
 
 var wasmBinaryFile;
-wasmBinaryFile = require('../CBQN/BQN.wasm');
+wasmBinaryFile = require('./CBQN/BQN.wasm');
   if (!isDataURI(wasmBinaryFile)) {
     wasmBinaryFile = locateFile(wasmBinaryFile);
   }

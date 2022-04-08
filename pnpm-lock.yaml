@@ -8,6 +8,7 @@ importers:
 
   .:
     specifiers:
+      '@bqnpad/repl': workspace:*
       '@codemirror/autocomplete': ^0.19.0
       '@codemirror/closebrackets': ^0.19.1
       '@codemirror/collab': ^0.19.0
@@ -57,6 +58,7 @@ importers:
       debug: 4.3.4
       ws: 8.5.0
     devDependencies:
+      '@bqnpad/repl': link:repl
       '@codemirror/autocomplete': 0.19.15
       '@codemirror/closebrackets': 0.19.1
       '@codemirror/commands': 0.19.8
@@ -143,6 +145,12 @@ importers:
       '@lezer/lr': 0.15.8
     devDependencies:
       '@lezer/generator': 0.15.4
+
+  repl:
+    specifiers:
+      '@mechanize/base': workspace:*
+    dependencies:
+      '@mechanize/base': link:../base
 
   ui:
     specifiers:

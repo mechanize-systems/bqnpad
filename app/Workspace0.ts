@@ -1,7 +1,7 @@
 /**
  * Workspace0 represents workspace serialization format.
  */
-import type { REPLResult } from "./REPL";
+import type * as REPL from "@bqnpad/repl";
 
 /** Workspace0 version, increment each time you change types here. */
 export const version = 5;
@@ -29,7 +29,7 @@ export type WorkspaceCell0 = {
   /** `from`/`to` represent a range into the workspace's `doc`. */
   to: number;
   /** Evaluation result (if present). */
-  result: readonly [REPLResult, string[]] | REPLResult | null;
+  result: readonly [REPL.REPLResult, string[]] | REPL.REPLResult | null;
 };
 
 /** Create a new workspace with a single (current) cell. */

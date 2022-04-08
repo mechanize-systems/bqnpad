@@ -8,10 +8,10 @@ init:
 	make all
 
 .PHONY: all
-all: lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js CBQN/BQN.wasm
+all: lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js repl/CBQN/BQN.wasm
 
-CBQN/BQN.wasm:
-	bash -c '(source ./emsdk/emsdk_env.sh && make -C CBQN emcc-o3)'
+repl/CBQN/BQN.wasm:
+	bash -c '(source ./repl/emsdk/emsdk_env.sh && make -C repl/CBQN emcc-o3)'
 
 .PHONY: start
 start:

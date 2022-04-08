@@ -10,14 +10,13 @@ import * as View from "@codemirror/view";
 import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
+import * as REPL from "@bqnpad/repl";
 import * as Base from "@mechanize/base";
 import * as Editor from "@mechanize/editor";
 import * as UI from "@mechanize/ui";
 
 import { FontSelect } from "./FontSelect";
 import { GlyphsPalette } from "./GlyphPalette";
-import * as REPL from "./REPL";
-import { REPLWebWorkerClient } from "./REPLWebWorkerClient";
 import { SessionBanner } from "./SessionBanner";
 import * as Workspace0 from "./Workspace0";
 import type { WorkspaceManager } from "./WorkspaceManager";
@@ -79,7 +78,7 @@ export function Workspace({
 
   let repl = React.useMemo(() => {
     if (Base.Worker.supportsWorkerModule()) {
-      return new REPLWebWorkerClient(vm);
+      return new REPL.REPLWebWorkerClient(vm);
     } else {
       // Those browsers (looking at you, Firefox) which don't support WebWorker
       // type=module will get in process REPL.

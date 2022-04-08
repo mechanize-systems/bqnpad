@@ -23,6 +23,7 @@
     "@lezer/common": "^0.15.11",
     "@lezer/generator": "^0.15.4",
     "@lezer/lr": "^0.15.8",
+    "@bqnpad/repl": "workspace:*",
     "@mechanize/base": "workspace:*",
     "@mechanize/ui": "workspace:*",
     "@mechanize/editor": "workspace:*",

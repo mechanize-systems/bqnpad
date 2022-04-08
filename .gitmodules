@@ -2,8 +2,8 @@
 	path = base
 	url = https://github.com/mechanize-systems/base.git
 [submodule "CBQN"]
-	path = CBQN
+	path = repl/CBQN
 	url = git@github.com:andreypopp/CBQN.git
 [submodule "emsdk"]
-	path = emsdk
+	path = repl/emsdk
 	url = https://github.com/emscripten-core/emsdk.git

@@ -3,5 +3,6 @@ packages:
 - "./base"
 - "./ui"
 - "./editor"
+- "./repl"
 - "./lezer-bqn"
 - "./lang-bqn"

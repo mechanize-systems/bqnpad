@@ -1,0 +1,12 @@
+{
+  "name": "@bqnpad/repl",
+  "version": "0.0.1",
+  "description": "BQN repl (both BQN.js and CBQN)",
+  "main": "index",
+  "types": "index.d.ts",
+  "author": "Andrey Popp <me@andreypopp.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@mechanize/base": "workspace:*"
+  }
+}
