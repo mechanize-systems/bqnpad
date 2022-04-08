@@ -43,7 +43,7 @@ export function Workspace({
     "bqnpad-pref-showGlyphbar",
     () => true,
   );
-  let [vm, setVm_] = Base.React.usePersistentState<"bqnjs" | "cbqn">(
+  let [vm, setVm_] = Base.React.usePersistentState<REPL.REPLType>(
     "bqnpad-vm",
     () => "bqnjs",
   );
@@ -76,17 +76,7 @@ export function Workspace({
     [enableLivePreview, disableSessionBanner],
   );
 
-  let repl = React.useMemo(() => {
-    if (Base.Worker.supportsWorkerModule()) {
-      return new REPL.REPLWebWorkerClient(vm);
-    } else {
-      // Those browsers (looking at you, Firefox) which don't support WebWorker
-      // type=module will get in process REPL.
-      //
-      // - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=1247687
-      return new REPL.REPL();
-    }
-  }, [vm]);
+  let repl = REPL.useREPL(vm);
 
   let listSys = React.useMemo(() => {
     let sys: null | Promise<REPL.ValueDesc[]> = null;

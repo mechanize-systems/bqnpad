@@ -2,10 +2,10 @@ import * as Base from "@mechanize/base";
 
 import * as CBQNREPL from "./CBQNREPL";
 import * as REPL from "./REPL";
+import type { REPLType } from "./index";
 
-let vm = (new URL(self.location.href).searchParams.get("vm") ?? "bqnjs") as
-  | "bqnjs"
-  | "cbqn";
+let vm = (new URL(self.location.href).searchParams.get("vm") ??
+  "bqnjs") as REPLType;
 
 let repl: REPL.IREPL;
 switch (vm) {

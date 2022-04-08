@@ -1,9 +1,8 @@
-import * as React from "react";
-
 import * as Base from "@mechanize/base";
 
-import type { IREPL, REPLResult, REPLStatus, ValueDesc } from "./REPL";
+import type { IREPL, REPLStatus } from "./REPL";
 import type { Methods } from "./REPLWebWorker";
+import type { REPLType } from "./index";
 
 export class REPLWebWorkerClient implements IREPL {
   private inflght: number = 0;
@@ -63,7 +62,7 @@ declare var ASAPConfig: { basePath: string };
 let BASENAME_RE =
   /^(?:\/?|)(?:[\s\S]*?)((?:\.{1,2}|[^\/]+?|)(?:\.[^.\/]*|))(?:[\/]*)$/;
 
-let bqnWorker = (vm: "cbqn" | "bqnjs") =>
+let bqnWorker = (type: REPLType) =>
   new Base.Worker.WorkerManager<Methods, Error>(async () => {
     let resp = await fetch(ASAPConfig.basePath + "/__static/metafile.json");
     let json = await resp.json();
@@ -79,7 +78,7 @@ let bqnWorker = (vm: "cbqn" | "bqnjs") =>
         )
       )
         continue;
-      let url = `${ASAPConfig.basePath}/__static/${basename}?vm=${vm}`;
+      let url = `${ASAPConfig.basePath}/__static/${basename}?vm=${type}`;
       return new Worker(url, { type: "module" });
     }
     return new Worker(new URL("./REPLWebWorker", import.meta.url));

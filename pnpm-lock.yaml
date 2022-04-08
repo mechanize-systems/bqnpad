@@ -149,8 +149,10 @@ importers:
   repl:
     specifiers:
       '@mechanize/base': workspace:*
+      react: 18.0.0
     dependencies:
       '@mechanize/base': link:../base
+      react: 18.0.0
 
   ui:
     specifiers:

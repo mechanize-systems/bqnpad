@@ -7,6 +7,7 @@
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
   "dependencies": {
-    "@mechanize/base": "workspace:*"
+    "@mechanize/base": "workspace:*",
+    "react": "^18.0.0"
   }
 }
