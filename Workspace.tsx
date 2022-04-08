@@ -817,7 +817,10 @@ function resultContent([result, logs]: readonly [
   let output: string;
   if (result.type === "ok") {
     output = result.ok ?? "&nbsp;";
-  } else if (result.type === "error" && result.error !== "Empty program") {
+  } else if (
+    result.type === "error" &&
+    result.error !== "Error: Empty program"
+  ) {
     output = result.error;
   } else if (result.type === "notice") {
     output = result.notice;
@@ -986,7 +989,9 @@ class CellOutputWidget extends BaseOutputWidget {
 
   override onResultUpdate(): void {
     this.outputView.content =
-      this.resultContent[0] === "Empty program" ? "" : this.resultContent[0];
+      this.resultContent[0] === "Error: Empty program"
+        ? ""
+        : this.resultContent[0];
     this.logsView.content = this.resultContent[1];
   }
 
@@ -1065,7 +1070,9 @@ class PreviewOutputWidget extends BaseOutputWidget {
 
   override onResultUpdate(): void {
     this.outputView.content =
-      this.resultContent[0] === "Empty program" ? "" : this.resultContent[0];
+      this.resultContent[0] === "Error: Empty program"
+        ? ""
+        : this.resultContent[0];
     this.logsView.content = this.resultContent[1];
   }
 
