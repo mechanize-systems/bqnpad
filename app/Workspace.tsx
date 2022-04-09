@@ -125,6 +125,7 @@ export function Workspace({
       darkThemeExtension,
       View.EditorView.darkTheme.from(darkThemeExtension),
       CloseBrackets.closeBrackets(),
+      Editor.scrollMarginBottom(150),
     ],
     [listSys, workspace, darkThemeExtension, keybindings],
   );
@@ -565,30 +566,6 @@ function workspace(
     },
   );
 
-  let onSelection = View.ViewPlugin.fromClass(
-    class {
-      constructor() {}
-      update(up: View.ViewUpdate) {
-        let view = up.view;
-        if (!up.selectionSet) return;
-        let sel = up.state.selection.main;
-        view.requestMeasure<{ cursor: View.Rect | null; scroller: DOMRect }>({
-          read() {
-            return {
-              scroller: view.scrollDOM.getBoundingClientRect(),
-              cursor: view.coordsAtPos(sel.anchor),
-            };
-          },
-          write({ cursor, scroller }) {
-            if (cursor == null) return;
-            let diff = scroller.bottom - cursor.bottom;
-            if (diff < 150) view.scrollDOM.scrollTop += 150 - diff;
-          },
-        });
-      }
-    },
-  );
-
   // Query
 
   let cells = (state: State.EditorState) => state.field(cellsField);
@@ -718,7 +695,6 @@ function workspace(
 
   let extension = [
     onInit.extension,
-    onSelection.extension,
     computeCurrentCellField,
     prevCellsField,
     cellsField,

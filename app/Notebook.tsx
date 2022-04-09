@@ -1,3 +1,4 @@
+import * as Autocomplete from "@codemirror/autocomplete";
 import * as CloseBrackets from "@codemirror/closebrackets";
 import * as Commands from "@codemirror/commands";
 import * as History from "@codemirror/history";
@@ -32,6 +33,7 @@ export default function Notebook() {
     extensions: React.useMemo(
       () => [
         View.keymap.of(cellsKeymap),
+        View.keymap.of([{ key: "Tab", run: Autocomplete.startCompletion }]),
         View.keymap.of(History.historyKeymap),
         View.keymap.of(Commands.defaultKeymap),
         cellsExtension,
@@ -41,6 +43,7 @@ export default function Notebook() {
         darkThemeExtension,
         View.EditorView.darkTheme.from(darkThemeExtension),
         CloseBrackets.closeBrackets(),
+        Editor.scrollMarginBottom(150),
       ],
       [darkThemeExtension, cellsKeymap, cellsExtension],
     ),
@@ -97,8 +100,7 @@ function notebookExtension() {
   });
 
   let runCell: View.Command = (view) => {
-    let cur = cells.query.cellAt(view.state);
-    if (cur == null) return false;
+    let cur = cells.query.cellAt(view.state)!;
 
     let toRun: { from: number; to: number; cell: Editor.Cells.Cell<Cell> }[] =
       [];
@@ -155,12 +157,17 @@ function notebookExtension() {
     }
   };
 
+  let runCellAndInsertAfter: View.Command = (view) => {
+    return runCell(view) && cells.commands.insertAfter(view);
+  };
+
   let keymap = [
     { key: "Backspace", run: cells.commands.removeIfEmpty },
     { key: "Meta-Enter", run: cells.commands.insertAfter },
     { key: "Meta-Backspace", run: cells.commands.mergeWithPrevious },
     { key: "Mod-a", run: cells.commands.select },
     { key: "Shift-Enter", run: runCell },
+    { key: "Meta-Shift-Enter", run: runCellAndInsertAfter },
   ];
 
   let outputExtension = Editor.Cells.cellsWidgetDecoration(
