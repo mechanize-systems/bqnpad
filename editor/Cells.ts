@@ -26,19 +26,15 @@ export type Cells<T = any> = {
    * Cell commands.
    */
   commands: {
-    /**
-     * Select cell at current cursor position.
-     */
+    /** Select cell at current cursor position. */
     select: View.Command;
-    /**
-     * Split cell at current cursor position.
-     */
+    /** Insert new cell after current cell.  */
+    insertAfter: View.Command;
+    /** Split cell at current cursor position. */
     split: View.Command;
-    /**
-     * Merge cell at current cursor position with the previous cell.
-     */
+    /** Merge cell at current cursor position with the previous cell. */
     mergeWithPrevious: View.Command;
-
+    /** Remove current cell if it is empty. */
     removeIfEmpty: View.Command;
   };
 
@@ -289,6 +285,15 @@ export function configure<T>(
   };
 
   let commands: Cells<T>["commands"] = {
+    insertAfter: (view) => {
+      let cell = query.cellAt(view.state)!;
+      view.dispatch({
+        changes: { insert: "\n", from: cell.to, to: cell.to },
+        selection: State.EditorSelection.cursor(cell.to + 1),
+        effects: [splitCell.of(cell.to)],
+      });
+      return true;
+    },
     split: (view) => {
       let at = view.state.selection.main.to;
       view.dispatch({
