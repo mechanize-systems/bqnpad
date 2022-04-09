@@ -15,6 +15,7 @@ import * as Base from "@mechanize/base";
 import * as Editor from "@mechanize/editor";
 import * as UI from "@mechanize/ui";
 
+import { AppHeader } from "./AppHeader";
 import { FontSelect } from "./FontSelect";
 import { GlyphsPalette } from "./GlyphPalette";
 import { SessionBanner } from "./SessionBanner";
@@ -199,111 +200,86 @@ export function Workspace({
     workspace.commands.focusCurrentCell(editor.current!);
   }, [editor, workspace]);
 
+  let statusElement = status != null && (
+    <div className="Toolbar__section">
+      <div
+        className={UI.cx(
+          "VMStatus",
+          status === "idle" && "VMStatus--idle",
+          status === "running" && "VMStatus--running",
+        )}
+      >
+        VM {status.toUpperCase()}
+      </div>
+    </div>
+  );
+
+  let toolbar = (
+    <>
+      <div className="Toolbar" style={{ justifyContent: "flex-start" }}>
+        <div className="Toolbar__section">
+          <div className="label">Session:</div>
+          {!disableSessionControls && (
+            <UI.Button title="Create new session" onClick={() => onNew()}>
+              New
+            </UI.Button>
+          )}
+          <UI.Button
+            title="Restart current session"
+            onClick={() => manager.restart()}
+          >
+            Restart
+          </UI.Button>
+          <UI.Button
+            title="Download workspace as .bqn source file"
+            onClick={onSave}
+          >
+            Download
+          </UI.Button>
+        </div>
+        <div className="Toolbar__section">
+          <UI.Checkbox
+            disabled={enableLivePreview === null}
+            value={enableLivePreview ?? false}
+            onValue={setEnableLivePreview}
+            title={enableLivePreviewTitle}
+          >
+            Live preview
+          </UI.Checkbox>
+          <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
+            Show glyphs
+          </UI.Checkbox>
+        </div>
+        <div className="Toolbar__section">
+          <div className="label">VM:</div>
+          <UI.Select
+            value={vm}
+            onValue={setVm}
+            options={[
+              { label: "BQN.js", value: "bqnjs" },
+              { label: "CBQN", value: "cbqn" },
+            ]}
+          />
+          <div className="label">Theme:</div>
+          <UI.Select
+            value={themePref}
+            onValue={setThemePref}
+            options={[
+              { label: "System", value: "system" },
+              { label: "Light", value: "light" },
+              { label: "Dark", value: "dark" },
+            ]}
+          />
+          <FontSelect />
+        </div>
+      </div>
+      {showGlyphbar && <GlyphsPalette onClick={onGlyph} theme={theme} />}
+    </>
+  );
+
   return (
     <div className="Workspace">
-      <div className="WorkspaceHeader">
-        <div className="Toolbar">
-          <div style={{ display: "flex", alignItems: "baseline" }}>
-            <a className="title Button" href={window.location.origin}>
-              BQNPAD
-            </a>
-            <a
-              target="_blank"
-              className="Button"
-              href="https://mlochbaum.github.io/BQN/index.html"
-            >
-              BQN Website ↗
-            </a>
-            <a
-              target="_blank"
-              className="Button"
-              href="https://mlochbaum.github.io/BQN/keymap.html"
-            >
-              Keymap ↗
-            </a>
-            <a
-              target="_blank"
-              className="Button"
-              href="https://mlochbaum.github.io/BQN/help/index.html"
-            >
-              Help ↗
-            </a>
-          </div>
-          <div style={{ display: "flex" }}>
-            {status != null && (
-              <div className="Toolbar__section">
-                <div
-                  className={UI.cx(
-                    "VMStatus",
-                    status === "idle" && "VMStatus--idle",
-                    status === "running" && "VMStatus--running",
-                  )}
-                >
-                  VM {status.toUpperCase()}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="Toolbar" style={{ justifyContent: "flex-start" }}>
-          <div className="Toolbar__section">
-            <div className="label">Session:</div>
-            {!disableSessionControls && (
-              <UI.Button title="Create new session" onClick={() => onNew()}>
-                New
-              </UI.Button>
-            )}
-            <UI.Button
-              title="Restart current session"
-              onClick={() => manager.restart()}
-            >
-              Restart
-            </UI.Button>
-            <UI.Button
-              title="Download workspace as .bqn source file"
-              onClick={onSave}
-            >
-              Download
-            </UI.Button>
-          </div>
-          <div className="Toolbar__section">
-            <UI.Checkbox
-              disabled={enableLivePreview === null}
-              value={enableLivePreview ?? false}
-              onValue={setEnableLivePreview}
-              title={enableLivePreviewTitle}
-            >
-              Live preview
-            </UI.Checkbox>
-            <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
-              Show glyphs
-            </UI.Checkbox>
-          </div>
-          <div className="Toolbar__section">
-            <div className="label">VM:</div>
-            <UI.Select
-              value={vm}
-              onValue={setVm}
-              options={[
-                { label: "BQN.js", value: "bqnjs" },
-                { label: "CBQN", value: "cbqn" },
-              ]}
-            />
-            <div className="label">Theme:</div>
-            <UI.Select
-              value={themePref}
-              onValue={setThemePref}
-              options={[
-                { label: "System", value: "system" },
-                { label: "Light", value: "light" },
-                { label: "Dark", value: "dark" },
-              ]}
-            />
-            <FontSelect />
-          </div>
-        </div>
-        {showGlyphbar && <GlyphsPalette onClick={onGlyph} theme={theme} />}
-      </div>
+      <AppHeader status={statusElement} toolbar={toolbar} />
       <div ref={editorElement} className="Editor" />
     </div>
   );

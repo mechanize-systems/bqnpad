@@ -1,0 +1,12 @@
+.CellOutput {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  border-left: 5px solid transparent;
+}
+.CellOutput--ok {
+  color: var(--app-color-dimmed);
+}
+.CellOutput--error {
+  color: red;
+}

@@ -1,6 +1,7 @@
 @import "normalize.css/normalize.css";
 @import "../font/index.css";
 
+@import "./Notebook.css";
 @import "@mechanize/ui/Theme.slate.css";
 @import "@mechanize/ui/Checkbox.css";
 @import "@mechanize/ui/Select.css";

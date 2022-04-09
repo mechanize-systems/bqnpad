@@ -1,6 +1,8 @@
-import * as ASAP from "@mechanize/asap";
 import * as React from "react";
 
+import * as ASAP from "@mechanize/asap";
+
+import { AppLoading, Chrome } from "./Chrome";
 import * as Workspace from "./Workspace";
 import * as Workspace0 from "./Workspace0";
 import * as WorkspaceManager from "./WorkspaceManager";
@@ -9,6 +11,7 @@ import "./index.css";
 export let routes = {
   index: ASAP.route("/", async () => ({ default: Index })),
   shared: ASAP.route("/s", async () => ({ default: Shared })),
+  notebook: ASAP.route("/notebook", async () => import("./Notebook")),
 };
 
 ASAP.boot({ routes, AppLoading });
@@ -55,15 +58,4 @@ function Shared() {
       />
     </Chrome>
   );
-}
-
-function Chrome({ children }: { children: React.ReactNode }) {
-  React.useLayoutEffect(() => {
-    document.title = "BQNPAD";
-  }, []);
-  return <React.Suspense fallback={<AppLoading />}>{children}</React.Suspense>;
-}
-
-function AppLoading(_props: ASAP.AppLoadingProps) {
-  return <div className="AppLoading">Loading...</div>;
 }
