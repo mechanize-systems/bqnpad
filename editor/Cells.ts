@@ -325,7 +325,6 @@ export function configure<T>(
       let at = view.state.selection.main.to;
       let cells = view.state.field(cellsField);
       for (let it = cells.iter(); it.value != null; it.next()) {
-        console.log("Backspace", at, it.to);
         if (at === 0 && it.to === 0 && view.state.doc.length > 0) {
           view.dispatch({
             filter: false,
