@@ -3,12 +3,12 @@ import * as React from "react";
 
 import * as UI from "@mechanize/ui";
 
-export type GlyphsPaletteProps = {
+export type GlyphPaletteProps = {
   theme: "dark" | "light";
   onClick: (glyph: LangBQN.Glyph) => void;
 };
 
-export function GlyphsPalette({ theme, onClick }: GlyphsPaletteProps) {
+export function GlyphPalette({ theme, onClick }: GlyphPaletteProps) {
   let hi = theme === "dark" ? LangBQN.highlightDark : LangBQN.highlightLight;
   let chars = React.useMemo(() => {
     return LangBQN.glyphs.map((glyph) => {
@@ -22,7 +22,10 @@ export function GlyphsPalette({ theme, onClick }: GlyphsPaletteProps) {
         <button
           title={title}
           key={glyph.glyph}
-          onClick={() => onClick(glyph)}
+          onMouseDown={(ev) => {
+            ev.preventDefault();
+            onClick(glyph);
+          }}
           className={UI.cx(className, "GlyphsPalette__item")}
         >
           {glyph.glyph}

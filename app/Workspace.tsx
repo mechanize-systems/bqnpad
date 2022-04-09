@@ -17,7 +17,7 @@ import * as UI from "@mechanize/ui";
 
 import { AppHeader } from "./AppHeader";
 import { FontSelect } from "./FontSelect";
-import { GlyphsPalette } from "./GlyphPalette";
+import { GlyphPalette } from "./GlyphPalette";
 import { SessionBanner } from "./SessionBanner";
 import * as Workspace0 from "./Workspace0";
 import type { WorkspaceManager } from "./WorkspaceManager";
@@ -273,7 +273,7 @@ export function Workspace({
           <FontSelect />
         </div>
       </div>
-      {showGlyphbar && <GlyphsPalette onClick={onGlyph} theme={theme} />}
+      {showGlyphbar && <GlyphPalette onClick={onGlyph} theme={theme} />}
     </>
   );
 

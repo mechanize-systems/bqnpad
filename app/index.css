@@ -248,6 +248,16 @@
   background: var(--app-ui-bg);
 }
 
+.WorkspaceHeader--collapsed {
+  border: 1px solid transparent;
+  border-bottom: 2px solid var(--app-border);
+  background: transparent;
+  border-radius: 0px;
+}
+.WorkspaceHeader--collapsed .WorkspaceHeader__hideable {
+  display: none;
+}
+
 .VMStatus {
   padding: 4px;
   font-size: 10px;

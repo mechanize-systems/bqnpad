@@ -14,6 +14,7 @@ import * as UI from "@mechanize/ui";
 
 import * as AppHeader from "./AppHeader";
 import * as Chrome from "./Chrome";
+import * as GlyphPalette from "./GlyphPalette";
 
 export default function Notebook() {
   let [theme, _themePref, _setThemePref] = UI.useTheme();
@@ -47,10 +48,26 @@ export default function Notebook() {
   React.useLayoutEffect(() => {
     editor.current!.focus();
   }, []);
+
+  let onGlyph = React.useCallback(
+    (glyph: LangBQN.Glyph) => {
+      let view = editor.current!;
+      if (!view.hasFocus) view.focus();
+      document.execCommand("insertText", false, glyph.glyph);
+    },
+    [editor],
+  );
+
   return (
     <Chrome.Chrome>
-      <AppHeader.AppHeader />
-      <div className="Editor" ref={editorElement} />
+      <div className="Notebook">
+        <AppHeader.AppHeader
+          toolbar={
+            <GlyphPalette.GlyphPalette theme={theme} onClick={onGlyph} />
+          }
+        />
+        <div className="Editor" ref={editorElement} />
+      </div>
     </Chrome.Chrome>
   );
 }
@@ -140,7 +157,7 @@ function notebookExtension() {
 
   let keymap = [
     { key: "Backspace", run: cells.commands.removeIfEmpty },
-    { key: "Meta-Enter", run: cells.commands.split },
+    { key: "Meta-Enter", run: cells.commands.insertAfter },
     { key: "Meta-Backspace", run: cells.commands.mergeWithPrevious },
     { key: "Mod-a", run: cells.commands.select },
     { key: "Shift-Enter", run: runCell },
