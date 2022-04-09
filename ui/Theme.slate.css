@@ -67,10 +67,12 @@
   --app-font-size-xs: 14px;
   --app-title-font-size: 18px;
   --app-bg: var(--slate1);
+  --app-subtle-bg: var(--slate2);
   --app-ui-bg: var(--slate3);
   --app-ui-hover-bg: var(--slate4);
   --app-ui-active-bg: var(--slate5);
   --app-border: var(--slate6);
+  --app-active-border: var(--slate7);
   --app-color: var(--slate12);
   --app-color-dimmed: var(--slate11);
 
