@@ -1,7 +1,7 @@
 import * as React from "react";
 
 export type ButtonProps = {
-  children: string;
+  children: React.ReactChild;
   onClick?: React.MouseEventHandler;
   title?: string;
 };
