@@ -77,10 +77,10 @@ export class CBQNREPL implements REPL.IREPL {
         let stdout = CBQN.consumeStdout();
         let stderr = CBQN.consumeStderr();
         if (stderr.length > 0) {
-          return [
-            { type: "error", error: String(stderr.join("\n")) },
-            stdout.map(fmt),
-          ] as const;
+          let error = String(stderr.join("\n"));
+          if (error === "Error: Empty program")
+            return [{ type: "ok", ok: null }, stdout.map(fmt)] as const;
+          else return [{ type: "error", error }, stdout.map(fmt)] as const;
         }
         let ok = stdout.pop() ?? "";
         return [{ type: "ok", ok: fmt(ok) }, stdout.map(fmt)] as const;

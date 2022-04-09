@@ -800,12 +800,7 @@ function resultContent([result, logs]: readonly [
 ]): readonly [string, string] {
   let output: string;
   if (result.type === "ok") {
-    output = result.ok ?? "&nbsp;";
-  } else if (
-    result.type === "error" &&
-    result.error !== "Error: Empty program"
-  ) {
-    output = result.error;
+    output = result.ok ?? "";
   } else if (result.type === "notice") {
     output = result.notice;
   } else {
@@ -972,10 +967,7 @@ class CellOutputWidget extends BaseOutputWidget {
   }
 
   override onResultUpdate(): void {
-    this.outputView.content =
-      this.resultContent[0] === "Error: Empty program"
-        ? ""
-        : this.resultContent[0];
+    this.outputView.content = this.resultContent[0];
     this.logsView.content = this.resultContent[1];
   }
 

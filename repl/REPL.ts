@@ -112,11 +112,13 @@ export class REPL implements IREPL {
           logs,
         ] as const;
       } catch (e) {
+        let error = BQN.BQN.fmtErr(e as any);
         let logs = consumeLogs();
-        return [
-          { type: "error", error: `Error: ${BQN.BQN.fmtErr(e as any)}` },
-          logs,
-        ] as const;
+        console.log(error);
+        if (error === "Empty program")
+          return [{ type: "ok", ok: null }, logs] as const;
+        else
+          return [{ type: "error", error: `Error: ${error}` }, logs] as const;
       }
     });
     this._ready = res;
