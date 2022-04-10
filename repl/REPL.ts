@@ -114,7 +114,6 @@ export class REPL implements IREPL {
       } catch (e) {
         let error = BQN.BQN.fmtErr(e as any);
         let logs = consumeLogs();
-        console.log(error);
         if (error === "Empty program")
           return [{ type: "ok", ok: null }, logs] as const;
         else

@@ -223,12 +223,6 @@ export function Workspace({
     </div>
   );
 
-  let settings = (
-    <>
-      <FontSelect />
-    </>
-  );
-
   let iconbar = (
     <>
       {statusElement}
@@ -236,7 +230,7 @@ export function Workspace({
     </>
   );
 
-  let settingsRight = (
+  let settings = (
     <>
       <UI.Checkbox
         disabled={enableLivePreview === null}
@@ -250,41 +244,42 @@ export function Workspace({
   );
 
   let toolbar = (
-    <>
-      <div className="Toolbar" style={{ justifyContent: "flex-start" }}>
-        <div className="Toolbar__section">
-          <div className="label">Session:</div>
-          {!disableSessionControls && (
-            <UI.Button title="Create new session" onClick={() => onNew()}>
-              New
-            </UI.Button>
-          )}
-          <UI.Button
-            title="Restart current session"
-            onClick={() => manager.restart()}
-          >
-            Restart
+    <div className="Toolbar__section">
+      <div className="Toolbar__section">
+        <div className="label">Session:</div>
+        {!disableSessionControls && (
+          <UI.Button title="Create new session" onClick={() => onNew()}>
+            New
           </UI.Button>
-          <UI.Button
-            title="Download workspace as .bqn source file"
-            onClick={onSave}
-          >
-            Download
-          </UI.Button>
-        </div>
-        <div className="Toolbar__section">
-          <div className="label">VM:</div>
-          <UI.Select
-            value={vm}
-            onValue={setVm}
-            options={[
-              { label: "BQN.js", value: "bqnjs" },
-              { label: "CBQN", value: "cbqn" },
-            ]}
-          />
-        </div>
+        )}
+        <UI.Button
+          title="Restart current session"
+          onClick={() => manager.restart()}
+        >
+          Restart
+        </UI.Button>
+        <UI.Button
+          title="Download workspace as .bqn source file"
+          onClick={onSave}
+        >
+          Download
+        </UI.Button>
       </div>
-    </>
+      <div className="Toolbar__section">
+        <div className="label">VM:</div>
+        <UI.Select
+          value={vm}
+          onValue={setVm}
+          options={[
+            { label: "BQN.js", value: "bqnjs" },
+            { label: "CBQN", value: "cbqn" },
+          ]}
+        />
+      </div>
+      <div className="Toolbar__section">
+        <FontSelect />
+      </div>
+    </div>
   );
 
   return (
@@ -293,7 +288,6 @@ export function Workspace({
         toolbar={toolbar}
         iconbar={iconbar}
         settings={settings}
-        settingsRight={settingsRight}
         theme={theme}
       />
       <div ref={editorElement} className="Editor" />
@@ -768,11 +762,11 @@ function resultContent([result, logs]: readonly [
   let output: string;
   if (result.type === "ok") {
     output = result.ok ?? "";
+  } else if (result.type === "error") {
+    output = result.error;
   } else if (result.type === "notice") {
     output = result.notice;
-  } else {
-    output = "";
-  }
+  } else Base.never(result);
   return [output.trim(), logs.join("\n").trim()] as const;
 }
 
@@ -1012,10 +1006,7 @@ class PreviewOutputWidget extends BaseOutputWidget {
   }
 
   override onResultUpdate(): void {
-    this.outputView.content =
-      this.resultContent[0] === "Error: Empty program"
-        ? ""
-        : this.resultContent[0];
+    this.outputView.content = this.resultContent[0];
     this.logsView.content = this.resultContent[1];
   }
 

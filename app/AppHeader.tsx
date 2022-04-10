@@ -11,7 +11,6 @@ export type AppHeaderProps = {
   toolbar?: React.ReactNode;
   iconbar?: React.ReactNode;
   settings?: React.ReactNode;
-  settingsRight?: React.ReactNode;
   theme: UI.Theme;
 };
 
@@ -75,22 +74,16 @@ export function AppHeader(props: AppHeaderProps) {
             {props.status}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 5 }}>{props.iconbar}</div>
+        <div style={{ display: "flex", gap: 3 }}>{props.iconbar}</div>
       </div>
       <div className="WorkspaceHeader__hideable">
-        {props.toolbar}
         <div className="Toolbar" style={{ justifyContent: "space-between" }}>
+          {props.toolbar}
           <div
             className="Toolbar__section"
-            style={{ display: "flex", alignItems: "baseline", gap: 5 }}
+            style={{ display: "flex", alignItems: "baseline", gap: 3 }}
           >
             {props.settings}
-          </div>
-          <div
-            className="Toolbar__section"
-            style={{ display: "flex", alignItems: "baseline", gap: 5 }}
-          >
-            {props.settingsRight}
             <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
               Show glyphs
             </UI.Checkbox>

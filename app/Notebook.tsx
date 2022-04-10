@@ -53,10 +53,10 @@ export default function Notebook() {
     editor.current!.focus();
   }, []);
 
-  let settings = (
-    <>
+  let toolbar = (
+    <div className="Toolbar__section">
       <FontSelect />
-    </>
+    </div>
   );
 
   let iconbar = (
@@ -70,7 +70,7 @@ export default function Notebook() {
       <div className="Notebook">
         <AppHeader.AppHeader
           theme={theme}
-          settings={settings}
+          toolbar={toolbar}
           iconbar={iconbar}
         />
         <div className="Editor" ref={editorElement} />
