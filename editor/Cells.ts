@@ -387,6 +387,15 @@ function touchesCellRange(tr: State.Transaction, from: number, to: number) {
       ins.length === 1 &&
       ins.sliceString(0) === "\n"
     )
+      // This is an insert of \n, we DO NOT mark range as changed then.
+      return;
+    if (
+      fromA - toA === -1 &&
+      fromB === toB &&
+      ins.length === 0 &&
+      tr.startState.doc.sliceString(fromA, toA) === "\n"
+    )
+      // This is a remove of \n, we DO NOT mark range as changed then.
       return;
     if (!yes) {
       if (from <= fromA && fromA <= to) yes = true;
