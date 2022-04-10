@@ -82,8 +82,8 @@ export class CBQNREPL implements REPL.IREPL {
             return [{ type: "ok", ok: null }, stdout.map(fmt)] as const;
           else return [{ type: "error", error }, stdout.map(fmt)] as const;
         }
-        let ok = stdout.pop() ?? "";
-        return [{ type: "ok", ok: fmt(ok) }, stdout.map(fmt)] as const;
+        let ok = stdout.join("\n");
+        return [{ type: "ok", ok: fmt(ok) }, [] as string[]] as const;
       } catch (e) {
         let stderr = CBQN.consumeStderr();
         return [
