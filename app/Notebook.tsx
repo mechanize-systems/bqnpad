@@ -16,7 +16,6 @@ import * as UI from "@mechanize/ui";
 import * as AppHeader from "./AppHeader";
 import * as Chrome from "./Chrome";
 import { FontSelect } from "./FontSelect";
-import * as GlyphPalette from "./GlyphPalette";
 import { ThemeSelect } from "./ThemeSelect";
 
 export default function Notebook() {
@@ -73,7 +72,6 @@ export default function Notebook() {
 
 type Cell = {
   readonly id: number;
-  readonly version: number;
   readonly deferred: null | Base.Promise.Deferred<
     readonly [REPL.REPLResult, string[]]
   >;
@@ -81,14 +79,16 @@ type Cell = {
 
 type CellState = "ok" | "dirty" | "computing";
 
-function cellState({ cell, version }: Editor.Cells.Cell<Cell>): CellState {
-  if (cell.deferred == null || cell.version !== version) return "dirty";
-  if (!cell.deferred.isCompleted) return "computing";
-  return "ok";
-}
-
 function notebookExtension() {
+  let versions = new Map<number, number>();
   let repl = new REPL.REPLWebWorkerClient("bqnjs");
+
+  function cellState({ cell, version }: Editor.Cells.Cell<Cell>): CellState {
+    if (cell.deferred == null || (versions.get(cell.id) ?? -1) !== version)
+      return "dirty";
+    if (!cell.deferred.isCompleted) return "computing";
+    return "ok";
+  }
 
   let cellId = 0;
   let [cells, cellsExtension] = Editor.Cells.configure<Cell>({
@@ -127,6 +127,7 @@ function notebookExtension() {
             Base.Promise.deferred<readonly [REPL.REPLResult, string[]]>();
 
           let newCell = { ...cell.cell, deferred, version: cell.version };
+          versions.set(cell.cell.id, cell.version);
           view.dispatch({
             effects: [
               cells.effects.updateCells.of(new Map([[cell.cell, newCell]])),
@@ -210,6 +211,68 @@ function notebookExtension() {
     },
   });
 
+  class OutputWidget extends View.WidgetType {
+    constructor(public readonly cell: Editor.Cells.Cell<Cell>) {
+      super();
+    }
+
+    get cellState(): CellState {
+      return cellState(this.cell);
+    }
+
+    render(root: HTMLElement, output: HTMLElement) {
+      root.dataset["cellId"] = String(this.cell.cell.id);
+      root.dataset["cellVersion"] = String(this.cell.version);
+      if (this.cellState === "dirty" || this.cellState === "computing") {
+        output.style.opacity = "0.3";
+      } else {
+        output.style.opacity = "1.0";
+      }
+      root.classList.add("CellOutput");
+      root.style.width = "100%";
+      if (this.cell.cell.deferred != null)
+        if (this.cell.cell.deferred.isCompleted) {
+          if (this.isValid(root))
+            renderResult(root, output, this.cell.cell.deferred.value[0]);
+        } else {
+          this.cell.cell.deferred.then((result) => {
+            if (this.isValid(root)) renderResult(root, output, result[0]);
+          });
+        }
+    }
+
+    isValid(root: HTMLElement) {
+      return (
+        root.dataset["cellId"] === String(this.cell.cell.id) &&
+        root.dataset["cellVersion"] === String(this.cell.version) &&
+        this.cell.version === (versions.get(this.cell.cell.id) ?? -1)
+      );
+    }
+
+    override eq(widget: OutputWidget): boolean {
+      return this.cell === widget.cell && this.cellState === widget.cellState;
+    }
+
+    override updateDOM(root: HTMLElement): boolean {
+      let canUpdate = root.dataset["cellId"] === String(this.cell.cell.id);
+      if (!canUpdate) return false;
+      this.render(
+        root as HTMLDivElement,
+        root.querySelector(".CellOutput__output") as HTMLDivElement,
+      );
+      return true;
+    }
+
+    override toDOM() {
+      let root = document.createElement("div");
+      let output = document.createElement("div");
+      output.classList.add("CellOutput__output");
+      root.appendChild(output);
+      this.render(root, output);
+      return root;
+    }
+  }
+
   return [
     cells,
     keymap,
@@ -220,68 +283,6 @@ function notebookExtension() {
       focusCellsDeco,
     ] as State.Extension,
   ] as const;
-}
-
-class OutputWidget extends View.WidgetType {
-  constructor(public readonly cell: Editor.Cells.Cell<Cell>) {
-    super();
-  }
-
-  get cellState(): CellState {
-    return cellState(this.cell);
-  }
-
-  render(root: HTMLElement, output: HTMLElement) {
-    root.dataset["cellId"] = String(this.cell.cell.id);
-    root.dataset["cellVersion"] = String(this.cell.version);
-    if (this.cellState === "dirty" || this.cellState === "computing") {
-      output.style.opacity = "0.3";
-    } else {
-      output.style.opacity = "1.0";
-    }
-    root.classList.add("CellOutput");
-    root.style.width = "100%";
-    if (this.cell.cell.deferred != null)
-      if (this.cell.cell.deferred.isCompleted) {
-        if (this.isValid(root))
-          renderResult(root, output, this.cell.cell.deferred.value[0]);
-      } else {
-        this.cell.cell.deferred.then((result) => {
-          if (this.isValid(root)) renderResult(root, output, result[0]);
-        });
-      }
-  }
-
-  isValid(root: HTMLElement) {
-    return (
-      root.dataset["cellId"] === String(this.cell.cell.id) &&
-      root.dataset["cellVersion"] === String(this.cell.version) &&
-      this.cell.version === this.cell.cell.version
-    );
-  }
-
-  override eq(widget: OutputWidget): boolean {
-    return this.cell === widget.cell && this.cellState === widget.cellState;
-  }
-
-  override updateDOM(root: HTMLElement): boolean {
-    let canUpdate = root.dataset["cellId"] === String(this.cell.cell.id);
-    if (!canUpdate) return false;
-    this.render(
-      root as HTMLDivElement,
-      root.querySelector(".CellOutput__output") as HTMLDivElement,
-    );
-    return true;
-  }
-
-  override toDOM() {
-    let root = document.createElement("div");
-    let output = document.createElement("div");
-    output.classList.add("CellOutput__output");
-    root.appendChild(output);
-    this.render(root, output);
-    return root;
-  }
 }
 
 function renderResult(

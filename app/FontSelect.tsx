@@ -42,7 +42,7 @@ export function FontSelect() {
 
 function setEditorFont(font: string) {
   document.documentElement.style.setProperty(
-    "--editor-font-family",
+    "--app-font-family-monospace",
     `${font}, Menlo, Monaco, monospace`,
   );
 }
