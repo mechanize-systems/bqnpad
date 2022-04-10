@@ -486,6 +486,7 @@ export function cellsLineDecoration<T>(
 export type DecorateCell<T> = (
   builder: RangeSet.RangeSetBuilder<View.Decoration>,
   range: CellRange<T>,
+  state: State.EditorState,
 ) => void;
 
 /**
@@ -500,7 +501,7 @@ export function cellsWidgetDecoration<T>(
     if (cs.size === 0) return View.Decoration.none;
     let b = new RangeSet.RangeSetBuilder<View.Decoration>();
     for (let it = cs.iter(); it.value != null; it.next())
-      decorate(b, it.value.range(it.from, it.to));
+      decorate(b, it.value.range(it.from, it.to), state);
     return b.finish();
   }
   return View.EditorView.decorations.compute(["doc", cells.field], compute);
