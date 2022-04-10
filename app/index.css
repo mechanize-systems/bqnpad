@@ -17,19 +17,19 @@
   width: 100%;
   height: 100%;
   display: flex;
-  color: var(--editor-color);
-  background: var(--editor-bg);
+  color: var(--app-color);
+  background: var(--app-bg);
 }
 
 .Editor .cm-content {
-  font-family: var(--editor-font-family);
-  font-size: var(--editor-font-size);
+  font-family: var(--app-font-family-monospace);
+  font-size: var(--app-font-size-xl);
   padding-top: 12px;
   padding-left: calc(12px + 5ch);
   padding-right: 12px;
   padding-bottom: 300px !important;
   width: 100%;
-  caret-color: var(--editor-color);
+  caret-color: var(--app-color);
 }
 .Editor .cm-editor {
   width: 100%;
@@ -41,27 +41,27 @@
 
 .Editor .cm-tooltip-autocomplete {
   border: 1px solid var(--app-border);
-  font-size: var(--editor-font-size-xs);
+  font-size: var(--app-font-size);
   border-bottom-width: 3px;
   background-color: var(--app-bg) !important;
   border-radius: 3px;
 }
 
 .Editor .cm-tooltip-autocomplete ul li {
-  color: var(--editor-color) !important;
+  color: var(--app-color) !important;
   display: flex;
   justify-content: flex-start;
   align-items: baseline;
 }
 
 .Editor .cm-bqn-completion-glyph {
-  font-family: var(--editor-font-family);
-  font-size: var(--editor-font-size);
+  font-family: var(--app-font-family-monospace);
+  font-size: var(--app-font-size-xl);
   padding-right: 5px;
 }
 .Editor .cm-bqn-completion-glyph-key {
-  font-family: var(--editor-font-family);
-  font-size: var(--editor-font-size);
+  font-family: var(--app-font-family-monospace);
+  font-size: var(--app-font-size-xl);
   flex-grow: 1;
   display: flex;
   justify-content: flex-end;
@@ -72,7 +72,7 @@
   border-style: solid;
   border-radius: 3px;
   border-color: var(--app-border);
-  background-color: var(--app-ui-bg);
+  background-color: var(--app-bg-ui);
   color: var(--app-color-dimmed);
   font-weight: 100;
   padding-top: 1px;
@@ -84,8 +84,8 @@
 }
 
 .Editor .cm-tooltip-autocomplete ul li[aria-selected] {
-  color: var(--editor-color) !important;
-  background-color: var(--app-ui-hover-bg) !important;
+  color: var(--app-color) !important;
+  background-color: var(--app-bg-ui-hover) !important;
 }
 
 .Editor .cm-completionIcon {
@@ -98,8 +98,8 @@
 }
 
 .Editor .cm-completionLabel {
-  font-family: var(--editor-font-family);
-  font-size: var(--editor-font-size-xs);
+  font-family: var(--app-font-family-monospace);
+  font-size: var(--app-font-size);
   padding-left: 5px;
   padding-right: 5px;
 }
@@ -140,9 +140,9 @@
 .FoldedOutput {
   display: flex;
   flex-direction: row;
-  color: var(--editor-color-output);
-  font-family: var(--editor-font-family);
-  font-size: var(--editor-font-size);
+  color: var(--app-color-dimmed);
+  font-family: var(--app-font-family-monospace);
+  font-size: var(--app-font-size-xl);
   line-height: 1.4;
   position: relative;
 }
@@ -173,13 +173,13 @@
 }
 
 .FoldedOutput--error {
-  color: var(--editor-color-output-error);
+  color: var(--app-color-error);
 }
 .FoldedOutput--preview {
-  color: var(--editor-color-output-dimmed);
+  color: var(--app-color-dimmed);
 }
 .FoldedOutput--notice {
-  color: var(--editor-color-output-dimmed);
+  color: var(--app-color-dimmed);
 }
 
 .SessionBanner {
@@ -246,7 +246,7 @@
   border-bottom-width: 2px;
   border-style: solid;
   border-color: var(--app-border);
-  background: var(--app-ui-bg);
+  background: var(--app-bg-ui);
 }
 .WorkspaceHeader__topRight {
   display: flex;
@@ -289,10 +289,10 @@
   border-top: 1px solid var(--app-border);
   display: flex;
   flex-direction: row;
-  font-size: var(--editor-font-size);
+  font-size: var(--app-font-size-xl);
   width: 100%;
   flex-wrap: wrap;
-  font-family: var(--editor-font-family);
+  font-family: var(--app-font-family-monospace);
 }
 
 .GlyphsPalette__item {
@@ -301,8 +301,8 @@
   padding: 5px;
 }
 .GlyphsPalette__item:hover {
-  background-color: var(--app-ui-hover-bg);
+  background-color: var(--app-bg-ui-hover);
 }
 .GlyphsPalette__item:active {
-  background-color: var(--app-ui-active-bg);
+  background-color: var(--app-bg-ui-active);
 }

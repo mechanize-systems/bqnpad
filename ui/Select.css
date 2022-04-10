@@ -11,8 +11,8 @@
   color: var(--app-color);
 }
 .Select:hover {
-  background-color: var(--app-ui-hover-bg);
+  background-color: var(--app-bg-ui-hover);
 }
 .Select:active {
-  background-color: var(--app-ui-active-bg);
+  background-color: var(--app-bg-ui-active);
 }

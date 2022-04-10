@@ -166,7 +166,7 @@ function notebookExtension() {
     { key: "Meta-Shift-Enter", run: runCellAndInsertAfter },
   ];
 
-  let outputExtension = Editor.Cells.cellsWidgetDecoration(
+  let outputDecoration = Editor.Cells.cellsWidgetDecoration(
     cells,
     (builder, cellRange) => {
       builder.add(
@@ -191,13 +191,12 @@ function notebookExtension() {
           : state === "dirty"
           ? "var(--app-border)"
           : state === "computing"
-          ? "yellow"
+          ? "var(--app-color-progress)"
           : Base.never(state);
       return {
         attributes: {
-          style: `
-            border-left: 5px solid ${borderColor}
-          `,
+          class: "CellLine",
+          style: `--cell-status-color: ${borderColor}`,
         },
       };
     },
@@ -206,7 +205,7 @@ function notebookExtension() {
   let focusCellsDeco = Editor.Cells.cellsFocusDecoration(cells, {
     attributes: {
       style: `
-        background-color: var(--app-subtle-bg);
+        background-color: var(--app-bg-subtle);
       `,
     },
   });
@@ -216,7 +215,7 @@ function notebookExtension() {
     keymap,
     [
       cellsExtension,
-      outputExtension,
+      outputDecoration,
       cellsDeco,
       focusCellsDeco,
     ] as State.Extension,

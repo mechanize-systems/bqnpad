@@ -9,10 +9,10 @@
   border-radius: 3px;
 }
 .Checkbox:hover {
-  background-color: var(--app-ui-hover-bg);
+  background-color: var(--app-bg-ui-hover);
 }
 .Checkbox:active {
-  background-color: var(--app-ui-active-bg);
+  background-color: var(--app-bg-ui-active);
 }
 .Checkbox--disabled,
 .Checkbox--disabled:active,

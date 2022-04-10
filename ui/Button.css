@@ -7,10 +7,10 @@
   border-radius: 3px;
 }
 .Button:hover {
-  background-color: var(--app-ui-hover-bg);
+  background-color: var(--app-bg-ui-hover);
 }
 .Button:active {
-  background-color: var(--app-ui-active-bg);
+  background-color: var(--app-bg-ui-active);
 }
 a.Button {
   text-decoration: none;

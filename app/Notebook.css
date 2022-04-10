@@ -4,9 +4,21 @@
   height: 100%;
   overflow-y: hidden;
 }
+
+.CellLine {
+  position: relative;
+}
+.CellLine:after {
+  background: var(--cell-status-color);
+  position: absolute;
+  top: 0;
+  right: 0;
+  content: " ";
+}
+
 .CellOutput {
   width: 100%;
-  border-left: 5px solid transparent;
+  margin-left: -5ch;
 }
 .CellOutput__output {
   width: 100%;
@@ -17,5 +29,5 @@
   color: var(--app-color-dimmed);
 }
 .CellOutput--error {
-  color: red;
+  color: var(--app-color-error);
 }
