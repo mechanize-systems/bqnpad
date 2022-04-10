@@ -383,6 +383,7 @@ function touchesCellRange(tr: State.Transaction, from: number, to: number) {
   tr.changes.iterChanges((fromA, toA, fromB, toB, ins) => {
     if (
       fromA === toA &&
+      toA === to - 1 &&
       fromB - toB === -1 &&
       ins.length === 1 &&
       ins.sliceString(0) === "\n"
@@ -391,6 +392,7 @@ function touchesCellRange(tr: State.Transaction, from: number, to: number) {
       return;
     if (
       fromA - toA === -1 &&
+      toA === to + 1 &&
       fromB === toB &&
       ins.length === 0 &&
       tr.startState.doc.sliceString(fromA, toA) === "\n"
