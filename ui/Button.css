@@ -12,6 +12,19 @@
 .Button:active {
   background-color: var(--app-bg-ui-active);
 }
+.Button--active {
+  color: var(--app-color-active);
+}
+.Button--active:hover {
+}
 a.Button {
   text-decoration: none;
+}
+
+.ButtonGroup {
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ButtonGroup .Button {
+  border-radius: 0;
 }

@@ -162,9 +162,6 @@
   background: transparent;
   border-radius: 0px;
 }
-.WorkspaceHeader--collapsed .title {
-  color: var(--app-color-dimmed);
-}
 .WorkspaceHeader--collapsed .WorkspaceHeader__hideable {
   display: none;
 }

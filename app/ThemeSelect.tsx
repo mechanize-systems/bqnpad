@@ -3,6 +3,8 @@ import * as React from "react";
 import * as Base from "@mechanize/base";
 import * as UI from "@mechanize/ui";
 
+import Icon from "./Icon";
+
 let FONTS: UI.SelectOption<UI.ThemePreference>[] = [
   { value: "system", label: "System" },
   { value: "light", label: "Light" },
@@ -17,12 +19,26 @@ export type ThemeSelectProps = {
 export function ThemeSelect(props: ThemeSelectProps) {
   return (
     <>
-      <div className="label">Theme: </div>
-      <UI.Select
-        value={props.themePref}
-        onValue={props.onThemePref}
-        options={FONTS}
-      />
+      <div className="ButtonGroup">
+        <UI.Button
+          active={props.themePref === "system"}
+          onClick={() => props.onThemePref("system")}
+        >
+          <Icon icon="gear" />
+        </UI.Button>
+        <UI.Button
+          active={props.themePref === "light"}
+          onClick={() => props.onThemePref("light")}
+        >
+          <Icon icon="sun" />
+        </UI.Button>
+        <UI.Button
+          active={props.themePref === "dark"}
+          onClick={() => props.onThemePref("dark")}
+        >
+          <Icon icon="moon" />
+        </UI.Button>
+      </div>
     </>
   );
 }

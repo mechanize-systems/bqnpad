@@ -55,15 +55,24 @@ export default function Notebook() {
 
   let settings = (
     <>
-      <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
       <FontSelect />
+    </>
+  );
+
+  let iconbar = (
+    <>
+      <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
     </>
   );
 
   return (
     <Chrome.Chrome>
       <div className="Notebook">
-        <AppHeader.AppHeader theme={theme} settings={settings} />
+        <AppHeader.AppHeader
+          theme={theme}
+          settings={settings}
+          iconbar={iconbar}
+        />
         <div className="Editor" ref={editorElement} />
       </div>
     </Chrome.Chrome>

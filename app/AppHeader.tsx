@@ -9,6 +9,7 @@ import { Logo } from "./Logo";
 export type AppHeaderProps = {
   status?: React.ReactNode;
   toolbar?: React.ReactNode;
+  iconbar?: React.ReactNode;
   settings?: React.ReactNode;
   settingsRight?: React.ReactNode;
   theme: UI.Theme;
@@ -40,49 +41,50 @@ export function AppHeader(props: AppHeaderProps) {
               BQNPAD
             </a>
           </div>
+          <div
+            className={UI.cx(
+              "WorkspaceHeader__topRight",
+              "WorkspaceHeader__hideable",
+            )}
+          >
+            <a
+              target="_blank"
+              className="Button"
+              href="https://mlochbaum.github.io/BQN/index.html"
+            >
+              BQN Website ↗
+            </a>
+            <a
+              target="_blank"
+              className="Button"
+              href="https://mlochbaum.github.io/BQN/keymap.html"
+            >
+              Keymap ↗
+            </a>
+            <a
+              target="_blank"
+              className="Button"
+              href="https://mlochbaum.github.io/BQN/help/index.html"
+            >
+              Help ↗
+            </a>
+            {props.status}
+          </div>
         </div>
-        <div
-          className={UI.cx(
-            "WorkspaceHeader__topRight",
-            "WorkspaceHeader__hideable",
-          )}
-        >
-          {props.status}
-          <a
-            target="_blank"
-            className="Button"
-            href="https://mlochbaum.github.io/BQN/index.html"
-          >
-            BQN Website ↗
-          </a>
-          <a
-            target="_blank"
-            className="Button"
-            href="https://mlochbaum.github.io/BQN/keymap.html"
-          >
-            Keymap ↗
-          </a>
-          <a
-            target="_blank"
-            className="Button"
-            href="https://mlochbaum.github.io/BQN/help/index.html"
-          >
-            Help ↗
-          </a>
-        </div>
+        <div style={{ display: "flex", gap: 5 }}>{props.iconbar}</div>
       </div>
       <div className="WorkspaceHeader__hideable">
         {props.toolbar}
         <div className="Toolbar" style={{ justifyContent: "space-between" }}>
           <div
             className="Toolbar__section"
-            style={{ display: "flex", alignItems: "baseline" }}
+            style={{ display: "flex", alignItems: "baseline", gap: 5 }}
           >
             {props.settings}
           </div>
           <div
             className="Toolbar__section"
-            style={{ display: "flex", alignItems: "baseline" }}
+            style={{ display: "flex", alignItems: "baseline", gap: 5 }}
           >
             {props.settingsRight}
             <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>

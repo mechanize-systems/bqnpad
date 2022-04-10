@@ -213,8 +213,14 @@ export function Workspace({
 
   let settings = (
     <>
-      <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
       <FontSelect />
+    </>
+  );
+
+  let iconbar = (
+    <>
+      {statusElement}
+      <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
     </>
   );
 
@@ -272,8 +278,8 @@ export function Workspace({
   return (
     <div className="Workspace">
       <AppHeader
-        status={statusElement}
         toolbar={toolbar}
+        iconbar={iconbar}
         settings={settings}
         settingsRight={settingsRight}
         theme={theme}
