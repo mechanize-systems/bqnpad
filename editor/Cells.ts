@@ -166,7 +166,7 @@ export function configure<T>(
 
   let cellsEffect = State.EditorState.transactionExtender.of((tr) => {
     // this is originated from undo/redo
-    if (tr.isUserEvent("undo") || tr.isUserEvent("redo")) return null;
+    let addToHistory = !(tr.isUserEvent("undo") || tr.isUserEvent("redo"));
 
     let cells0 = tr.startState.field(cellsField);
     let cells1 = cells0;
@@ -234,6 +234,7 @@ export function configure<T>(
         prev: cells0,
         next: cells1,
       }),
+      annotations: [State.Transaction.addToHistory.of(addToHistory)],
     };
   });
 

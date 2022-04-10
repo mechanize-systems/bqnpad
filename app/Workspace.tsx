@@ -17,8 +17,8 @@ import * as UI from "@mechanize/ui";
 
 import { AppHeader } from "./AppHeader";
 import { FontSelect } from "./FontSelect";
-import { GlyphPalette } from "./GlyphPalette";
 import { SessionBanner } from "./SessionBanner";
+import { ThemeSelect } from "./ThemeSelect";
 import * as Workspace0 from "./Workspace0";
 import type { WorkspaceManager } from "./WorkspaceManager";
 
@@ -40,10 +40,6 @@ export function Workspace({
   );
   let editor = React.useRef<null | View.EditorView>(null);
 
-  let [showGlyphbar, setShowGlyphbar] = Base.React.usePersistentState(
-    "bqnpad-pref-showGlyphbar",
-    () => true,
-  );
   let [vm, setVm_] = Base.React.usePersistentState<REPL.REPLType>(
     "bqnpad-vm",
     () => "bqnjs",
@@ -215,6 +211,26 @@ export function Workspace({
     </div>
   );
 
+  let settings = (
+    <>
+      <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
+      <FontSelect />
+    </>
+  );
+
+  let settingsRight = (
+    <>
+      <UI.Checkbox
+        disabled={enableLivePreview === null}
+        value={enableLivePreview ?? false}
+        onValue={setEnableLivePreview}
+        title={enableLivePreviewTitle}
+      >
+        Live preview
+      </UI.Checkbox>
+    </>
+  );
+
   let toolbar = (
     <>
       <div className="Toolbar" style={{ justifyContent: "flex-start" }}>
@@ -239,19 +255,6 @@ export function Workspace({
           </UI.Button>
         </div>
         <div className="Toolbar__section">
-          <UI.Checkbox
-            disabled={enableLivePreview === null}
-            value={enableLivePreview ?? false}
-            onValue={setEnableLivePreview}
-            title={enableLivePreviewTitle}
-          >
-            Live preview
-          </UI.Checkbox>
-          <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
-            Show glyphs
-          </UI.Checkbox>
-        </div>
-        <div className="Toolbar__section">
           <div className="label">VM:</div>
           <UI.Select
             value={vm}
@@ -261,26 +264,20 @@ export function Workspace({
               { label: "CBQN", value: "cbqn" },
             ]}
           />
-          <div className="label">Theme:</div>
-          <UI.Select
-            value={themePref}
-            onValue={setThemePref}
-            options={[
-              { label: "System", value: "system" },
-              { label: "Light", value: "light" },
-              { label: "Dark", value: "dark" },
-            ]}
-          />
-          <FontSelect />
         </div>
       </div>
-      {showGlyphbar && <GlyphPalette onClick={onGlyph} theme={theme} />}
     </>
   );
 
   return (
     <div className="Workspace">
-      <AppHeader status={statusElement} toolbar={toolbar} />
+      <AppHeader
+        status={statusElement}
+        toolbar={toolbar}
+        settings={settings}
+        settingsRight={settingsRight}
+        theme={theme}
+      />
       <div ref={editorElement} className="Editor" />
     </div>
   );

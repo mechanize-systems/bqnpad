@@ -15,10 +15,12 @@ import * as UI from "@mechanize/ui";
 
 import * as AppHeader from "./AppHeader";
 import * as Chrome from "./Chrome";
+import { FontSelect } from "./FontSelect";
 import * as GlyphPalette from "./GlyphPalette";
+import { ThemeSelect } from "./ThemeSelect";
 
 export default function Notebook() {
-  let [theme, _themePref, _setThemePref] = UI.useTheme();
+  let [theme, themePref, setThemePref] = UI.useTheme();
   let editorElement = React.useRef<null | HTMLDivElement>(null);
   let editor = React.useRef<null | View.EditorView>(null);
   let darkThemeExtension = Editor.useStateField(editor, theme === "dark", [
@@ -52,23 +54,17 @@ export default function Notebook() {
     editor.current!.focus();
   }, []);
 
-  let onGlyph = React.useCallback(
-    (glyph: LangBQN.Glyph) => {
-      let view = editor.current!;
-      if (!view.hasFocus) view.focus();
-      document.execCommand("insertText", false, glyph.glyph);
-    },
-    [editor],
+  let settings = (
+    <>
+      <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
+      <FontSelect />
+    </>
   );
 
   return (
     <Chrome.Chrome>
       <div className="Notebook">
-        <AppHeader.AppHeader
-          toolbar={
-            <GlyphPalette.GlyphPalette theme={theme} onClick={onGlyph} />
-          }
-        />
+        <AppHeader.AppHeader theme={theme} settings={settings} />
         <div className="Editor" ref={editorElement} />
       </div>
     </Chrome.Chrome>

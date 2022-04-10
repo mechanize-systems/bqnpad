@@ -5,10 +5,13 @@ import * as UI from "@mechanize/ui";
 
 export type GlyphPaletteProps = {
   theme: "dark" | "light";
-  onClick: (glyph: LangBQN.Glyph) => void;
+  onGlyph?: (glyph: LangBQN.Glyph) => void;
 };
 
-export function GlyphPalette({ theme, onClick }: GlyphPaletteProps) {
+export function GlyphPalette({
+  theme,
+  onGlyph = onGlyphDefault,
+}: GlyphPaletteProps) {
   let hi = theme === "dark" ? LangBQN.highlightDark : LangBQN.highlightLight;
   let chars = React.useMemo(() => {
     return LangBQN.glyphs.map((glyph) => {
@@ -24,7 +27,7 @@ export function GlyphPalette({ theme, onClick }: GlyphPaletteProps) {
           key={glyph.glyph}
           onMouseDown={(ev) => {
             ev.preventDefault();
-            onClick(glyph);
+            onGlyph(glyph);
           }}
           className={UI.cx(className, "GlyphsPalette__item")}
         >
@@ -32,6 +35,14 @@ export function GlyphPalette({ theme, onClick }: GlyphPaletteProps) {
         </button>
       );
     });
-  }, [hi, onClick]);
-  return <div className="GlyphsPalette">{chars}</div>;
+  }, [hi, onGlyph]);
+  return (
+    <div className="GlyphsPalette">
+      <div className="GlyphsPalette__inner">{chars}</div>
+    </div>
+  );
 }
+
+let onGlyphDefault = (glyph: LangBQN.Glyph) => {
+  document.execCommand("insertText", false, glyph.glyph);
+};
