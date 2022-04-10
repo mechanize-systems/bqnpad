@@ -165,20 +165,3 @@
 .WorkspaceHeader--collapsed .WorkspaceHeader__hideable {
   display: none;
 }
-
-.VMStatus {
-  padding: 4px;
-  font-size: 10px;
-  font-weight: 500;
-  border-style: solid;
-  border-radius: 3px;
-  border-width: 1px;
-}
-.VMStatus--running {
-  border-color: #998819;
-  color: #998819;
-}
-.VMStatus--idle {
-  border-color: #3aa548;
-  color: #3aa548;
-}

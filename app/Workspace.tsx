@@ -17,6 +17,7 @@ import * as UI from "@mechanize/ui";
 
 import { AppHeader } from "./AppHeader";
 import { FontSelect } from "./FontSelect";
+import Icon from "./Icon";
 import { SessionBanner } from "./SessionBanner";
 import { ThemeSelect } from "./ThemeSelect";
 import * as Workspace0 from "./Workspace0";
@@ -199,15 +200,26 @@ export function Workspace({
 
   let statusElement = status != null && (
     <div className="Toolbar__section">
-      <div
-        className={UI.cx(
-          "VMStatus",
-          status === "idle" && "VMStatus--idle",
-          status === "running" && "VMStatus--running",
-        )}
+      <UI.Button
+        title={
+          status === "idle"
+            ? "VM idle"
+            : status === "running"
+            ? "VM computing"
+            : "What?"
+        }
+        style={{
+          color:
+            status === "idle"
+              ? "#3aa548"
+              : status === "running"
+              ? "#998819"
+              : "currentColor",
+        }}
       >
-        VM {status.toUpperCase()}
-      </div>
+        {status === "idle" && <Icon icon="checkCircled" />}
+        {status === "running" && <Icon icon="rocket" />}
+      </UI.Button>
     </div>
   );
 

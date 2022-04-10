@@ -37,7 +37,11 @@ export function AppHeader(props: AppHeaderProps) {
             <Logo size={20} />
           </UI.Button>
           <div style={{ display: "flex", alignItems: "baseline" }}>
-            <a className="title Button" href={window.location.origin}>
+            <a
+              className="title Button"
+              href={window.location.origin}
+              style={{ color: "#2b7067" }}
+            >
               BQNPAD
             </a>
           </div>
