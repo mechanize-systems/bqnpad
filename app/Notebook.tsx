@@ -191,22 +191,27 @@ function notebookExtension() {
     },
   );
 
+  function cellStatusColor(
+    state: CellState,
+    fallback: string = "transparent",
+  ) {
+    return state === "ok"
+      ? fallback
+      : state === "dirty"
+      ? "var(--app-color-progress)"
+      : state === "computing"
+      ? "var(--app-color-progress)"
+      : Base.never(state);
+  }
+
   let cellsDeco = Editor.Cells.cellsLineDecoration(
     cells,
     (cell: Editor.Cells.Cell) => {
       let state = cellState(cell);
-      let borderColor =
-        state === "ok"
-          ? "transparent"
-          : state === "dirty"
-          ? "var(--app-border)"
-          : state === "computing"
-          ? "var(--app-color-progress)"
-          : Base.never(state);
       return {
         attributes: {
           class: "CellLine",
-          style: `--cell-status-color: ${borderColor}`,
+          style: `--cell-status-color: ${cellStatusColor(state)}`,
         },
       };
     },
@@ -228,6 +233,14 @@ function notebookExtension() {
     render(root: HTMLElement, output: HTMLElement) {
       root.dataset["cellId"] = String(this.cell.cell.id);
       root.dataset["cellVersion"] = String(this.cell.version);
+      root.style.setProperty(
+        "--cell-status-color",
+        cellStatusColor(this.cellState, "transparent"),
+      );
+      root.style.setProperty(
+        "--cell-status-marker-color",
+        cellStatusColor(this.cellState, "var(--app-border-ui)"),
+      );
       if (this.cellState === "dirty" || this.cellState === "computing") {
         output.style.opacity = "0.3";
       } else {

@@ -149,7 +149,7 @@
   border-width: 1px;
   border-bottom-width: 2px;
   border-style: solid;
-  border-color: var(--app-border);
+  border-color: var(--app-border-ui);
   background: var(--app-bg-ui);
 }
 .WorkspaceHeader__topRight {
