@@ -1,0 +1,24 @@
+.GlyphsPalette {
+  padding-top: 5px;
+}
+.GlyphsPalette__inner {
+  border-top: 1px solid var(--app-border);
+  display: flex;
+  flex-direction: row;
+  font-size: var(--app-font-size-xl);
+  width: 100%;
+  flex-wrap: wrap;
+  font-family: var(--app-font-family-monospace);
+}
+
+.GlyphsPalette__item {
+  background-color: transparent;
+  border: none;
+  padding: 5px;
+}
+.GlyphsPalette__item:hover {
+  background-color: var(--app-bg-ui-hover);
+}
+.GlyphsPalette__item:active {
+  background-color: var(--app-bg-ui-active);
+}
