@@ -81,7 +81,7 @@ type CellState = "ok" | "dirty" | "computing";
 
 function notebookExtension() {
   let versions = new Map<number, number>();
-  let repl = new REPL.REPLWebWorkerClient("bqnjs");
+  let repl = REPL.makeREPL("bqnjs");
 
   function cellState({ cell, version }: Editor.Cells.Cell<Cell>): CellState {
     if (cell.deferred == null || (versions.get(cell.id) ?? -1) !== version)
