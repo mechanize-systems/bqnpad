@@ -8,6 +8,15 @@
 .CellLine {
   position: relative;
 }
+.CellLine--active {
+  background-color: var(--app-bg-subtle);
+}
+.CellLine--active + .CellOutput {
+  background-color: var(--app-bg-subtle);
+}
+.CellLine--active + .CellOutput:before {
+  border-color: var(--app-border-ui-active);
+}
 .CellLine:after {
   background: var(--cell-status-color);
   position: absolute;
@@ -18,6 +27,21 @@
 
 .CellOutput {
   width: 100%;
+  position: relative;
+  padding-left: 1ch;
+}
+.CellOutput:before {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  height: 10px;
+  content: "";
+  border-style: solid;
+  border-color: var(--app-border-ui);
+  border-width: 0;
+  border-left-width: 1px;
+  border-bottom-width: 1px;
 }
 .CellOutput__output {
   width: 100%;

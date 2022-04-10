@@ -1,10 +1,10 @@
 @import "normalize.css/normalize.css";
 @import "../font/index.css";
 
+@import "@mechanize/ui/Theme.slate.css";
 @import "./Notebook.css";
 @import "./GlyphPalette.css";
 @import "./Editor.css";
-@import "@mechanize/ui/Theme.slate.css";
 @import "@mechanize/ui/Checkbox.css";
 @import "@mechanize/ui/Select.css";
 @import "@mechanize/ui/Button.css";

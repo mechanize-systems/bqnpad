@@ -204,11 +204,7 @@ function notebookExtension() {
   );
 
   let focusCellsDeco = Editor.Cells.cellsFocusDecoration(cells, {
-    attributes: {
-      style: `
-        background-color: var(--app-bg-subtle);
-      `,
-    },
+    attributes: { class: "CellLine--active" },
   });
 
   class OutputWidget extends View.WidgetType {
@@ -229,7 +225,6 @@ function notebookExtension() {
         output.style.opacity = "1.0";
       }
       root.classList.add("CellOutput");
-      root.style.width = "100%";
       if (this.cell.cell.deferred != null)
         if (this.cell.cell.deferred.isCompleted) {
           if (this.isValid(root))
