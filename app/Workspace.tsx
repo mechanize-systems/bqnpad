@@ -247,23 +247,25 @@ export function Workspace({
     <div className="Toolbar__section">
       <div className="Toolbar__section">
         <div className="label">Session:</div>
-        {!disableSessionControls && (
-          <UI.Button title="Create new session" onClick={() => onNew()}>
-            New
+        <div className="ButtonGroup" style={{ display: "flex", gap: 0 }}>
+          {!disableSessionControls && (
+            <UI.Button title="Create new session" onClick={() => onNew()}>
+              New
+            </UI.Button>
+          )}
+          <UI.Button
+            title="Restart current session"
+            onClick={() => manager.restart()}
+          >
+            Restart
           </UI.Button>
-        )}
-        <UI.Button
-          title="Restart current session"
-          onClick={() => manager.restart()}
-        >
-          Restart
-        </UI.Button>
-        <UI.Button
-          title="Download workspace as .bqn source file"
-          onClick={onSave}
-        >
-          Download
-        </UI.Button>
+          <UI.Button
+            title="Download workspace as .bqn source file"
+            onClick={onSave}
+          >
+            Download
+          </UI.Button>
+        </div>
       </div>
       <div className="Toolbar__section">
         <div className="label">VM:</div>
