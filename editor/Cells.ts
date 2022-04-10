@@ -218,6 +218,9 @@ export function configure<T>(
         // add original cell now
         cells.push([new Cell(onCellCreate(), 0), it.to]);
       } else {
+        // ignore dups
+        if (cells.length > 0 && cells[cells.length - 1]![1] === it.to)
+          continue;
         cells.push([rebuild(it, from), it.to]);
       }
       from = it.to;
@@ -272,7 +275,11 @@ export function configure<T>(
       let from = 0;
       let b = new RangeSet.RangeSetBuilder<Cell<T>>();
       for (let it = query0.cells(state).iter(); it.value != null; it.next()) {
-        b.add(from, it.to, it.value);
+        b.add(
+          Math.min(from, state.doc.length),
+          Math.min(Math.max(from, it.to), state.doc.length),
+          it.value,
+        );
         from = it.to + 1;
       }
       return b.finish();
@@ -454,6 +461,7 @@ export function cellsLineDecoration<T>(
     if (cs.size === 0) return View.Decoration.none;
     let b = new RangeSet.RangeSetBuilder<View.Decoration>();
     for (let it = cs.iter(); it.value != null; it.next()) {
+      Base.assert(it.from <= it.to);
       let s = doc.lineAt(it.from);
       let e = doc.lineAt(it.to);
       let deco = makeDecorationSpec(it.value);
