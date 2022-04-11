@@ -144,8 +144,10 @@ export function configure<T>(
       // that this effect is reversable and plays well with history (see
       // cellsHistory facet below). Therefore all other cell effects are being
       // translated in replaceCells effect.
-      for (let e of Base.Array.reversed(tr.effects))
-        if (e.is(replaceCells)) return e.value.next;
+      let effects = tr.isUserEvent("redo")
+        ? tr.effects
+        : Base.Array.reversed(tr.effects);
+      for (let e of effects) if (e.is(replaceCells)) return e.value.next;
       return cells;
     },
   });
@@ -242,13 +244,10 @@ export function configure<T>(
   });
 
   let cellsHistory = History.invertedEffects.of((tr) => {
-    let effects: State.StateEffect<any>[] = [];
     for (let e of tr.effects)
       if (e.is(replaceCells))
-        effects.push(
-          replaceCells.of({ prev: e.value.next, next: e.value.prev }),
-        );
-    return effects;
+        return [replaceCells.of({ prev: e.value.next, next: e.value.prev })];
+    return [];
   });
 
   let query0 = {
