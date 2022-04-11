@@ -96,6 +96,8 @@ export class Cell<T = any> extends RangeSet.RangeValue {
 export type CellSet<T> = RangeSet.RangeSet<Cell<T>>;
 export type CellRange<T> = RangeSet.Range<Cell<T>>;
 
+const USER_EVENT_CELLS_STRUCTURE = "cells.structure";
+
 export function configure<T>(
   cfg: CellsConfig<T>,
 ): readonly [Cells<T>, State.Extension] {
@@ -144,10 +146,8 @@ export function configure<T>(
       // that this effect is reversable and plays well with history (see
       // cellsHistory facet below). Therefore all other cell effects are being
       // translated in replaceCells effect.
-      let effects = tr.isUserEvent("redo")
-        ? tr.effects
-        : Base.Array.reversed(tr.effects);
-      for (let e of effects) if (e.is(replaceCells)) return e.value.next;
+      for (let e of Base.Array.reversed(tr.effects))
+        if (e.is(replaceCells)) return e.value.next;
       return cells;
     },
   });
@@ -167,8 +167,7 @@ export function configure<T>(
   });
 
   let cellsEffect = State.EditorState.transactionExtender.of((tr) => {
-    // this is originated from undo/redo
-    let addToHistory = !(tr.isUserEvent("undo") || tr.isUserEvent("redo"));
+    if (tr.isUserEvent("undo") || tr.isUserEvent("redo")) return {};
 
     let cells0 = tr.startState.field(cellsField);
     let cells1 = cells0;
@@ -234,12 +233,19 @@ export function configure<T>(
       else b.add(tr.newDoc.length, tr.newDoc.length, cell);
     }
     cells1 = b.finish();
+    let cellsStructureChanged =
+      removed.size > 0 || split0.size > 0 || cells1.size !== cells0.size;
     return {
       effects: replaceCells.of({
         prev: cells0,
         next: cells1,
       }),
-      annotations: [State.Transaction.addToHistory.of(addToHistory)],
+      annotations: cellsStructureChanged
+        ? [
+            History.isolateHistory.of("full"),
+            State.Transaction.userEvent.of(USER_EVENT_CELLS_STRUCTURE),
+          ]
+        : undefined,
     };
   });
 
