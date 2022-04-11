@@ -309,11 +309,20 @@ export function configure<T>(
     },
     split: (view) => {
       let at = view.state.selection.main.to;
-      view.dispatch({
-        changes: { insert: "\n", from: at, to: at },
-        selection: State.EditorSelection.cursor(at + 1),
-        effects: [splitCell.of(at)],
-      });
+      let line = view.state.doc.lineAt(at);
+      let cell = query.cellAt(view.state);
+      if (at === line.from && cell?.from !== at)
+        // If we are at the start of the line within the cell do not insert a
+        // new line, split before existing.
+        view.dispatch({
+          effects: [splitCell.of(at - 1)],
+        });
+      else
+        view.dispatch({
+          changes: { insert: "\n", from: at, to: at },
+          selection: State.EditorSelection.cursor(at + 1),
+          effects: [splitCell.of(at)],
+        });
       return true;
     },
     select: (view) => {
