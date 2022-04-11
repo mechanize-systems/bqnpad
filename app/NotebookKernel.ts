@@ -5,11 +5,12 @@ import * as REPL from "@bqnpad/repl";
 import * as Base from "@mechanize/base";
 import * as Editor from "@mechanize/editor";
 
+type CellResult = Base.Promise.Deferred<readonly [REPL.REPLResult, string[]]>;
+
 export type CellData = {
   readonly id: number;
-  readonly deferred: null | Base.Promise.Deferred<
-    readonly [REPL.REPLResult, string[]]
-  >;
+  readonly prevDeferred: CellResult | null;
+  readonly deferred: CellResult;
 };
 
 export type CellState = "ok" | "dirty" | "computing";
@@ -33,6 +34,15 @@ export function configure({
     cellSet,
     onCellCreate,
   });
+
+  let view: { current: View.EditorView | null } = { current: null };
+  let onInit = View.ViewPlugin.fromClass(
+    class {
+      constructor(view0: View.EditorView) {
+        view.current = view0;
+      }
+    },
+  );
 
   let runCell: View.Command = (view) => {
     let cur = cells.query.cellAt(view.state)!;
@@ -66,9 +76,14 @@ export function configure({
         else if (state === "dirty") {
           let code = view.state.doc.sliceString(from, to).trim();
           let deferred =
-            Base.Promise.deferred<readonly [REPL.REPLResult, string[]]>();
-
-          let newCell = { ...cell.data, deferred, version: cell.version };
+            cell.data.prevDeferred == null
+              ? cell.data.deferred
+              : Base.Promise.deferred<readonly [REPL.REPLResult, string[]]>();
+          let newCell: CellData = {
+            id: cell.data.id,
+            prevDeferred: cell.data.deferred,
+            deferred,
+          };
           view.dispatch({
             effects: [
               cells.effects.updateCells.of(new Map([[cell.data, newCell]])),
@@ -79,7 +94,7 @@ export function configure({
 
           let result = await deferred.promise;
           let curCell = getById(newCell.id);
-          if (curCell != null && curCell.version === newCell.version) {
+          if (curCell != null && curCell.version === cell.version) {
             view.dispatch({
               effects: [
                 cells.effects.updateCells.of(
@@ -116,7 +131,7 @@ export function configure({
         cellRange.to,
         cellRange.to,
         View.Decoration.widget({
-          widget: new OutputWidget(repl, cellRange.value),
+          widget: new OutputWidget(view, repl, cellRange.value),
           block: true,
           side: 1,
         }),
@@ -178,6 +193,7 @@ export function configure({
     doc,
     keymap,
     extension: [
+      onInit,
       cells.extension,
       outputDecoration,
       cellDecoration,
@@ -188,20 +204,58 @@ export function configure({
 }
 
 class OutputWidget extends View.WidgetType {
+  _estimatedHeight: number = -1;
+  textContent: string = "";
+  className: string = "CellOutput";
+  mounted: boolean = false;
+
   constructor(
+    private readonly view: { current: View.EditorView | null },
     private readonly repl: NotebookREPL,
     private readonly cell: Editor.Cells.Cell<CellData>,
   ) {
     super();
+    let { deferred, prevDeferred } = this.cell.data;
+    if (deferred.isCompleted) this.onResult(deferred.value[0]);
+    else {
+      if (prevDeferred?.isCompleted) this.onResult(prevDeferred.value[0]);
+      deferred.then(([res]) => this.onResult(res));
+    }
   }
+
+  onResult = (result: REPL.REPLResult) => {
+    let [textContent, className] = renderResult(result);
+    let lines =
+      textContent === "" ? 0 : (textContent.match(/\n/g) ?? []).length + 1;
+    let prevEstimatedHeight = this.estimatedHeight;
+    this.estimatedHeight = 28 * lines;
+    this.textContent = textContent;
+    this.className = className;
+    if (this.mounted && prevEstimatedHeight !== this.estimatedHeight)
+      this.view.current!.requestMeasure();
+  };
 
   get cellState(): CellState {
     return this.repl.state(this.cell);
   }
 
-  render(root: HTMLElement, output: HTMLElement) {
+  override get estimatedHeight(): number {
+    return this._estimatedHeight;
+  }
+
+  override set estimatedHeight(value: number) {
+    this._estimatedHeight = value;
+  }
+
+  override destroy(_dom: HTMLElement): void {
+    this.mounted = false;
+  }
+
+  render(root: HTMLElement, output: HTMLElement, force: boolean) {
+    this.mounted = true;
     root.dataset["cellId"] = String(this.cell.data.id);
     root.dataset["cellVersion"] = String(this.cell.version);
+
     root.style.setProperty(
       "--cell-status-color",
       cellStatusColor(this.cellState, "transparent"),
@@ -210,21 +264,36 @@ class OutputWidget extends View.WidgetType {
       "--cell-status-marker-color",
       cellStatusColor(this.cellState, "var(--app-border-ui)"),
     );
+
     if (this.cellState === "dirty" || this.cellState === "computing") {
       output.style.opacity = "0.3";
     } else {
       output.style.opacity = "1.0";
     }
     root.classList.add("CellOutput");
-    if (this.cell.data.deferred != null)
-      if (this.cell.data.deferred.isCompleted) {
-        if (this.isValid(root))
-          renderResult(root, output, this.cell.data.deferred.value[0]);
-      } else {
-        this.cell.data.deferred.then((result) => {
-          if (this.isValid(root)) renderResult(root, output, result[0]);
-        });
+    let render = (res: REPL.REPLResult) => {
+      this.onResult(res);
+      root.className = this.className;
+      root.style.height = `${this.estimatedHeight}px`;
+      output.textContent = this.textContent;
+    };
+    let renderFallback = () => {
+      if (this.cell.data.prevDeferred?.isCompleted) {
+        root.className = this.className;
+        root.style.height = `${this.estimatedHeight}px`;
+        output.textContent = this.textContent;
       }
+    };
+    if (this.cell.data.deferred.isCompleted) {
+      if (this.isValid(root) || force)
+        render(this.cell.data.deferred.value[0]);
+      else renderFallback();
+    } else {
+      renderFallback();
+      this.cell.data.deferred.then((result) => {
+        if (this.isValid(root)) render(result[0]);
+      });
+    }
   }
 
   isValid(root: HTMLElement) {
@@ -245,6 +314,7 @@ class OutputWidget extends View.WidgetType {
     this.render(
       root as HTMLDivElement,
       root.querySelector(".CellOutput__output") as HTMLDivElement,
+      true,
     );
     return true;
   }
@@ -254,7 +324,7 @@ class OutputWidget extends View.WidgetType {
     let output = document.createElement("div");
     output.classList.add("CellOutput__output");
     root.appendChild(output);
-    this.render(root, output);
+    this.render(root, output, true);
     return root;
   }
 }
@@ -269,23 +339,13 @@ function cellStatusColor(state: CellState, fallback: string = "transparent") {
     : Base.never(state);
 }
 
-function renderResult(
-  root: HTMLElement,
-  elem: HTMLElement,
-  res: REPL.REPLResult,
-) {
+function renderResult(res: REPL.REPLResult) {
   if (res.type === "ok") {
-    elem.textContent = res.ok ?? "";
-    root.classList.add("CellOutput--ok");
-    root.classList.remove("CellOutput--error");
+    return [res.ok ?? "", "CellOutput CellOutput--ok"] as const;
   } else if (res.type === "error") {
-    elem.textContent = res.error;
-    root.classList.remove("CellOutput--ok");
-    root.classList.add("CellOutput--error");
+    return [res.error, "CellOutput CellOutput--error"] as const;
   } else if (res.type === "notice") {
-    elem.textContent = res.notice;
-    root.classList.add("CellOutput--ok");
-    root.classList.remove("CellOutput--error");
+    return [res.notice, "CellOutput CellOutput--ok"] as const;
   } else Base.never(res);
 }
 
@@ -306,11 +366,16 @@ class NotebookREPL {
   }
 
   state(cell: Editor.Cells.Cell<CellData>): CellState {
-    if (cell.data.deferred == null || !this.isComputed(cell)) return "dirty";
+    if (cell.data.prevDeferred == null || !this.isComputed(cell))
+      return "dirty";
     if (!cell.data.deferred.isCompleted) return "computing";
     return "ok";
   }
 }
 
 let cellId = 0;
-let onCellCreate = () => ({ id: cellId++, deferred: null, version: -1 });
+let onCellCreate = (): CellData => ({
+  id: cellId++,
+  prevDeferred: null,
+  deferred: Base.Promise.deferred(),
+});

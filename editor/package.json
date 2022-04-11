@@ -17,7 +17,7 @@
     "@codemirror/history": "^0.19.2",
     "@codemirror/language": "^0.19.8",
     "@codemirror/text": "^0.19.6",
-    "@codemirror/view": "^0.19.47",
+    "@codemirror/view": "^0.19.48",
     "@codemirror/rangeset": "^0.19.0",
     "@mechanize/base": "workspace:*"
   }
