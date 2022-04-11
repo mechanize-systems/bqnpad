@@ -105,7 +105,7 @@ export function configure({
     { key: "Shift-Enter", run: runCell },
     { key: "Meta-Alt-Enter", run: cells.commands.split },
     { key: "Meta-Shift-Enter", run: runCellAndInsertAfter },
-    { key: "Meta-Backspace", run: cells.commands.mergeWithPrevious },
+    { key: "Meta-Backspace", run: cells.commands.joinWithPrevious },
     { key: "Backspace", run: cells.commands.removeIfEmpty },
   ];
 

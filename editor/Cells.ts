@@ -33,7 +33,7 @@ export type Cells<T = any> = {
     /** Split cell at current cursor position. */
     split: View.Command;
     /** Merge cell at current cursor position with the previous cell. */
-    mergeWithPrevious: View.Command;
+    joinWithPrevious: View.Command;
     /** Remove current cell if it is empty. */
     removeIfEmpty: View.Command;
   };
@@ -335,13 +335,12 @@ export function configure<T>(cfg: CellsConfig<T>) {
       });
       return true;
     },
-    mergeWithPrevious: (view) => {
+    joinWithPrevious: (view) => {
       let [_it, before] = query0.cellAt(view.state);
       let prev = before[before.length - 1];
       if (prev == null) return true;
       view.dispatch({
         filter: false,
-        changes: { insert: "", from: prev.to, to: prev.to + 1 },
         effects: [removeCell.of(prev.value)],
       });
       return true;
