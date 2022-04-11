@@ -1,3 +1,7 @@
+:root {
+  --nb-cell-border-width: 2px;
+}
+
 .Notebook {
   display: flex;
   flex-direction: column;
@@ -7,7 +11,7 @@
 
 .CellLine {
   position: relative;
-  border-left: 2px solid var(--cell-status-color);
+  border-left: var(--nb-cell-border-width) solid var(--cell-status-color);
 }
 .CellLine--active {
   background-color: var(--app-bg-subtle);
@@ -23,20 +27,20 @@
   border-style: solid;
   border-color: var(--cell-status-color);
   border-width: 0;
-  border-left-width: 2px;
+  border-left-width: var(--nb-cell-border-width);
 }
 .CellOutput:before {
   position: absolute;
   bottom: 0;
-  left: -2px;
+  left: calc(0px - var(--nb-cell-border-width));
   width: 5px;
   height: 10px;
   content: "";
   border-style: solid;
   border-color: var(--cell-status-marker-color);
   border-width: 0;
-  border-left-width: 2px;
-  border-bottom-width: 2px;
+  border-left-width: var(--nb-cell-border-width);
+  border-bottom-width: var(--nb-cell-border-width);
 }
 .CellOutput__output {
   width: 100%;

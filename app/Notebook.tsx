@@ -168,12 +168,13 @@ function notebookExtension() {
   };
 
   let keymap = [
-    { key: "Backspace", run: cells.commands.removeIfEmpty },
-    { key: "Meta-Enter", run: cells.commands.insertAfter },
-    { key: "Meta-Backspace", run: cells.commands.mergeWithPrevious },
     { key: "Mod-a", run: cells.commands.select },
+    { key: "Meta-Enter", run: cells.commands.insertAfter },
     { key: "Shift-Enter", run: runCell },
+    { key: "Meta-Alt-Enter", run: cells.commands.split },
     { key: "Meta-Shift-Enter", run: runCellAndInsertAfter },
+    { key: "Meta-Backspace", run: cells.commands.mergeWithPrevious },
+    { key: "Backspace", run: cells.commands.removeIfEmpty },
   ];
 
   let outputDecoration = Editor.Cells.cellsWidgetDecoration(
@@ -198,9 +199,9 @@ function notebookExtension() {
     return state === "ok"
       ? fallback
       : state === "dirty"
-      ? "var(--app-color-progress)"
+      ? "var(--app-border-warn-ui)"
       : state === "computing"
-      ? "var(--app-color-progress)"
+      ? "var(--app-border-warn-ui)"
       : Base.never(state);
   }
 

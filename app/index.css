@@ -150,7 +150,7 @@
 
 .WorkspaceHeader--collapsed {
   border: 1px solid transparent;
-  border-bottom: 1px solid var(--app-border);
+  border-bottom: 2px solid var(--app-border);
   background: transparent;
   border-radius: 0px;
 }
