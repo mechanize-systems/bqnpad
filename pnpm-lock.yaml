@@ -28,6 +28,7 @@ importers:
       '@mechanize/base': workspace:*
       '@mechanize/editor': workspace:*
       '@mechanize/ui': workspace:*
+      '@tabler/icons': ^1.63.0
       '@trivago/prettier-plugin-sort-imports': ^3.2.0
       '@tsconfig/strictest': ^1.0.0
       '@types/debug': ^4.1.7
@@ -75,6 +76,7 @@ importers:
       '@mechanize/base': link:base
       '@mechanize/editor': link:editor
       '@mechanize/ui': link:ui
+      '@tabler/icons': 1.63.0_react-dom@18.0.0+react@18.0.0
       '@trivago/prettier-plugin-sort-imports': 3.2.0_prettier@2.6.0
       '@tsconfig/strictest': 1.0.0
       '@types/debug': 4.1.7
@@ -612,6 +614,21 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.13.0
+    dev: true
+
+  /@tabler/icons/1.63.0_react-dom@18.0.0+react@18.0.0:
+    resolution: {integrity: sha512-CrtwngpsKcRBUBT5kbNKJS5UDJkexK4povE/5FOJv1EmNdFLN+cFMfkd2wy55zKSiTMZTNnSV9HYIZgvc6g23A==}
+    peerDependencies:
+      react: ^16.x || 17.x
+      react-dom: ^16.x || 17.x
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+    dependencies:
+      react: 18.0.0
+      react-dom: 18.0.0_react@18.0.0
     dev: true
 
   /@trivago/prettier-plugin-sort-imports/3.2.0_prettier@2.6.0:

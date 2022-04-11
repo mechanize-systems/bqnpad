@@ -7,6 +7,7 @@ import * as History from "@codemirror/history";
 import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
+import * as icons from "@tabler/icons";
 import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
@@ -17,7 +18,6 @@ import * as UI from "@mechanize/ui";
 
 import { AppHeader } from "./AppHeader";
 import { FontSelect } from "./FontSelect";
-import Icon from "./Icon";
 import { SessionBanner } from "./SessionBanner";
 import { ThemeSelect } from "./ThemeSelect";
 import * as Workspace0 from "./Workspace0";
@@ -127,31 +127,6 @@ export function Workspace({
     [listSys, workspace, darkThemeExtension, keybindings],
   );
 
-  let onGlyph = React.useCallback(
-    (glyph: LangBQN.Glyph) => {
-      let view = editor.current!;
-      if (!view.hasFocus) view.focus();
-      let currentCell = workspace.query.currentCell(view.state);
-      let { from, to } = view.state.selection.main;
-      if (from < currentCell.from) {
-        view.dispatch({
-          changes: {
-            from: currentCell.to,
-            to: currentCell.to,
-            insert: glyph.glyph,
-          },
-          selection: State.EditorSelection.cursor(currentCell.to + 1),
-        });
-      } else {
-        view.dispatch({
-          changes: { from, to, insert: glyph.glyph },
-          selection: State.EditorSelection.cursor(to + 1, 1),
-        });
-      }
-    },
-    [editor, workspace],
-  );
-
   let onSave = React.useCallback(() => {
     let data = editor.current!.state.doc.sliceString(0);
     let blob = new Blob([data], { type: "text/csv" });
@@ -200,6 +175,7 @@ export function Workspace({
 
   let statusElement = status != null && (
     <div className="Toolbar__section">
+      <div className="label WorkspaceHeader__hideable">VM:</div>
       <UI.Button
         title={
           status === "idle"
@@ -217,8 +193,8 @@ export function Workspace({
               : "currentColor",
         }}
       >
-        {status === "idle" && <Icon icon="checkCircled" />}
-        {status === "running" && <Icon icon="rocket" />}
+        {status === "idle" && <icons.IconCircleCheck />}
+        {status === "running" && <icons.IconRocket />}
       </UI.Button>
     </div>
   );
@@ -247,7 +223,7 @@ export function Workspace({
     <div className="Toolbar__section">
       <div className="Toolbar__section">
         <div className="label">Session:</div>
-        <div className="ButtonGroup" style={{ display: "flex", gap: 0 }}>
+        <div style={{ display: "flex", gap: 0 }}>
           {!disableSessionControls && (
             <UI.Button title="Create new session" onClick={() => onNew()}>
               New

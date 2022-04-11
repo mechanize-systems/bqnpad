@@ -19,8 +19,13 @@
 
 .label {
   color: var(--app-color-dimmed);
-  font-weight: 400;
+  font-weight: 500;
   padding-left: 5px;
+}
+
+.icon-tabler {
+  width: 16px;
+  height: 16px;
 }
 
 /**
