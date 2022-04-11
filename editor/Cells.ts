@@ -56,6 +56,8 @@ export type Cells<T = any> = {
   effects: {
     updateCells: State.StateEffectType<Map<T, T>>;
   };
+
+  extension: State.Extension;
 };
 
 export class DocBuilder<T> {
@@ -98,9 +100,7 @@ export type CellRange<T> = RangeSet.Range<Cell<T>>;
 
 const USER_EVENT_CELLS_STRUCTURE = "cells.structure";
 
-export function configure<T>(
-  cfg: CellsConfig<T>,
-): readonly [Cells<T>, State.Extension] {
+export function configure<T>(cfg: CellsConfig<T>) {
   let {
     cellSet: cellSet0 = RangeSet.RangeSet.empty,
     onCellCreate,
@@ -379,17 +379,16 @@ export function configure<T>(
     query,
     commands,
     effects: { updateCells },
+    extension: [
+      cellsField,
+      cellsEffect,
+      cellsHistory,
+      transactionFilter,
+      onUpdate,
+    ],
   };
 
-  let extension: State.Extension = [
-    cellsField,
-    cellsEffect,
-    cellsHistory,
-    transactionFilter,
-    onUpdate,
-  ];
-
-  return [cells, extension] as const;
+  return cells;
 }
 
 function touchesCellRange(tr: State.Transaction, from: number, to: number) {
