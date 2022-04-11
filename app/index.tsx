@@ -3,6 +3,7 @@ import * as React from "react";
 import * as ASAP from "@mechanize/asap";
 
 import { AppLoading, Chrome } from "./Chrome";
+import * as NotebookManager from "./NotebookManager";
 import * as Workspace from "./Workspace";
 import * as Workspace0 from "./Workspace0";
 import * as WorkspaceManager from "./WorkspaceManager";

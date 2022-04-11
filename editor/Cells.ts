@@ -90,7 +90,7 @@ export type CellsConfig<T> = {
 };
 
 export class Cell<T = any> extends RangeSet.RangeValue {
-  constructor(public readonly cell: T, public readonly version: number) {
+  constructor(public readonly data: T, public readonly version: number) {
     super();
   }
 }
@@ -193,11 +193,10 @@ export function configure<T>(cfg: CellsConfig<T>) {
 
     function rebuild(it: RangeSet.RangeCursor<Cell>, from: number) {
       let cell = it.value!;
-      let cellValue = updated.get(cell.cell) ?? cell.cell;
+      let cellData = updated.get(cell.data) ?? cell.data;
       touched = touched || touchesCellRange(tr, from, it.to);
-      if (touched) cell = new Cell(cellValue, cell.version + 1);
-      else if (cellValue !== cell.cell)
-        cell = new Cell(cellValue, cell.version);
+      if (touched) cell = new Cell(cellData, cell.version + 1);
+      else if (cellData !== cell.data) cell = new Cell(cellData, cell.version);
       return cell;
     }
 

@@ -9,47 +9,39 @@ import * as ReactDOMClient from "react-dom/client";
 import * as Base from "@mechanize/base";
 
 export type EditorConfig = {
-  doc: State.Text;
+  initState: () => State.EditorState;
   onUpdate?: (update: View.ViewUpdate) => void;
-  extensions?: (undefined | State.Extension)[] | State.Extension;
 };
 
 export function useEditor<E extends HTMLElement>(
-  ref: React.MutableRefObject<E | null>,
+  element: React.MutableRefObject<E | null>,
   view: React.MutableRefObject<View.EditorView | null>,
-  config: EditorConfig,
+  initState: () => State.EditorState,
+  deps: unknown[],
 ) {
-  let { doc, onUpdate, extensions } = config;
-  let doc0 = Base.React.useMemoOnce(() => doc);
-
-  let onUpdateExtension = useStateCompartment(
-    view,
-    () => View.EditorView.updateListener.of((update) => onUpdate?.(update)),
-    [onUpdate],
-  );
 
   React.useLayoutEffect(() => {
-    let startState = State.EditorState.create({
-      doc: doc0,
-      extensions: [
-        onUpdateExtension,
-        (Array.isArray(extensions)
-          ? extensions.filter(Boolean)
-          : extensions
-          ? extensions
-          : []) as State.Extension,
-      ],
-    });
-    view.current = new View.EditorView({
-      state: startState,
-      parent: ref.current!,
-    });
+    if (view.current == null)
+      view.current = new View.EditorView({
+        state: initState(),
+        parent: element.current!,
+      });
+    else view.current.setState(initState());
+  }, [view, element, ...deps]); // eslint-disable-line
+
+  React.useLayoutEffect(() => {
     return () => {
       view.current?.destroy();
       view.current = null;
     };
-  }, [ref, view, doc0, onUpdateExtension, extensions]);
+  }, [view]);
 }
+
+  //let onUpdateExtension = useStateCompartment(
+  //  view,
+  //  () => View.EditorView.updateListener.of((update) => onUpdate?.(update)),
+  //  [onUpdate],
+  //);
 
 /**
  * Produce a dynamically configured `State.Extension`.

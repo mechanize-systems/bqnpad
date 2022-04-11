@@ -110,21 +110,10 @@ export function Workspace({
     ];
   }, [workspace]);
 
-  let extensions = React.useMemo(
-    () => [
-      History.history(),
-      workspace.extension,
-      View.keymap.of(keybindings),
-      View.keymap.of(History.historyKeymap),
-      View.keymap.of(Commands.defaultKeymap),
-      LangBQN.bqn({ sysCompletion: listSys }),
-      Language.indentOnInput(),
-      darkThemeExtension,
-      View.EditorView.darkTheme.from(darkThemeExtension),
-      CloseBrackets.closeBrackets(),
-      Editor.scrollMarginBottom(150),
-    ],
-    [listSys, workspace, darkThemeExtension, keybindings],
+  let onUpdateExtension = Editor.useStateCompartment(
+    editor,
+    () => View.EditorView.updateListener.of((update) => onUpdate?.(update)),
+    [onUpdate],
   );
 
   let onSave = React.useCallback(() => {
@@ -164,11 +153,37 @@ export function Workspace({
   }, [editor, manager, onUpdateCancel, workspace]);
 
   let editorElement = React.useRef<null | HTMLDivElement>(null);
-  Editor.useEditor(editorElement, editor, {
-    doc: doc0,
-    onUpdate,
-    extensions,
-  });
+
+  Editor.useEditor(
+    editorElement,
+    editor,
+    () =>
+      State.EditorState.create({
+        doc: doc0,
+        extensions: [
+          History.history(),
+          workspace.extension,
+          View.keymap.of(keybindings),
+          View.keymap.of(History.historyKeymap),
+          View.keymap.of(Commands.defaultKeymap),
+          LangBQN.bqn({ sysCompletion: listSys }),
+          Language.indentOnInput(),
+          darkThemeExtension,
+          View.EditorView.darkTheme.from(darkThemeExtension),
+          CloseBrackets.closeBrackets(),
+          Editor.scrollMarginBottom(150),
+          onUpdateExtension,
+        ],
+      }),
+    [
+      doc0,
+      listSys,
+      workspace,
+      darkThemeExtension,
+      onUpdateExtension,
+      keybindings,
+    ],
+  );
   React.useLayoutEffect(() => {
     workspace.commands.focusCurrentCell(editor.current!);
   }, [editor, workspace]);

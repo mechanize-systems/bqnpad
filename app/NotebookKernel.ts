@@ -16,41 +16,23 @@ export type CellState = "ok" | "dirty" | "computing";
 
 export type Cell = Editor.Cells.Cell<CellData>;
 
-let cellId = 0;
-
-let cells = Editor.Cells.configure<CellData>({
-  onCellCreate: () => ({ id: cellId++, deferred: null, version: -1 }),
-});
-
-class NotebookREPL {
-  private repl: REPL.IREPL;
-  private versions: Map<number, number> = new Map();
-  constructor(replType: REPL.REPLType) {
-    this.repl = REPL.makeREPL(replType);
-  }
-
-  eval(cell: Cell, code: string) {
-    this.versions.set(cell.cell.id, cell.version);
-    return this.repl.eval(code);
-  }
-
-  isComputed(cell: Cell) {
-    return cell.version === this.versions.get(cell.cell.id) ?? -1;
-  }
-
-  state(cell: Editor.Cells.Cell<CellData>): CellState {
-    if (cell.cell.deferred == null || !this.isComputed(cell)) return "dirty";
-    if (!cell.cell.deferred.isCompleted) return "computing";
-    return "ok";
-  }
-}
-
 export type NotebookConfig = {
+  notebook?: string;
+  onNotebook?: (getNotebook: () => string) => void;
   replType?: REPL.REPLType;
 };
 
-export function configure({ replType = "bqnjs" }: NotebookConfig = {}) {
+export function configure({
+  notebook = "",
+  onNotebook,
+  replType = "bqnjs",
+}: NotebookConfig = {}) {
+  let [doc, cellSet] = decode(notebook);
   let repl = new NotebookREPL(replType);
+  let cells = Editor.Cells.configure<CellData>({
+    cellSet,
+    onCellCreate,
+  });
 
   let runCell: View.Command = (view) => {
     let cur = cells.query.cellAt(view.state)!;
@@ -72,24 +54,24 @@ export function configure({ replType = "bqnjs" }: NotebookConfig = {}) {
     function getById(id: number) {
       let cs = cells.query.cells(view.state);
       for (let it = cs.iter(); it.value != null; it.next())
-        if (it.value.cell.id === id) return it.value;
+        if (it.value.data.id === id) return it.value;
       return null;
     }
 
     async function run() {
       for (let { from, to, cell } of toRun) {
         let state = repl.state(cell);
-        if (state === "computing") await cell.cell.deferred;
+        if (state === "computing") await cell.data.deferred;
         else if (state === "ok") continue;
         else if (state === "dirty") {
           let code = view.state.doc.sliceString(from, to).trim();
           let deferred =
             Base.Promise.deferred<readonly [REPL.REPLResult, string[]]>();
 
-          let newCell = { ...cell.cell, deferred, version: cell.version };
+          let newCell = { ...cell.data, deferred, version: cell.version };
           view.dispatch({
             effects: [
-              cells.effects.updateCells.of(new Map([[cell.cell, newCell]])),
+              cells.effects.updateCells.of(new Map([[cell.data, newCell]])),
             ],
             annotations: [State.Transaction.addToHistory.of(false)],
           });
@@ -101,7 +83,7 @@ export function configure({ replType = "bqnjs" }: NotebookConfig = {}) {
             view.dispatch({
               effects: [
                 cells.effects.updateCells.of(
-                  new Map([[curCell.cell, { ...curCell.cell }]]),
+                  new Map([[curCell.data, { ...curCell.data }]]),
                 ),
               ],
               annotations: [State.Transaction.addToHistory.of(false)],
@@ -161,14 +143,46 @@ export function configure({ replType = "bqnjs" }: NotebookConfig = {}) {
     },
   });
 
+  function decode(notebook: string) {
+    let builder = new Editor.Cells.DocBuilder<CellData>();
+    let lines: string[] = [];
+    for (let line of notebook.split("\n"))
+      if (line === "###") {
+        let code = lines.join("\n");
+        lines = [];
+        builder.add(code, new Editor.Cells.Cell(onCellCreate(), -1));
+      } else lines.push(line);
+    if (lines.length > 0) {
+      let code = lines.join("\n");
+      builder.add(code, new Editor.Cells.Cell(onCellCreate(), -1));
+    }
+    return builder.finish();
+  }
+
+  function encode(state: State.EditorState) {
+    let cs = cells.query.cells(state);
+    let chunks = [];
+    for (let it = cs.iter(); it.value != null; it.next()) {
+      chunks.push(state.doc.sliceString(it.from, it.to));
+      chunks.push("###");
+    }
+    return chunks.join("\n");
+  }
+
+  let onUpdate = View.EditorView.updateListener.of((update) => {
+    onNotebook?.(() => encode(update.state));
+  });
+
   return {
     repl,
+    doc,
     keymap,
     extension: [
       cells.extension,
       outputDecoration,
       cellDecoration,
       focusedCellDecoration,
+      onUpdate,
     ] as State.Extension,
   };
 }
@@ -186,7 +200,7 @@ class OutputWidget extends View.WidgetType {
   }
 
   render(root: HTMLElement, output: HTMLElement) {
-    root.dataset["cellId"] = String(this.cell.cell.id);
+    root.dataset["cellId"] = String(this.cell.data.id);
     root.dataset["cellVersion"] = String(this.cell.version);
     root.style.setProperty(
       "--cell-status-color",
@@ -202,12 +216,12 @@ class OutputWidget extends View.WidgetType {
       output.style.opacity = "1.0";
     }
     root.classList.add("CellOutput");
-    if (this.cell.cell.deferred != null)
-      if (this.cell.cell.deferred.isCompleted) {
+    if (this.cell.data.deferred != null)
+      if (this.cell.data.deferred.isCompleted) {
         if (this.isValid(root))
-          renderResult(root, output, this.cell.cell.deferred.value[0]);
+          renderResult(root, output, this.cell.data.deferred.value[0]);
       } else {
-        this.cell.cell.deferred.then((result) => {
+        this.cell.data.deferred.then((result) => {
           if (this.isValid(root)) renderResult(root, output, result[0]);
         });
       }
@@ -215,7 +229,7 @@ class OutputWidget extends View.WidgetType {
 
   isValid(root: HTMLElement) {
     return (
-      root.dataset["cellId"] === String(this.cell.cell.id) &&
+      root.dataset["cellId"] === String(this.cell.data.id) &&
       root.dataset["cellVersion"] === String(this.cell.version) &&
       this.repl.isComputed(this.cell)
     );
@@ -226,7 +240,7 @@ class OutputWidget extends View.WidgetType {
   }
 
   override updateDOM(root: HTMLElement): boolean {
-    let canUpdate = root.dataset["cellId"] === String(this.cell.cell.id);
+    let canUpdate = root.dataset["cellId"] === String(this.cell.data.id);
     if (!canUpdate) return false;
     this.render(
       root as HTMLDivElement,
@@ -274,3 +288,29 @@ function renderResult(
     root.classList.remove("CellOutput--error");
   } else Base.never(res);
 }
+
+class NotebookREPL {
+  private repl: REPL.IREPL;
+  private versions: Map<number, number> = new Map();
+  constructor(replType: REPL.REPLType) {
+    this.repl = REPL.makeREPL(replType);
+  }
+
+  eval(cell: Cell, code: string) {
+    this.versions.set(cell.data.id, cell.version);
+    return this.repl.eval(code);
+  }
+
+  isComputed(cell: Cell) {
+    return cell.version === this.versions.get(cell.data.id) ?? -1;
+  }
+
+  state(cell: Editor.Cells.Cell<CellData>): CellState {
+    if (cell.data.deferred == null || !this.isComputed(cell)) return "dirty";
+    if (!cell.data.deferred.isCompleted) return "computing";
+    return "ok";
+  }
+}
+
+let cellId = 0;
+let onCellCreate = () => ({ id: cellId++, deferred: null, version: -1 });
