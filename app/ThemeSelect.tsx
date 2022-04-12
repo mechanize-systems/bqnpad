@@ -18,10 +18,7 @@ export type ThemeSelectProps = {
 export function ThemeSelect(props: ThemeSelectProps) {
   return (
     <div className="Toolbar__section">
-      <div className="label Toolbar__element WorkspaceHeader__hideable">
-        Theme:
-      </div>
-      <div className="ButtonGroup">
+      <div className="ButtonGroup ButtonGroup--toggle">
         <UI.Button
           title="System Theme"
           active={props.themePref === "system"}

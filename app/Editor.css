@@ -32,7 +32,7 @@
   font-size: var(--app-font-size);
   border-bottom-width: 3px;
   background-color: var(--app-bg) !important;
-  border-radius: 3px;
+  border-radius: 0px;
 }
 
 .Editor .cm-tooltip-autocomplete ul li {
@@ -58,7 +58,7 @@
 .Editor .cm-bqn-completion-glyph-key-inner {
   border-width: 1px;
   border-style: solid;
-  border-radius: 3px;
+  border-radius: 0px;
   border-color: var(--app-border);
   background-color: var(--app-bg-ui);
   color: var(--app-color-dimmed);
@@ -90,4 +90,15 @@
   font-size: var(--app-font-size);
   padding-left: 5px;
   padding-right: 5px;
+}
+
+.EditorToolbar {
+  border-bottom: 2px solid var(--app-border);
+  margin-left: 10px;
+  margin-right: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  justify-content: flex-end !important;
 }

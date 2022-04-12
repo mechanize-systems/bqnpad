@@ -5,8 +5,13 @@
   flex-direction: row;
   align-items: baseline;
   position: relative;
-  font-weight: 400;
-  border-radius: 3px;
+  font-weight: 500;
+  border-radius: 0px;
+  height: 32px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 .Checkbox:hover {
   background-color: var(--app-bg-ui-hover);

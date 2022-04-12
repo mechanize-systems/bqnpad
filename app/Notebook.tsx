@@ -5,6 +5,7 @@ import * as History from "@codemirror/history";
 import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
+import * as icons from "@tabler/icons";
 import * as LangBQN from "lang-bqn";
 import * as React from "react";
 
@@ -49,9 +50,16 @@ type NotebookEditorProps = {
 };
 
 function NotebookEditor({ theme, notebookId }: NotebookEditorProps) {
-  let editorElement = React.useRef<null | HTMLDivElement>(null);
-  let editor = React.useRef<null | View.EditorView>(null);
-  let darkThemeExtension = Editor.useStateField(editor, theme === "dark", [
+  let view = React.useRef<null | View.EditorView>(null);
+  let runCommand =
+    (cmd: View.Command): React.MouseEventHandler =>
+    (ev) => {
+      ev.preventDefault();
+      if (!view.current!.hasFocus) view.current!.focus();
+      cmd(view.current!);
+    };
+  let elem = React.useRef<null | HTMLDivElement>(null);
+  let darkThemeExtension = Editor.useStateField(view, theme === "dark", [
     theme,
   ]);
 
@@ -59,32 +67,29 @@ function NotebookEditor({ theme, notebookId }: NotebookEditorProps) {
     () => manager.loadNotebook(notebookId).getOrSuspend(),
     [notebookId],
   );
-  let [onNotebook, onNotebookFlush] = Base.React.useDebouncedCallback(
+  let [onUpdate, onUpdateFlush] = Base.React.useDebouncedCallback(
     700,
-    (getDoc: () => string) => {
-      let doc = getDoc();
+    (update: View.ViewUpdate) => {
+      let doc = NotebookKernel.encode(update.state);
       manager.saveNotebook({ meta: { id: notebook.meta.id }, doc });
     },
     [notebook.meta.id],
   );
-  React.useEffect(() => onNotebookFlush, [onNotebookFlush]);
+  React.useEffect(() => onUpdateFlush, [onUpdateFlush]);
 
   Editor.useEditor(
-    editorElement,
-    editor,
+    elem,
+    view,
     () => {
-      let kernel = NotebookKernel.configure({
-        notebook: notebook.doc,
-        onNotebook,
-      });
-      return State.EditorState.create({
-        doc: kernel.doc,
+      let [doc, cellSet] = NotebookKernel.decode(notebook.doc);
+      let state = State.EditorState.create({
+        doc,
         extensions: [
-          View.keymap.of(kernel.keymap),
+          View.keymap.of(NotebookKernel.keymap),
           View.keymap.of([{ key: "Tab", run: Autocomplete.startCompletion }]),
           View.keymap.of(History.historyKeymap),
           View.keymap.of(Commands.defaultKeymap),
-          kernel.extension,
+          NotebookKernel.configure(),
           History.history(),
           LangBQN.bqn(),
           Language.indentOnInput(),
@@ -92,13 +97,50 @@ function NotebookEditor({ theme, notebookId }: NotebookEditorProps) {
           View.EditorView.darkTheme.from(darkThemeExtension),
           CloseBrackets.closeBrackets(),
           Editor.scrollMarginBottom(150),
+          View.EditorView.updateListener.of(onUpdate),
         ],
       });
+      state = NotebookKernel.cells.setCellSet(state, cellSet);
+      return state;
     },
-    [notebook, onNotebook, darkThemeExtension],
+    [notebook, onUpdate, darkThemeExtension],
   );
   React.useLayoutEffect(() => {
-    editor.current!.focus();
-  }, []);
-  return <div className="Editor" ref={editorElement} />;
+    view.current!.focus();
+  }, [view]);
+  return (
+    <div style={{ width: "100%", height: "100%" }}>
+      <div className="Toolbar EditorToolbar">
+        <div className="Toolbar__section">
+          <div className="ButtonGroup">
+            <UI.Button onMouseDown={runCommand(History.undo)}>
+              <icons.IconArrowBackUp />
+            </UI.Button>
+            <UI.Button onMouseDown={runCommand(History.redo)}>
+              <icons.IconArrowForwardUp />
+            </UI.Button>
+          </div>
+          <div className="ButtonGroup">
+            <UI.Button
+              onMouseDown={runCommand(NotebookKernel.commands.insertAfter)}
+            >
+              <icons.IconPlus />
+            </UI.Button>
+            <UI.Button
+              onMouseDown={runCommand(NotebookKernel.commands.runCurrent)}
+            >
+              <icons.IconPlayerPlay />
+            </UI.Button>
+            <UI.Button
+              color="dimmed"
+              onMouseDown={runCommand(NotebookKernel.commands.runAll)}
+            >
+              <icons.IconPlayerSkipForward />
+            </UI.Button>
+          </div>
+        </div>
+      </div>
+      <div className="Editor" ref={elem} />
+    </div>
+  );
 }

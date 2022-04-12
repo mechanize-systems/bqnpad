@@ -22,6 +22,8 @@ export type Cells<T = any> = {
    */
   field: State.StateField<never>;
 
+  setCellSet(state: State.EditorState, cellSet: CellSet<T>): State.EditorState;
+
   /**
    * Cell commands.
    */
@@ -113,8 +115,11 @@ export function configure<T>(cfg: CellsConfig<T>) {
   let updateCells = State.StateEffect.define<Map<T, T>>();
 
   // Cell effect which replaces on cells with another
-  let replaceCells =
-    State.StateEffect.define<{ prev: CellSet<T>; next: CellSet<T> }>();
+  let replaceCells = State.StateEffect.define<{
+    prev: CellSet<T>;
+    next: CellSet<T>;
+    init: boolean;
+  }>();
 
   let onUpdate = View.EditorView.updateListener.of((update) => {
     // TODO: Right now this is an important optimization but in general cells
@@ -181,7 +186,8 @@ export function configure<T>(cfg: CellsConfig<T>) {
     let removed: Set<Cell> = new Set();
     let updated: Map<T, T> = new Map();
     for (let e of tr.effects)
-      if (e.is(splitCell)) {
+      if (e.is(replaceCells) && e.value.init) return {};
+      else if (e.is(splitCell)) {
         split.push(e.value);
         split0.add(e.value);
       } else if (e.is(removeCell)) removed.add(e.value);
@@ -238,6 +244,7 @@ export function configure<T>(cfg: CellsConfig<T>) {
       effects: replaceCells.of({
         prev: cells0,
         next: cells1,
+        init: false,
       }),
       annotations: cellsStructureChanged
         ? [
@@ -251,7 +258,13 @@ export function configure<T>(cfg: CellsConfig<T>) {
   let cellsHistory = History.invertedEffects.of((tr) => {
     for (let e of tr.effects)
       if (e.is(replaceCells))
-        return [replaceCells.of({ prev: e.value.next, next: e.value.prev })];
+        return [
+          replaceCells.of({
+            prev: e.value.next,
+            next: e.value.prev,
+            init: false,
+          }),
+        ];
     return [];
   });
 
@@ -372,8 +385,20 @@ export function configure<T>(cfg: CellsConfig<T>) {
     },
   };
 
+  function setCellSet(state: State.EditorState, cellSet: CellSet<T>) {
+    return state.update({
+      effects: replaceCells.of({
+        prev: RangeSet.RangeSet.empty,
+        next: cellSet,
+        init: true,
+      }),
+      annotations: [State.Transaction.addToHistory.of(false)],
+    }).state;
+  }
+
   let cells: Cells<T> = {
     field: cellsField,
+    setCellSet,
     query,
     commands,
     effects: { updateCells },
@@ -475,7 +500,10 @@ export function cellsFocusDecoration(
  */
 export function cellsLineDecoration<T>(
   cells: Cells<T>,
-  makeDecorationSpec: (cell: Cell<T>) => LineDecorationSpec | null,
+  makeDecorationSpec: (
+    cell: Cell<T>,
+    state: State.EditorState,
+  ) => LineDecorationSpec | null,
 ) {
   function compute(view: View.EditorView) {
     let doc = view.state.doc;
@@ -486,7 +514,7 @@ export function cellsLineDecoration<T>(
       Base.assert(it.from <= it.to);
       let s = doc.lineAt(it.from);
       let e = doc.lineAt(it.to);
-      let deco = makeDecorationSpec(it.value);
+      let deco = makeDecorationSpec(it.value, view.state);
       if (deco != null)
         while (s.number <= e.number) {
           b.add(s.from, s.from, View.Decoration.line(deco));

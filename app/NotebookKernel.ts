@@ -5,47 +5,92 @@ import * as REPL from "@bqnpad/repl";
 import * as Base from "@mechanize/base";
 import * as Editor from "@mechanize/editor";
 
-type CellResult = Base.Promise.Deferred<readonly [REPL.REPLResult, string[]]>;
+/** Cell type. */
 
 export type CellData = {
-  readonly id: number;
-  readonly prevDeferred: CellResult | null;
-  readonly deferred: CellResult;
+  id: number;
+  prevDeferred: CellResultDeferred | null;
+  deferred: CellResultDeferred;
 };
 
 export type CellState = "ok" | "dirty" | "computing";
+export type CellResult = readonly [REPL.REPLResult, string[]];
+export type CellResultDeferred = Base.Promise.Deferred<CellResult>;
 
 export type Cell = Editor.Cells.Cell<CellData>;
 
-export type NotebookConfig = {
-  notebook?: string;
-  onNotebook?: (getNotebook: () => string) => void;
-  replType?: REPL.REPLType;
-};
+/** Instantiate cells extension. */
 
-export function configure({
-  notebook = "",
-  onNotebook,
-  replType = "bqnjs",
-}: NotebookConfig = {}) {
-  let [doc, cellSet] = decode(notebook);
-  let repl = new NotebookREPL(replType);
-  let cells = Editor.Cells.configure<CellData>({
-    cellSet,
-    onCellCreate,
-  });
+let cellId = 0;
+let onCellCreate = (): CellData => ({
+  id: cellId++,
+  prevDeferred: null,
+  deferred: Base.Promise.deferred(),
+});
 
-  let view: { current: View.EditorView | null } = { current: null };
-  let onInit = View.ViewPlugin.fromClass(
-    class {
-      constructor(view0: View.EditorView) {
-        view.current = view0;
-      }
+export let cells = Editor.Cells.configure<CellData>({
+  onCellCreate,
+});
+
+/** Notebook extension. */
+export function configure() {
+  let [view, viewExtension] = Editor.viewRef();
+
+  let outputDecoration = Editor.Cells.cellsWidgetDecoration(
+    cells,
+    (builder, cellRange, state) => {
+      builder.add(
+        cellRange.to,
+        cellRange.to,
+        View.Decoration.widget({
+          widget: new OutputWidget(
+            view,
+            NotebookREPL.get(state),
+            cellRange.value,
+          ),
+          block: true,
+          side: 1,
+        }),
+      );
     },
   );
 
-  let runCell: View.Command = (view) => {
-    let cur = cells.query.cellAt(view.state)!;
+  let cellDecoration = Editor.Cells.cellsLineDecoration(
+    cells,
+    (cell: Editor.Cells.Cell, state: State.EditorState) => {
+      let s = NotebookREPL.get(state).state(cell);
+      return {
+        attributes: {
+          class: "CellLine",
+          style: `--cell-status-color: ${cellStatusColor(s)}`,
+        },
+      };
+    },
+  );
+
+  let focusedCellDecoration = Editor.Cells.cellsFocusDecoration(cells, {
+    attributes: {
+      class: "CellLine--active",
+    },
+  });
+
+  return {
+    extension: [
+      NotebookREPL,
+      viewExtension,
+      cells.extension,
+      outputDecoration,
+      cellDecoration,
+      focusedCellDecoration,
+    ] as State.Extension,
+  };
+}
+
+/** Run till the specificed cell (current cell is used by default). */
+let run =
+  (cell: Editor.Cells.Cell<CellData>): View.Command =>
+  (view) => {
+    let repl = NotebookREPL.get(view.state);
 
     let toRun: {
       from: number;
@@ -55,7 +100,7 @@ export function configure({
     let cs = cells.query.cells(view.state);
     for (let it = cs.iter(); it.value != null; it.next()) {
       toRun.push({ from: it.from, to: it.to, cell: it.value });
-      if (it.value === cur.value) break;
+      if (it.value === cell) break;
     }
     run();
     return true;
@@ -110,98 +155,22 @@ export function configure({
     }
   };
 
-  let runCellAndInsertAfter: View.Command = (view) => {
-    return runCell(view) && cells.commands.insertAfter(view);
-  };
+/** Run till the current cell (inclusive). */
+let runCurrent: View.Command = (view) => {
+  let cell = cells.query.cellAt(view.state)!.value;
+  return run(cell)(view);
+};
 
-  let keymap = [
-    { key: "Mod-a", run: cells.commands.select },
-    { key: "Meta-Enter", run: cells.commands.insertAfter },
-    { key: "Shift-Enter", run: runCell },
-    { key: "Meta-Alt-Enter", run: cells.commands.split },
-    { key: "Meta-Shift-Enter", run: runCellAndInsertAfter },
-    { key: "Meta-Backspace", run: cells.commands.joinWithPrevious },
-    { key: "Backspace", run: cells.commands.removeIfEmpty },
-  ];
+/** Run entire notebook. */
+let runAll: View.Command = (view) => {
+  let c = cells.query.cellAt(view.state, view.state.doc.length)!.value;
+  return run(c)(view);
+};
 
-  let outputDecoration = Editor.Cells.cellsWidgetDecoration(
-    cells,
-    (builder, cellRange) => {
-      builder.add(
-        cellRange.to,
-        cellRange.to,
-        View.Decoration.widget({
-          widget: new OutputWidget(view, repl, cellRange.value),
-          block: true,
-          side: 1,
-        }),
-      );
-    },
-  );
-
-  let cellDecoration = Editor.Cells.cellsLineDecoration(
-    cells,
-    (cell: Editor.Cells.Cell) => {
-      let state = repl.state(cell);
-      return {
-        attributes: {
-          class: "CellLine",
-          style: `--cell-status-color: ${cellStatusColor(state)}`,
-        },
-      };
-    },
-  );
-
-  let focusedCellDecoration = Editor.Cells.cellsFocusDecoration(cells, {
-    attributes: {
-      class: "CellLine--active",
-    },
-  });
-
-  function decode(notebook: string) {
-    let builder = new Editor.Cells.DocBuilder<CellData>();
-    let lines: string[] = [];
-    for (let line of notebook.split("\n"))
-      if (line === "###") {
-        let code = lines.join("\n");
-        lines = [];
-        builder.add(code, new Editor.Cells.Cell(onCellCreate(), -1));
-      } else lines.push(line);
-    if (lines.length > 0) {
-      let code = lines.join("\n");
-      builder.add(code, new Editor.Cells.Cell(onCellCreate(), -1));
-    }
-    return builder.finish();
-  }
-
-  function encode(state: State.EditorState) {
-    let cs = cells.query.cells(state);
-    let chunks = [];
-    for (let it = cs.iter(); it.value != null; it.next()) {
-      chunks.push(state.doc.sliceString(it.from, it.to));
-      chunks.push("###");
-    }
-    return chunks.join("\n");
-  }
-
-  let onUpdate = View.EditorView.updateListener.of((update) => {
-    onNotebook?.(() => encode(update.state));
-  });
-
-  return {
-    repl,
-    doc,
-    keymap,
-    extension: [
-      onInit,
-      cells.extension,
-      outputDecoration,
-      cellDecoration,
-      focusedCellDecoration,
-      onUpdate,
-    ] as State.Extension,
-  };
-}
+/** Run till the current cell and insert a new cell. */
+let runCurrentAndInsertCellAfter: View.Command = (view) => {
+  return runCurrent(view) && cells.commands.insertAfter(view);
+};
 
 class OutputWidget extends View.WidgetType {
   _estimatedHeight: number = -1;
@@ -371,11 +340,63 @@ class NotebookREPL {
     if (!cell.data.deferred.isCompleted) return "computing";
     return "ok";
   }
+
+  static get(state: State.EditorState) {
+    return state.field(this.extension);
+  }
+
+  static extension = State.StateField.define<NotebookREPL>({
+    create() {
+      return new NotebookREPL("bqnjs");
+    },
+    update(repl) {
+      return repl;
+    },
+  });
 }
 
-let cellId = 0;
-let onCellCreate = (): CellData => ({
-  id: cellId++,
-  prevDeferred: null,
-  deferred: Base.Promise.deferred(),
-});
+export let keymap = [
+  { key: "Mod-a", run: cells.commands.select },
+  { key: "Meta-Enter", run: cells.commands.insertAfter },
+  { key: "Shift-Enter", run: runCurrent },
+  { key: "Alt-Shift-Enter", run: runAll },
+  { key: "Meta-Alt-Enter", run: cells.commands.split },
+  { key: "Meta-Shift-Enter", run: runCurrentAndInsertCellAfter },
+  { key: "Meta-Backspace", run: cells.commands.joinWithPrevious },
+  { key: "Backspace", run: cells.commands.removeIfEmpty },
+];
+
+export let commands = {
+  ...cells.commands,
+  runAll,
+  runCurrent,
+  runCurrentAndInsertCellAfter,
+};
+
+export function decode(
+  notebook: string,
+): readonly [State.Text, Editor.Cells.CellSet<CellData>] {
+  let builder = new Editor.Cells.DocBuilder<CellData>();
+  let lines: string[] = [];
+  for (let line of notebook.split("\n"))
+    if (line === "###") {
+      let code = lines.join("\n");
+      lines = [];
+      builder.add(code, new Editor.Cells.Cell(onCellCreate(), -1));
+    } else lines.push(line);
+  if (lines.length > 0) {
+    let code = lines.join("\n");
+    builder.add(code, new Editor.Cells.Cell(onCellCreate(), -1));
+  }
+  return builder.finish();
+}
+
+export function encode(state: State.EditorState) {
+  let cs = cells.query.cells(state);
+  let chunks = [];
+  for (let it = cs.iter(); it.value != null; it.next()) {
+    chunks.push(state.doc.sliceString(it.from, it.to));
+    chunks.push("###");
+  }
+  return chunks.join("\n");
+}

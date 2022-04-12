@@ -15,6 +15,7 @@
   background-color: transparent;
   border: none;
   padding: 5px;
+  height: 32px;
 }
 .GlyphsPalette__item:hover {
   background-color: var(--app-bg-ui-hover);

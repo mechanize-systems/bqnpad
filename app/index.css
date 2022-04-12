@@ -24,8 +24,8 @@
 }
 
 .icon-tabler {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 /**
@@ -114,18 +114,18 @@
 }
 
 .Toolbar {
-  font-weight: 300;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   flex-wrap: wrap;
+  gap: 3px;
 }
 
 .Toolbar__section {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: baseline;
   gap: 3px;
 }
 
@@ -136,29 +136,29 @@
   overflow-y: hidden;
 }
 
-.WorkspaceHeader {
+.AppHeader {
   display: flex;
   flex-direction: column;
   padding: 5px;
   margin: 10px;
   margin-bottom: 0px;
-  border-radius: 3px;
+  border-radius: 0px;
   border-width: 1px;
   border-bottom-width: 2px;
   border-style: solid;
-  border-color: var(--app-border-ui);
+  border-color: var(--app-color-dimmed);
   background: var(--app-bg-ui);
 }
-.WorkspaceHeader__topRight {
+.AppHeader__topRight {
   display: flex;
 }
 
-.WorkspaceHeader--collapsed {
+.AppHeader--collapsed {
   border: 1px solid transparent;
-  border-bottom: 2px solid var(--app-border);
   background: transparent;
   border-radius: 0px;
+  padding-bottom: 0;
 }
-.WorkspaceHeader--collapsed .WorkspaceHeader__hideable {
+.AppHeader--collapsed .AppHeader__hideable {
   display: none;
 }

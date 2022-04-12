@@ -10,7 +10,6 @@ export type AppHeaderProps = {
   status?: React.ReactNode;
   toolbar?: React.ReactNode;
   iconbar?: React.ReactNode;
-  settings?: React.ReactNode;
   theme: UI.Theme;
 };
 
@@ -24,16 +23,11 @@ export function AppHeader(props: AppHeaderProps) {
     () => true,
   );
   return (
-    <div
-      className={UI.cx(
-        "WorkspaceHeader",
-        collapsed && "WorkspaceHeader--collapsed",
-      )}
-    >
+    <div className={UI.cx("AppHeader", collapsed && "AppHeader--collapsed")}>
       <div className="Toolbar">
         <div style={{ display: "flex" }}>
           <UI.Button onClick={() => setCollapsed((collapsed) => !collapsed)}>
-            <Logo size={20} />
+            <Logo size={24} />
           </UI.Button>
           <div style={{ display: "flex", alignItems: "baseline" }}>
             <a
@@ -44,12 +38,7 @@ export function AppHeader(props: AppHeaderProps) {
               BQNPAD
             </a>
           </div>
-          <div
-            className={UI.cx(
-              "WorkspaceHeader__topRight",
-              "WorkspaceHeader__hideable",
-            )}
-          >
+          <div className={UI.cx("AppHeader__topRight", "AppHeader__hideable")}>
             <a
               target="_blank"
               className="Button"
@@ -76,14 +65,13 @@ export function AppHeader(props: AppHeaderProps) {
         </div>
         <div style={{ display: "flex", gap: 3 }}>{props.iconbar}</div>
       </div>
-      <div className="WorkspaceHeader__hideable">
+      <div className="AppHeader__hideable">
         <div className="Toolbar" style={{ justifyContent: "space-between" }}>
           {props.toolbar}
           <div
             className="Toolbar__section"
             style={{ display: "flex", alignItems: "baseline", gap: 3 }}
           >
-            {props.settings}
             <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
               Show glyphs
             </UI.Checkbox>

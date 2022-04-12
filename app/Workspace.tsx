@@ -190,7 +190,6 @@ export function Workspace({
 
   let statusElement = status != null && (
     <div className="Toolbar__section">
-      <div className="label WorkspaceHeader__hideable">VM:</div>
       <UI.Button
         title={
           status === "idle"
@@ -221,19 +220,6 @@ export function Workspace({
     </>
   );
 
-  let settings = (
-    <>
-      <UI.Checkbox
-        disabled={enableLivePreview === null}
-        value={enableLivePreview ?? false}
-        onValue={setEnableLivePreview}
-        title={enableLivePreviewTitle}
-      >
-        Live preview
-      </UI.Checkbox>
-    </>
-  );
-
   let toolbar = (
     <div className="Toolbar__section">
       <div className="Toolbar__section">
@@ -259,17 +245,6 @@ export function Workspace({
         </div>
       </div>
       <div className="Toolbar__section">
-        <div className="label">VM:</div>
-        <UI.Select
-          value={vm}
-          onValue={setVm}
-          options={[
-            { label: "BQN.js", value: "bqnjs" },
-            { label: "CBQN", value: "cbqn" },
-          ]}
-        />
-      </div>
-      <div className="Toolbar__section">
         <FontSelect />
       </div>
     </div>
@@ -277,12 +252,30 @@ export function Workspace({
 
   return (
     <div className="Workspace">
-      <AppHeader
-        toolbar={toolbar}
-        iconbar={iconbar}
-        settings={settings}
-        theme={theme}
-      />
+      <AppHeader iconbar={iconbar} toolbar={toolbar} theme={theme} />
+      <div className="Toolbar EditorToolbar">
+        <div className="Toolbar__section">
+          <div className="label">VM:</div>
+          <UI.Select
+            value={vm}
+            onValue={setVm}
+            options={[
+              { label: "BQN.js", value: "bqnjs" },
+              { label: "CBQN", value: "cbqn" },
+            ]}
+          />
+        </div>
+        <div className="Toolbar__section">
+          <UI.Checkbox
+            disabled={enableLivePreview === null}
+            value={enableLivePreview ?? false}
+            onValue={setEnableLivePreview}
+            title={enableLivePreviewTitle}
+          >
+            Live preview
+          </UI.Checkbox>
+        </div>
+      </div>
       <div ref={editorElement} className="Editor" />
     </div>
   );

@@ -6,9 +6,10 @@
   border: none;
   background-color: transparent;
   border-radius: 0;
-  font-weight: 400;
-  border-radius: 3px;
+  font-weight: 500;
+  border-radius: 0px;
   color: var(--app-color);
+  height: 32px;
 }
 .Select:hover {
   background-color: var(--app-bg-ui-hover);

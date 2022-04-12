@@ -3,15 +3,22 @@
   padding: 5px;
   background-color: transparent;
   border: none;
+  border-radius: 0px;
   color: var(--app-color);
-  font-weight: 400;
-  border-radius: 3px;
+  font-weight: 500;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+  height: 32px;
 }
 .Button:hover {
   background-color: var(--app-bg-ui-hover);
+  color: var(--app-color);
 }
 .Button:active {
   background-color: var(--app-bg-ui-active);
+  color: var(--app-color);
 }
 .Button--active {
   color: var(--app-color-active);
@@ -22,20 +29,20 @@ a.Button {
   text-decoration: none;
 }
 Button .icon-tabler {
-  vertical-align: middle;
-  top: -1px;
+  top: 1px;
   position: relative;
 }
 
 .ButtonGroup {
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
   overflow: hidden;
 }
-.ButtonGroup .Button {
+.ButtonGroup--toggle .Button {
   border-radius: 0;
+  border: none;
   border-bottom: 2px solid var(--app-border-ui);
 }
-.ButtonGroup .Button--active {
+.ButtonGroup--toggle .Button--active {
   border-bottom: 2px solid var(--app-color-active);
 }

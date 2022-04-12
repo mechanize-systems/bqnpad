@@ -4,21 +4,14 @@ import { cx } from "./index";
 
 export type ButtonProps = {
   children: React.ReactNode;
-  onClick?: React.MouseEventHandler;
-  title?: string;
   active?: boolean;
-  style?: React.CSSProperties;
-};
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-export function Button(props: ButtonProps) {
+export function Button({ children, active, ...props }: ButtonProps) {
+  let className = cx("Button", active && "Button--active", props.className);
   return (
-    <button
-      className={cx("Button", props.active && "Button--active")}
-      style={props.style}
-      onClick={props.onClick}
-      title={props.title}
-    >
-      {props.children}
+    <button {...props} className={className}>
+      {children}
     </button>
   );
 }
