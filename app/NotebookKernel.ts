@@ -11,6 +11,7 @@ export type CellData = {
   id: number;
   prevDeferred: CellResultDeferred | null;
   deferred: CellResultDeferred;
+  showOutput: boolean;
 };
 
 export type CellState = "ok" | "dirty" | "computing";
@@ -26,6 +27,7 @@ let onCellCreate = (): CellData => ({
   id: cellId++,
   prevDeferred: null,
   deferred: Base.Promise.deferred(),
+  showOutput: true,
 });
 
 export let cells = Editor.Cells.configure<CellData>({
@@ -128,6 +130,7 @@ let run =
             id: cell.data.id,
             prevDeferred: cell.data.deferred,
             deferred,
+            showOutput: showOutput(code),
           };
           view.dispatch({
             effects: [
@@ -173,7 +176,7 @@ let runCurrentAndInsertCellAfter: View.Command = (view) => {
 };
 
 class OutputWidget extends View.WidgetType {
-  _estimatedHeight: number = -1;
+  _estimatedHeight: number = this.cell.data.showOutput ? -1 : 0;
   textContent: string = "";
   className: string = "CellOutput";
   mounted: boolean = false;
@@ -193,6 +196,7 @@ class OutputWidget extends View.WidgetType {
   }
 
   onResult = (result: REPL.REPLResult) => {
+    if (!this.cell.data.showOutput) return;
     let [textContent, className] = renderResult(result);
     let lines =
       textContent === "" ? 0 : (textContent.match(/\n/g) ?? []).length + 1;
@@ -399,4 +403,14 @@ export function encode(state: State.EditorState) {
     chunks.push("###");
   }
   return chunks.join("\n");
+}
+
+/** Show cell output if cell doesn't end with `,` or `⋄`. */
+function showOutput(code: string) {
+  let i = code.length - 1;
+  while (i >= 0)
+    if (code[i] === "," || code[i] === "⋄") return false;
+    else if (code[i] === " " || code[i] === "\n") i--;
+    else break;
+  return true;
 }
