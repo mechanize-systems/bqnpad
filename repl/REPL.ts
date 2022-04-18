@@ -43,7 +43,7 @@ let valueTypes: { [code: number]: ValueType } = {
   6: "namespace",
 };
 
-const FMTLIMIT = 5000;
+const FMTLIMIT = 10000;
 
 const LOGS: string[] = [];
 

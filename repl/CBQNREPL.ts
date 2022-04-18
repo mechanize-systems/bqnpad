@@ -4,7 +4,7 @@ import * as Base from "@mechanize/base";
 
 import * as REPL from "./REPL";
 
-const FMTLIMIT = 5000;
+const FMTLIMIT = 10000;
 
 function fmt(s: string) {
   if (s.length > FMTLIMIT) s = s.slice(0, FMTLIMIT);
