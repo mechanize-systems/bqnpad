@@ -196,7 +196,7 @@ class OutputWidget extends View.WidgetType {
   }
 
   onResult = (result: REPL.REPLResult) => {
-    if (!this.cell.data.showOutput) return;
+    if (!this.cell.data.showOutput && result.type !== "error") return;
     let [textContent, className] = renderResult(result);
     let lines =
       textContent === "" ? 0 : (textContent.match(/\n/g) ?? []).length + 1;
