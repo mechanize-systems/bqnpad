@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import * as Base from "@mechanize/base";
 
 import * as REPL from "./REPL";
@@ -68,10 +66,10 @@ export class CBQNREPL implements REPL.IREPL {
     return [];
   }
 
-  eval(code: string): Promise<readonly [REPL.REPLResult, string[]]> {
+  eval(code: string): Promise<REPL.REPLOutput> {
     let res = this.CBQN().then((CBQN) => {
       if (code.trim().length === 0)
-        return [{ type: "ok", ok: null }, [] as string[]] as const;
+        return [{ type: "ok", ok: null }, [] as REPL.REPLEffect[]] as const;
       try {
         CBQN.eval(code);
         let stdout = CBQN.consumeStdout();
@@ -79,16 +77,29 @@ export class CBQNREPL implements REPL.IREPL {
         if (stderr.length > 0) {
           let error = String(stderr.join("\n"));
           if (error === "Error: Empty program")
-            return [{ type: "ok", ok: null }, stdout.map(fmt)] as const;
-          else return [{ type: "error", error }, stdout.map(fmt)] as const;
+            return [
+              { type: "ok", ok: null },
+              stdout.map((v) => ({
+                type: "show",
+                v: fmt(v),
+              })) as REPL.REPLEffect[],
+            ] as const;
+          else
+            return [
+              { type: "error", error },
+              stdout.map((v) => ({
+                type: "show",
+                v: fmt(v),
+              })) as REPL.REPLEffect[],
+            ] as const;
         }
         let ok = stdout.join("\n");
-        return [{ type: "ok", ok: fmt(ok) }, [] as string[]] as const;
+        return [{ type: "ok", ok: fmt(ok) }, [] as REPL.REPLEffect[]] as const;
       } catch (e) {
         let stderr = CBQN.consumeStderr();
         return [
           { type: "error", error: String(stderr.join("\n")) },
-          [] as string[],
+          [] as REPL.REPLEffect[],
         ] as const;
       }
     });
@@ -96,7 +107,9 @@ export class CBQNREPL implements REPL.IREPL {
     return res;
   }
 
-  async preview(_code: string): Promise<readonly [REPL.REPLResult, string[]]> {
+  async preview(
+    _code: string,
+  ): Promise<REPL.REPLOutput> {
     return [{ type: "notice", notice: "..." }, []];
   }
 }

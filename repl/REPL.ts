@@ -11,12 +11,18 @@ export type REPLResult =
 
 export type REPLStatus = "running" | "idle";
 
+export type REPLEffect =
+  | { type: "show"; v: string }
+  | { type: "plot"; 𝕨: BQN.Value; 𝕩: BQN.Value };
+
+export type REPLOutput = readonly [REPLResult, REPLEffect[]];
+
 export interface IREPL {
   status: REPLStatus | null;
   onStatus: Base.EventEmitter<REPLStatus>;
   listSys(): Promise<ValueDesc[]>;
-  eval(code: string): Promise<readonly [REPLResult, string[]]>;
-  preview(code: string): Promise<readonly [REPLResult, string[]]>;
+  eval(code: string): Promise<REPLOutput>;
+  preview(code: string): Promise<REPLOutput>;
 }
 
 export type ValueDesc = {
@@ -45,18 +51,19 @@ let valueTypes: { [code: number]: ValueType } = {
 
 const FMTLIMIT = 10000;
 
-const LOGS: string[] = [];
+const EFFECTS: REPLEffect[] = [];
 
 declare global {
   interface Window {
     bqnShow(v: string): void;
+    bqnPlot(𝕩: BQN.Value, 𝕨: BQN.Value): void;
   }
 }
-self.bqnShow = (v: string) => LOGS.push(v);
+self.bqnShow = (v: string) => EFFECTS.push({ type: "show", v });
 
-let consumeLogs = (): string[] => {
-  let logs = LOGS.slice(0);
-  LOGS.length = 0;
+let consumeEffects = (): REPLEffect[] => {
+  let logs = EFFECTS.slice(0);
+  EFFECTS.length = 0;
   return logs;
 };
 
@@ -100,44 +107,47 @@ export class REPL implements IREPL {
     return res;
   }
 
-  eval(code: string): Promise<readonly [REPLResult, string[]]> {
+  eval(code: string): Promise<REPLOutput> {
     let res = this.BQN().then((BQN) => {
       if (code.trim().length === 0)
-        return [{ type: "ok", ok: null }, [] as string[]] as const;
+        return [{ type: "ok", ok: null }, [] as REPLEffect[]] as const;
       try {
         let value = BQN.repl(code);
-        let logs = consumeLogs();
+        let effects = consumeEffects();
         return [
           { type: "ok", ok: BQN.BQN.fmt(value).slice(0, FMTLIMIT) },
-          logs,
+          effects,
         ] as const;
       } catch (e) {
         let error = BQN.BQN.fmtErr(e as any);
-        let logs = consumeLogs();
+        let effects = consumeEffects();
         if (error === "Empty program")
-          return [{ type: "ok", ok: null }, logs] as const;
+          return [{ type: "ok", ok: null }, effects] as const;
         else
-          return [{ type: "error", error: `Error: ${error}` }, logs] as const;
+          return [
+            { type: "error", error: `Error: ${error}` },
+            effects,
+          ] as const;
       }
     });
     this._ready = res;
     return res;
   }
 
-  preview(code: string): Promise<readonly [REPLResult, string[]]> {
+  preview(code: string): Promise<REPLOutput> {
     let res = this.BQN().then((BQN) => {
       if (code.trim().length === 0)
-        return [{ type: "ok", ok: null }, [] as string[]] as const;
+        return [{ type: "ok", ok: null }, [] as REPLEffect[]] as const;
 
       try {
         let value = BQN.repl.preview(code);
-        let logs = consumeLogs();
+        let effects = consumeEffects();
         return [
           { type: "ok", ok: BQN.BQN.fmt(value).slice(0, FMTLIMIT) },
-          logs,
+          effects,
         ] as const;
       } catch (e) {
-        let logs = consumeLogs();
+        let effects = consumeEffects();
         if ((e as any).kind === "previewError")
           return [
             {
@@ -145,11 +155,11 @@ export class REPL implements IREPL {
               notice:
                 "cannot preview this expression as it produces side effects, submit expression (Shift+Enter) to see its result",
             },
-            logs,
+            effects,
           ] as const;
         return [
           { type: "error", error: `Error: ${BQN.BQN.fmtErr(e as any)}` },
-          logs,
+          effects,
         ] as const;
       }
     });

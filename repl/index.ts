@@ -6,7 +6,14 @@ import { CBQNREPL } from "./CBQNREPL";
 import { IREPL, REPL } from "./REPL";
 import { REPLWebWorkerClient } from "./REPLWebWorkerClient";
 
-export type { IREPL, REPLResult, REPLStatus, ValueDesc } from "./REPL";
+export type {
+  IREPL,
+  REPLResult,
+  REPLStatus,
+  REPLEffect,
+  REPLOutput,
+  ValueDesc,
+} from "./REPL";
 export { REPL, useREPLStatus } from "./REPL";
 export { CBQNREPL } from "./CBQNREPL";
 export { REPLWebWorkerClient } from "./REPLWebWorkerClient";

@@ -732,7 +732,8 @@ let sysvals = {
   type, glyph, decompose, fmt:fmt1, repr, currenterror, unixtime,
   js:dojs, math:mathns, ns:nsns, rand,
   listsys: dynsys(_ => list(Object.keys(sysvals).sort().map(str))),
-  show: (x,w) => { self.bqnShow(unstr(fmt1(x)));return x; }
+  show: (x,w) => { self.bqnShow(unstr(fmt1(x)));return x; },
+  plot: (x,w) => { self.bqnPlot(x, w);return x; },
 };
 
 let make_timed = tfn => {
