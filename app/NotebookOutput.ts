@@ -8,7 +8,7 @@ import type { CellData, CellState, NotebookREPL } from "./NotebookKernel";
 
 export class Widget extends View.WidgetType {
   _estimatedHeight: number = this.cell.data.showOutput ? -1 : 0;
-  textContent: string = "";
+  rendered: DocumentFragment = document.createDocumentFragment();
   className: string = "CellOutput";
   mounted: boolean = false;
 
@@ -26,15 +26,36 @@ export class Widget extends View.WidgetType {
     }
   }
 
-  onResult = ([result, logs]: readonly [REPL.REPLResult, string[]]) => {
+  onResult = ([result, effects]: REPL.REPLOutput) => {
     if (!this.cell.data.showOutput && result.type !== "error") return;
+
+    let rendered = document.createDocumentFragment();
+    let lineCount = 0;
+    let append = (text: string) => {
+      let el = document.createElement("div");
+      lineCount += text === "" ? 0 : (text.match(/\n/g) ?? []).length + 1;
+      el.textContent = text;
+      rendered.appendChild(el);
+    };
+
     let [textContent, className] = renderResult(result);
-    if (logs.length > 0) textContent = logs.join("\n") + "\n" + textContent;
-    let lines =
-      textContent === "" ? 0 : (textContent.match(/\n/g) ?? []).length + 1;
+    if (effects.length > 0) {
+      for (let eff of effects) {
+        switch (eff.type) {
+          case "show":
+            append(eff.v);
+            break;
+          case "plot":
+            break;
+          default:
+            Base.never(eff);
+        }
+      }
+    }
+    append(textContent);
     let prevEstimatedHeight = this.estimatedHeight;
-    this.estimatedHeight = 28 * lines;
-    this.textContent = textContent;
+    this.estimatedHeight = 28 * lineCount;
+    this.rendered = rendered;
     this.className = className;
     if (this.mounted && prevEstimatedHeight !== this.estimatedHeight)
       this.view.current!.requestMeasure();
@@ -76,18 +97,18 @@ export class Widget extends View.WidgetType {
       output.style.opacity = "1.0";
     }
     root.classList.add("CellOutput");
-    let render = (res: readonly [REPL.REPLResult, string[]]) => {
-      this.onResult(res);
+    let update = () => {
       root.className = this.className;
       root.style.height = `${this.estimatedHeight}px`;
-      output.textContent = this.textContent;
+      while (output.firstChild != null) output.removeChild(output.lastChild!);
+      output.append(this.rendered);
+    };
+    let render = (res: REPL.REPLOutput) => {
+      this.onResult(res);
+      update();
     };
     let renderFallback = () => {
-      if (this.cell.data.prevDeferred?.isCompleted) {
-        root.className = this.className;
-        root.style.height = `${this.estimatedHeight}px`;
-        output.textContent = this.textContent;
-      }
+      if (this.cell.data.prevDeferred?.isCompleted) update();
     };
     if (this.cell.data.deferred.isCompleted) {
       if (this.isValid(root) || force) render(this.cell.data.deferred.value);

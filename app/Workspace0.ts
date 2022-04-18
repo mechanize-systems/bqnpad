@@ -29,7 +29,7 @@ export type WorkspaceCell0 = {
   /** `from`/`to` represent a range into the workspace's `doc`. */
   to: number;
   /** Evaluation result (if present). */
-  result: readonly [REPL.REPLResult, string[]] | REPL.REPLResult | null;
+  result: REPL.REPLOutput | REPL.REPLResult | null;
 };
 
 /** Create a new workspace with a single (current) cell. */

@@ -17,7 +17,7 @@ export type CellData = {
 };
 
 export type CellState = "ok" | "dirty" | "computing";
-export type CellResult = readonly [REPL.REPLResult, string[]];
+export type CellResult = REPL.REPLOutput;
 export type CellResultDeferred = Base.Promise.Deferred<CellResult>;
 
 export type Cell = Editor.Cells.Cell<CellData>;
@@ -127,7 +127,7 @@ let run =
           let deferred =
             cell.data.prevDeferred == null
               ? cell.data.deferred
-              : Base.Promise.deferred<readonly [REPL.REPLResult, string[]]>();
+              : Base.Promise.deferred<REPL.REPLOutput>();
           let newCell: CellData = {
             id: cell.data.id,
             prevDeferred: cell.data.deferred,

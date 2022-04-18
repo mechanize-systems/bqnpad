@@ -323,8 +323,8 @@ export type WorkspaceCell = {
   idx: number;
   from: number;
   to: number;
-  result: null | Base.Promise.Deferred<readonly [REPL.REPLResult, string[]]>;
-  resultPreview: null | readonly [REPL.REPLResult, string[]];
+  result: null | Base.Promise.Deferred<REPL.REPLOutput>;
+  resultPreview: null | REPL.REPLOutput;
 };
 
 type WorkspaceState = {
@@ -353,10 +353,26 @@ function workspace(
     cell: Workspace0.WorkspaceCell0,
     idx: number,
   ): WorkspaceCell => {
-    let resultPreview: WorkspaceCell["resultPreview"] =
-      cell.result != null && !Array.isArray(cell.result)
-        ? ([cell.result as REPL.REPLResult, [] as string[]] as const)
-        : (cell.result as null | readonly [REPL.REPLResult, string[]]);
+    function parseResult(result: unknown): null | REPL.REPLOutput {
+      if (result != null && !Array.isArray(result)) {
+        return [result as REPL.REPLResult, [] as REPL.REPLEffect[]] as const;
+      } else if (result != null) {
+        let [value, effects] = result;
+        if (effects.length > 0 && typeof effects[0] === "string") {
+          return [
+            value,
+            effects.map((v: string) => ({ type: "show", v })),
+          ] as const;
+        } else {
+          return result as unknown as ReturnType<typeof parseResult>;
+        }
+      } else {
+        return result ?? null;
+      }
+    }
+    let resultPreview: WorkspaceCell["resultPreview"] = parseResult(
+      cell.result,
+    );
     return {
       idx,
       from: cell.from,
@@ -741,10 +757,10 @@ class PlaceholderWidget extends View.WidgetType {
   }
 }
 
-function resultContent([result, logs]: readonly [
-  REPL.REPLResult,
-  string[],
-]): readonly [string, string] {
+function resultContent([result, logs]: REPL.REPLOutput): readonly [
+  string,
+  string,
+] {
   let output: string;
   if (result.type === "ok") {
     output = result.ok ?? "";
@@ -861,7 +877,7 @@ class FoldedOutputView {
 }
 
 abstract class BaseOutputWidget extends View.WidgetType {
-  private _result: readonly [REPL.REPLResult, string[]] | null = null;
+  private _result: REPL.REPLOutput | null = null;
   private _resultContent: readonly [string, string] | null = null;
   private _numberOfLines: number | null = null;
 
@@ -910,7 +926,7 @@ class CellOutputWidget extends BaseOutputWidget {
       ? this.cell.result.value
       : this.cell.resultPreview != null
       ? this.cell.resultPreview
-      : [{ type: "notice", notice: "..." }, [] as string[]];
+      : [{ type: "notice", notice: "..." }, [] as REPL.REPLEffect[]];
   }
 
   override onResultUpdate(): void {
