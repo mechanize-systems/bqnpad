@@ -173,6 +173,7 @@ export function configure<T>(cfg: CellsConfig<T>) {
 
   let cellsEffect = State.EditorState.transactionExtender.of((tr) => {
     if (tr.isUserEvent("undo") || tr.isUserEvent("redo")) return {};
+    if (!tr.docChanged && tr.effects.length === 0) return {};
 
     let cells0 = tr.startState.field(cellsField);
     let cells1 = cells0;
