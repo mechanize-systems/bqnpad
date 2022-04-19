@@ -3,7 +3,7 @@
   user-select: none;
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   position: relative;
   font-weight: 500;
   border-radius: 0px;

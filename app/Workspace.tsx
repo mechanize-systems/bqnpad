@@ -215,6 +215,25 @@ export function Workspace({
 
   let iconbar = (
     <>
+      <div className="Toolbar__section">
+        <div className="label">VM:</div>
+        <UI.Select
+          value={vm}
+          onValue={setVm}
+          options={[
+            { label: "BQN.js", value: "bqnjs" },
+            { label: "CBQN", value: "cbqn" },
+          ]}
+        />
+      </div>
+      <UI.Checkbox
+        disabled={enableLivePreview === null}
+        value={enableLivePreview ?? false}
+        onValue={setEnableLivePreview}
+        title={enableLivePreviewTitle}
+      >
+        Live preview
+      </UI.Checkbox>
       {statusElement}
       <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
     </>
@@ -253,29 +272,6 @@ export function Workspace({
   return (
     <div className="Workspace">
       <AppHeader iconbar={iconbar} toolbar={toolbar} theme={theme} />
-      <div className="Toolbar EditorToolbar">
-        <div className="Toolbar__section">
-          <div className="label">VM:</div>
-          <UI.Select
-            value={vm}
-            onValue={setVm}
-            options={[
-              { label: "BQN.js", value: "bqnjs" },
-              { label: "CBQN", value: "cbqn" },
-            ]}
-          />
-        </div>
-        <div className="Toolbar__section">
-          <UI.Checkbox
-            disabled={enableLivePreview === null}
-            value={enableLivePreview ?? false}
-            onValue={setEnableLivePreview}
-            title={enableLivePreviewTitle}
-          >
-            Live preview
-          </UI.Checkbox>
-        </div>
-      </div>
       <div ref={editorElement} className="Editor" />
     </div>
   );

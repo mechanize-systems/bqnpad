@@ -24,32 +24,7 @@ let manager = NotebookManager.makeLocalStorageManager();
 
 export default function Notebook() {
   let [theme, themePref, setThemePref] = UI.useTheme();
-  return (
-    <Chrome.Chrome>
-      <div className="Notebook">
-        <AppHeader.AppHeader
-          theme={theme}
-          toolbar={
-            <div className="Toolbar__section">
-              <FontSelect />
-            </div>
-          }
-          iconbar={
-            <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
-          }
-        />
-        <NotebookEditor theme={theme} notebookId="*scratch*" />
-      </div>
-    </Chrome.Chrome>
-  );
-}
 
-type NotebookEditorProps = {
-  theme: UI.Theme;
-  notebookId: string;
-};
-
-function NotebookEditor({ theme, notebookId }: NotebookEditorProps) {
   let view = React.useRef<null | View.EditorView>(null);
   let runCommand =
     (cmd: View.Command): React.MouseEventHandler =>
@@ -63,6 +38,7 @@ function NotebookEditor({ theme, notebookId }: NotebookEditorProps) {
     theme,
   ]);
 
+  let notebookId = "*scratch*";
   let notebook = React.useMemo(
     () => manager.loadNotebook(notebookId).getOrSuspend(),
     [notebookId],
@@ -108,39 +84,53 @@ function NotebookEditor({ theme, notebookId }: NotebookEditorProps) {
   React.useLayoutEffect(() => {
     view.current!.focus();
   }, [view]);
+
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <div className="Toolbar EditorToolbar">
-        <div className="Toolbar__section">
-          <div className="ButtonGroup">
-            <UI.Button onMouseDown={runCommand(History.undo)}>
-              <icons.IconArrowBackUp />
-            </UI.Button>
-            <UI.Button onMouseDown={runCommand(History.redo)}>
-              <icons.IconArrowForwardUp />
-            </UI.Button>
-          </div>
-          <div className="ButtonGroup">
-            <UI.Button
-              onMouseDown={runCommand(NotebookKernel.commands.insertAfter)}
-            >
-              <icons.IconPlus />
-            </UI.Button>
-            <UI.Button
-              onMouseDown={runCommand(NotebookKernel.commands.runCurrent)}
-            >
-              <icons.IconPlayerPlay />
-            </UI.Button>
-            <UI.Button
-              color="dimmed"
-              onMouseDown={runCommand(NotebookKernel.commands.runAll)}
-            >
-              <icons.IconPlayerSkipForward />
-            </UI.Button>
-          </div>
+    <Chrome.Chrome>
+      <div className="Notebook">
+        <AppHeader.AppHeader
+          theme={theme}
+          toolbar={
+            <div className="Toolbar__section">
+              <FontSelect />
+            </div>
+          }
+          iconbar={
+            <>
+              <div className="ButtonGroup">
+                <UI.Button onMouseDown={runCommand(History.undo)}>
+                  <icons.IconArrowBackUp />
+                </UI.Button>
+                <UI.Button onMouseDown={runCommand(History.redo)}>
+                  <icons.IconArrowForwardUp />
+                </UI.Button>
+              </div>
+              <div className="ButtonGroup">
+                <UI.Button
+                  onMouseDown={runCommand(NotebookKernel.commands.insertAfter)}
+                >
+                  <icons.IconPlus />
+                </UI.Button>
+                <UI.Button
+                  onMouseDown={runCommand(NotebookKernel.commands.runCurrent)}
+                >
+                  <icons.IconPlayerPlay />
+                </UI.Button>
+                <UI.Button
+                  color="dimmed"
+                  onMouseDown={runCommand(NotebookKernel.commands.runAll)}
+                >
+                  <icons.IconPlayerSkipForward />
+                </UI.Button>
+              </div>
+              <ThemeSelect themePref={themePref} onThemePref={setThemePref} />
+            </>
+          }
+        />
+        <div style={{ width: "100%", height: "100%" }}>
+          <div className="Editor" ref={elem} />
         </div>
       </div>
-      <div className="Editor" ref={elem} />
-    </div>
+    </Chrome.Chrome>
   );
 }

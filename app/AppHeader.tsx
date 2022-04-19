@@ -1,3 +1,4 @@
+import * as icons from "@tabler/icons";
 import * as React from "react";
 
 import * as Base from "@mechanize/base";
@@ -18,15 +19,12 @@ export function AppHeader(props: AppHeaderProps) {
     "bqnpad-appheader-collapsed",
     () => false,
   );
-  let [showGlyphbar, setShowGlyphbar] = Base.React.usePersistentState(
-    "bqnpad-pref-showGlyphbar",
-    () => true,
-  );
+  let toggleCollapsed = () => setCollapsed((collapsed) => !collapsed);
   return (
     <div className={UI.cx("AppHeader", collapsed && "AppHeader--collapsed")}>
       <div className="Toolbar">
         <div style={{ display: "flex" }}>
-          <UI.Button onClick={() => setCollapsed((collapsed) => !collapsed)}>
+          <UI.Button onClick={toggleCollapsed}>
             <Logo size={24} />
           </UI.Button>
           <div style={{ display: "flex", alignItems: "baseline" }}>
@@ -38,6 +36,16 @@ export function AppHeader(props: AppHeaderProps) {
               BQNPAD
             </a>
           </div>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          {props.iconbar}
+          <UI.Button onClick={toggleCollapsed}>
+            {collapsed ? <icons.IconMenu2 /> : <icons.IconArrowsMinimize />}
+          </UI.Button>
+        </div>
+      </div>
+      <div className="AppHeader__hideable">
+        <div className="Toolbar" style={{ justifyContent: "space-between" }}>
           <div className={UI.cx("AppHeader__topRight", "AppHeader__hideable")}>
             <a
               target="_blank"
@@ -62,22 +70,9 @@ export function AppHeader(props: AppHeaderProps) {
             </a>
             {props.status}
           </div>
-        </div>
-        <div style={{ display: "flex", gap: 3 }}>{props.iconbar}</div>
-      </div>
-      <div className="AppHeader__hideable">
-        <div className="Toolbar" style={{ justifyContent: "space-between" }}>
           {props.toolbar}
-          <div
-            className="Toolbar__section"
-            style={{ display: "flex", alignItems: "baseline", gap: 3 }}
-          >
-            <UI.Checkbox value={showGlyphbar} onValue={setShowGlyphbar}>
-              Show glyphs
-            </UI.Checkbox>
-          </div>
         </div>
-        {showGlyphbar && <GlyphPalette theme={props.theme} />}
+        <GlyphPalette theme={props.theme} />
       </div>
     </div>
   );
