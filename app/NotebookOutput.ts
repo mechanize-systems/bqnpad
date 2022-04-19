@@ -9,6 +9,7 @@ import * as Editor from "@mechanize/editor";
 import type { CellData, CellState, NotebookREPL } from "./NotebookKernel";
 
 type Rendered = {
+  status: REPL.REPLResult["type"];
   className: string;
   effects: Block[];
   result: Block;
@@ -50,6 +51,7 @@ function renderOutput([result, effects]: REPL.REPLOutput): Rendered {
   let [textContent, className] = renderResult(result);
   let resultBlock = createTextBlock(textContent);
   return {
+    status: result.type,
     className,
     effects: effectBlocks,
     result: resultBlock,
@@ -117,7 +119,10 @@ export class Widget extends View.WidgetType {
   override get estimatedHeight(): number {
     let { value } = this.rendered;
     if (value != null) {
-      let h = this.cell.data.showOutput ? value.result.height : 0;
+      let h =
+        this.cell.data.showOutput || value.status === "error"
+          ? value.result.height
+          : 0;
       for (let b of value.effects) h += b.height;
       return h;
     } else return -1;
@@ -153,7 +158,7 @@ export class Widget extends View.WidgetType {
       root.style.height = `${this.estimatedHeight}px`;
       while (output.firstChild != null) output.removeChild(output.lastChild!);
       for (let e of rendered.effects) output.append(e.element.cloneNode(true));
-      if (this.cell.data.showOutput)
+      if (this.cell.data.showOutput || rendered.status === "error")
         output.append(rendered.result.element.cloneNode(true));
     };
 
