@@ -38,6 +38,10 @@ export type Cells<T = any> = {
     joinWithPrevious: View.Command;
     /** Remove current cell if it is empty. */
     removeIfEmpty: View.Command;
+    /** Move cursor to the next cell (if any). */
+    moveToNextCell: View.Command;
+    /** Move cursor to the prev cell (if any). */
+    moveToPrevCell: View.Command;
   };
 
   /**
@@ -48,11 +52,12 @@ export type Cells<T = any> = {
      * Return a set of cells for the editor state.
      */
     cells: (state: State.EditorState) => CellSet<T>;
-    /**
-     * Return a cell range at the position (current cursor position is used by
-     * default).
-     */
-    cellAt(state: State.EditorState, pos?: number): CellRange<T> | null;
+    /** Find current cell. */
+    cellAt(state: State.EditorState, pos?: number): CellRange<T>;
+    /** Find next cell (if any). */
+    nextCellAt(state: State.EditorState, pos?: number): CellRange<T> | null;
+    /** Find prev cell (if any). */
+    prevCellAt(state: State.EditorState, pos?: number): CellRange<T> | null;
   };
 
   effects: {
@@ -306,7 +311,29 @@ export function configure<T>(cfg: CellsConfig<T>) {
       let [it, before] = query0.cellAt(state, pos);
       let prev = before[before.length - 1];
       let from = prev != null ? prev.to + 1 : 0;
-      return it.value?.range(from, it.to) ?? null;
+      let cellRange = it.value?.range(from, it.to) ?? null;
+      Base.assert(cellRange != null, "Missing a cell");
+      return cellRange;
+    },
+    nextCellAt(state: State.EditorState, pos?: number) {
+      let cell = query.cellAt(state, pos);
+      if (cell == null) return null;
+      let cells = query.cells(state);
+      let it = cells.iter();
+      for (; it.value != null; it.next()) if (it.value === cell.value) break;
+      it.next();
+      return it.value?.range(it.from, it.to) ?? null;
+    },
+    prevCellAt(state: State.EditorState, pos?: number) {
+      let cell = query.cellAt(state, pos);
+      if (cell == null) return null;
+      let cells = query.cells(state);
+      let prev: CellRange<T> | null = null;
+      for (let it = cells.iter(); it.value != null; it.next()) {
+        if (it.value === cell.value) break;
+        prev = it.value.range(it.from, it.to) ?? null;
+      }
+      return prev;
     },
   };
 
@@ -383,6 +410,49 @@ export function configure<T>(cfg: CellsConfig<T>) {
         }
       }
       return false;
+    },
+    moveToNextCell: (view) => {
+      if (view.state.selection.ranges.length !== 1) return false;
+      let sel = view.state.selection.main;
+      if (sel.to !== sel.from) return false;
+      let nextCell = query.nextCellAt(view.state);
+      if (nextCell == null) return false;
+
+      let curLine = view.state.doc.lineAt(sel.from);
+      let line = view.state.doc.lineAt(nextCell.from);
+      let curLineBlock = view.lineBlockAt(curLine.from);
+      let lineBlock = view.lineBlockAt(line.from);
+      let delta = lineBlock.top - curLineBlock.top;
+
+      view.dispatch({
+        selection: view.moveVertically(view.state.selection.main, true, delta),
+        scrollIntoView: true,
+      });
+      return true;
+    },
+    moveToPrevCell: (view) => {
+      if (view.state.selection.ranges.length !== 1) return false;
+      let sel = view.state.selection.main;
+      if (sel.to !== sel.from) return false;
+      let prevCell = query.prevCellAt(view.state);
+      let cell = query.cellAt(view.state);
+      if (prevCell == null) return false;
+
+      let curLine = view.state.doc.lineAt(sel.from);
+      let line = view.state.doc.lineAt(prevCell.from);
+      let curLineBlock = view.lineBlockAt(curLine.from);
+      let lineBlock = view.lineBlockAt(line.from);
+      let delta = lineBlock.top - curLineBlock.top;
+
+      view.dispatch({
+        selection: view.moveVertically(
+          view.state.selection.main,
+          false,
+          -delta,
+        ),
+        scrollIntoView: true,
+      });
+      return true;
     },
   };
 

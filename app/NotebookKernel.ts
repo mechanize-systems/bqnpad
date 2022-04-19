@@ -215,7 +215,7 @@ export class NotebookREPL {
 }
 
 export let keymap = [
-  { key: "Mod-a", run: cells.commands.select },
+  { key: "Meta-a", run: cells.commands.select },
   { key: "Meta-Enter", run: cells.commands.insertAfter },
   { key: "Shift-Enter", run: runCurrent },
   { key: "Alt-Shift-Enter", run: runAll },
@@ -223,6 +223,8 @@ export let keymap = [
   { key: "Meta-Shift-Enter", run: runCurrentAndInsertCellAfter },
   { key: "Meta-Backspace", run: cells.commands.joinWithPrevious },
   { key: "Backspace", run: cells.commands.removeIfEmpty },
+  { key: "Meta-ArrowDown", run: cells.commands.moveToNextCell },
+  { key: "Meta-ArrowUp", run: cells.commands.moveToPrevCell },
 ];
 
 export let commands = {
