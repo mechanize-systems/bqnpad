@@ -13,7 +13,7 @@ import * as View from "@codemirror/view";
 
 import * as Base from "@mechanize/base";
 
-export type Cells<T = any> = {
+export type Cells<T extends object = any> = {
   /**
    * State field used for storing cells state.
    *
@@ -107,7 +107,7 @@ export type CellRange<T> = RangeSet.Range<Cell<T>>;
 
 const USER_EVENT_CELLS_STRUCTURE = "cells.structure";
 
-export function configure<T>(cfg: CellsConfig<T>) {
+export function configure<T extends object>(cfg: CellsConfig<T>) {
   let {
     cellSet: cellSet0 = RangeSet.RangeSet.empty,
     onCellCreate,
@@ -418,10 +418,22 @@ export function configure<T>(cfg: CellsConfig<T>) {
       let nextCell = query.nextCellAt(view.state);
       if (nextCell == null) return false;
 
-      let curLine = view.state.doc.lineAt(sel.from);
-      let line = view.state.doc.lineAt(nextCell.from);
-      let curLineBlock = view.lineBlockAt(curLine.from);
-      let lineBlock = view.lineBlockAt(line.from);
+      let cell = query.cellAt(view.state);
+      let cellLine = view.state.doc.lineAt(cell.from);
+      let line = view.state.doc.lineAt(sel.from);
+      cellLineGoal.set(cell.value.data, line.number - cellLine.number);
+
+      let toLine = view.state.doc.lineAt(nextCell.from);
+      let goalLineDelta = cellLineGoal.get(nextCell.value.data);
+      if (goalLineDelta != null) {
+        let goalLine = view.state.doc.line(toLine.number + goalLineDelta);
+        if (goalLine.from < nextCell.to) {
+          toLine = goalLine;
+        }
+      }
+
+      let curLineBlock = view.lineBlockAt(line.from);
+      let lineBlock = view.lineBlockAt(toLine.from);
       let delta = lineBlock.top - curLineBlock.top;
 
       view.dispatch({
@@ -435,13 +447,23 @@ export function configure<T>(cfg: CellsConfig<T>) {
       let sel = view.state.selection.main;
       if (sel.to !== sel.from) return false;
       let prevCell = query.prevCellAt(view.state);
-      let cell = query.cellAt(view.state);
       if (prevCell == null) return false;
+      let cell = query.cellAt(view.state);
+      let cellLine = view.state.doc.lineAt(cell.from);
+      let line = view.state.doc.lineAt(sel.from);
+      cellLineGoal.set(cell.value.data, line.number - cellLine.number);
 
-      let curLine = view.state.doc.lineAt(sel.from);
-      let line = view.state.doc.lineAt(prevCell.from);
-      let curLineBlock = view.lineBlockAt(curLine.from);
-      let lineBlock = view.lineBlockAt(line.from);
+      let toLine = view.state.doc.lineAt(prevCell.from);
+      let goalLineDelta = cellLineGoal.get(prevCell.value.data);
+      if (goalLineDelta != null) {
+        let goalLine = view.state.doc.line(toLine.number + goalLineDelta);
+        if (goalLine.from < prevCell.to) {
+          toLine = goalLine;
+        }
+      }
+
+      let curLineBlock = view.lineBlockAt(line.from);
+      let lineBlock = view.lineBlockAt(toLine.from);
       let delta = lineBlock.top - curLineBlock.top;
 
       view.dispatch({
@@ -455,6 +477,8 @@ export function configure<T>(cfg: CellsConfig<T>) {
       return true;
     },
   };
+
+  let cellLineGoal: WeakMap<T, number> = new WeakMap();
 
   function setCellSet(state: State.EditorState, cellSet: CellSet<T>) {
     return state.update({
@@ -569,7 +593,7 @@ export function cellsFocusDecoration(
 /**
  * Apply line decorations per cell.
  */
-export function cellsLineDecoration<T>(
+export function cellsLineDecoration<T extends object>(
   cells: Cells<T>,
   makeDecorationSpec: (
     cell: Cell<T>,
@@ -621,7 +645,7 @@ export type DecorateCell<T> = (
 /**
  * Add widget decorations to cells.
  */
-export function cellsWidgetDecoration<T>(
+export function cellsWidgetDecoration<T extends object>(
   cells: Cells<T>,
   decorate: DecorateCell<T>,
 ) {
