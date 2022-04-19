@@ -248,6 +248,8 @@ function plotMark(m: any): any {
         stroke: m.stroke,
         symbol: m.symbol,
       });
+    case "frame":
+      return Plot.frame({ stroke: "var(--app-border)" });
     default:
       console.error(m);
       Base.assert(false, `unknown mark`);

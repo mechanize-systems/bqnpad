@@ -790,6 +790,9 @@ let pmarkdot = p.obj({
   stroke: p.opt(parr01fill(p.strnum)),
   symbol: p.opt(parr01fill(p.strnum)),
 });
+let pmarkframe = p.obj({
+  type: p.str,
+});
 let pmarkbarx = p.obj({
   type: p.str,
   x: p.any,
@@ -814,6 +817,7 @@ let pmark = p.obj((v, t) => {
   else if (type === 'line') return pmarkline(v, t);
   else if (type === 'barx') return pmarkbarx(v, t);
   else if (type === 'bary') return pmarkbary(v, t);
+  else if (type === 'frame') return pmarkframe(v, t);
   else throw new Error(`${t.join('.')}: unknown mark type: ${type}`);
 });
 let pfacet = p.obj({
