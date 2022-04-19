@@ -7,10 +7,15 @@ export type ButtonProps = {
   active?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-export function Button({ children, active, ...props }: ButtonProps) {
-  let className = cx("Button", active && "Button--active", props.className);
+export function Button({ children, active, disabled, ...props }: ButtonProps) {
+  let className = cx(
+    "Button",
+    active && "Button--active",
+    disabled && "Button--disabled",
+    props.className,
+  );
   return (
-    <button {...props} className={className}>
+    <button {...props} className={className} disabled={disabled}>
       {children}
     </button>
   );

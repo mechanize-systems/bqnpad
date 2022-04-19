@@ -32,6 +32,12 @@ Button .icon-tabler {
   top: 1px;
   position: relative;
 }
+.Button--disabled,
+.Button--disabled:active,
+.Button--disabled:hover {
+  background-color: transparent;
+  color: var(--app-color-dimmed);
+}
 
 .ButtonGroup {
   border-top-left-radius: 0px;

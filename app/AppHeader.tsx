@@ -39,8 +39,11 @@ export function AppHeader(props: AppHeaderProps) {
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           {props.iconbar}
-          <UI.Button onClick={toggleCollapsed}>
-            {collapsed ? <icons.IconMenu2 /> : <icons.IconArrowsMinimize />}
+          <UI.Button
+            title={collapsed ? "Expand toolbar" : "Collapse toolbar"}
+            onClick={toggleCollapsed}
+          >
+            {collapsed ? <icons.IconMenu2 /> : <icons.IconX />}
           </UI.Button>
         </div>
       </div>

@@ -1,4 +1,6 @@
+import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
+import * as React from "react";
 
 export { useEditor, useStateCompartment, useStateField } from "./useEditor";
 export { highlight } from "./highlight";
@@ -18,4 +20,18 @@ export function viewRef() {
     },
   );
   return [view, extension] as const;
+}
+
+export function useStateValue<T>(
+  initValue: T,
+  f: (state: State.EditorState) => T,
+  deps: unknown[] = [],
+) {
+  let [v, setv] = React.useState<T>(initValue);
+  let ext = React.useMemo(() => {
+    return View.EditorView.updateListener.of((update) =>
+      setv(f(update.state)),
+    );
+  }, [setv, ...deps]); // eslint-disable-line
+  return [v, ext] as const;
 }

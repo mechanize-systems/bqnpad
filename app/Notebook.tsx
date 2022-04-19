@@ -53,6 +53,14 @@ export default function Notebook() {
   );
   React.useEffect(() => onUpdateFlush, [onUpdateFlush]);
 
+  let [{ undoDepth, redoDepth }, trackState] = Editor.useStateValue(
+    { undoDepth: 0, redoDepth: 0 },
+    (state) => ({
+      undoDepth: History.undoDepth(state),
+      redoDepth: History.redoDepth(state),
+    }),
+  );
+
   Editor.useEditor(
     elem,
     view,
@@ -74,12 +82,13 @@ export default function Notebook() {
           CloseBrackets.closeBrackets(),
           Editor.scrollMarginBottom(150),
           View.EditorView.updateListener.of(onUpdate),
+          trackState,
         ],
       });
       state = NotebookKernel.cells.setCellSet(state, cellSet);
       return state;
     },
-    [notebook, onUpdate, darkThemeExtension],
+    [notebook, onUpdate, darkThemeExtension, trackState],
   );
   React.useLayoutEffect(() => {
     view.current!.focus();
@@ -98,26 +107,36 @@ export default function Notebook() {
           iconbar={
             <>
               <div className="ButtonGroup">
-                <UI.Button onMouseDown={runCommand(History.undo)}>
+                <UI.Button
+                  disabled={undoDepth === 0}
+                  title="Undo (Mod-z)"
+                  onMouseDown={runCommand(History.undo)}
+                >
                   <icons.IconArrowBackUp />
                 </UI.Button>
-                <UI.Button onMouseDown={runCommand(History.redo)}>
+                <UI.Button
+                  disabled={redoDepth === 0}
+                  title="Redo (Mod-Shift-z) "
+                  onMouseDown={runCommand(History.redo)}
+                >
                   <icons.IconArrowForwardUp />
                 </UI.Button>
               </div>
               <div className="ButtonGroup">
                 <UI.Button
+                  title="Insert cell (Mod+Enter)"
                   onMouseDown={runCommand(NotebookKernel.commands.insertAfter)}
                 >
                   <icons.IconPlus />
                 </UI.Button>
                 <UI.Button
+                  title="Run till the current cell (Shift+Enter)"
                   onMouseDown={runCommand(NotebookKernel.commands.runCurrent)}
                 >
                   <icons.IconPlayerPlay />
                 </UI.Button>
                 <UI.Button
-                  color="dimmed"
+                  title="Run all (Shift+Alt+Enter)"
                   onMouseDown={runCommand(NotebookKernel.commands.runAll)}
                 >
                   <icons.IconPlayerSkipForward />
