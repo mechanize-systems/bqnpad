@@ -727,13 +727,28 @@ let rand = (() => {
   return makens(["range", "deal", "subset"], [range, deal, subset]);
 })();
 
+let plotns = (() => {
+  let plot0 = (x, w) => {self.bqnPlot(x); return x;};
+  return makens(["plot0"], [plot0])
+})();
+
+let jsffins = (() => {
+  let obj = (x, w) => {
+    let obj = {};
+    for (let [k, v] of x) obj[typeof k==='string'?k:k.join('')] = v;
+    return obj;
+  };
+  let str0 = (x, w) => typeof x === 'string' ? x : x.join('');
+  return makens(["obj", "str"], [obj, str0]);
+})();
+
 let sysvals = {
   bqn:dynsys_copy(makebqnfn("•BQN",r=>run(...r))), rebqn, primitives,
   type, glyph, decompose, fmt:fmt1, repr, currenterror, unixtime,
-  js:dojs, math:mathns, ns:nsns, rand,
+  js:dojs, jsffi: jsffins, math:mathns, ns:nsns, rand,
   listsys: dynsys(_ => list(Object.keys(sysvals).sort().map(str))),
   show: (x,w) => { self.bqnShow(unstr(fmt1(x)));return x; },
-  plot: (x,w) => { self.bqnPlot(x, w);return x; },
+  plot: plotns,
 };
 
 let make_timed = tfn => {

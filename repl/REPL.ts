@@ -13,7 +13,7 @@ export type REPLStatus = "running" | "idle";
 
 export type REPLEffect =
   | { type: "show"; v: string }
-  | { type: "plot"; 𝕨: BQN.Value; 𝕩: BQN.Value };
+  | { type: "plot"; v: BQN.Value };
 
 export type REPLOutput = readonly [REPLResult, REPLEffect[]];
 
@@ -60,6 +60,7 @@ declare global {
   }
 }
 self.bqnShow = (v: string) => EFFECTS.push({ type: "show", v });
+self.bqnPlot = (v: BQN.Value) => EFFECTS.push({ type: "plot", v });
 
 let consumeEffects = (): REPLEffect[] => {
   let logs = EFFECTS.slice(0);

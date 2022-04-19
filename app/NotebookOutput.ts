@@ -1,4 +1,6 @@
 import * as View from "@codemirror/view";
+// @ts-ignore
+import * as Plot from "@observablehq/plot";
 
 import * as REPL from "@bqnpad/repl";
 import * as Base from "@mechanize/base";
@@ -31,7 +33,7 @@ export class Widget extends View.WidgetType {
 
     let rendered = document.createDocumentFragment();
     let lineCount = 0;
-    let append = (text: string) => {
+    let appendText = (text: string) => {
       let el = document.createElement("div");
       lineCount += text === "" ? 0 : (text.match(/\n/g) ?? []).length + 1;
       el.textContent = text;
@@ -43,16 +45,19 @@ export class Widget extends View.WidgetType {
       for (let eff of effects) {
         switch (eff.type) {
           case "show":
-            append(eff.v);
+            appendText(eff.v);
             break;
-          case "plot":
+          case "plot": {
+            rendered.appendChild(plot(eff.v, { height: 28 * 10 }));
+            lineCount += 10;
             break;
+          }
           default:
             Base.never(eff);
         }
       }
     }
-    append(textContent);
+    appendText(textContent);
     let prevEstimatedHeight = this.estimatedHeight;
     this.estimatedHeight = 28 * lineCount;
     this.rendered = rendered;
@@ -151,6 +156,63 @@ export class Widget extends View.WidgetType {
     root.appendChild(output);
     this.render(root, output, true);
     return root;
+  }
+}
+
+type PlotOptions = {
+  height: number;
+};
+
+function plot(v: any, options: PlotOptions): HTMLElement {
+  let spec = { marks: [] as any[], facet: v.facet };
+  let marks = Array.isArray(v.marks) ? v.marks : [v.marks];
+  for (let m of marks) spec.marks.push(plotMark(m));
+  let plot = Plot.plot({
+    ...spec,
+    height: options.height,
+    grid: true,
+    style: {
+      background: "transparent",
+      color: "var(--app-color-dimmed)",
+      fontFamily: "var(--app-font-family-monospace)",
+    },
+  });
+  return plot;
+}
+
+function plotMark(m: any): any {
+  switch (m.type) {
+    case "line":
+      return Plot.line(m.x, {
+        x: m.x,
+        y: m.y,
+        z: m.z,
+        stroke: m.stroke,
+        strokeWidth: m.strokeWidth,
+      });
+    case "barY":
+      return Plot.barY(m.x, {
+        x: m.x,
+        y: m.y,
+      });
+    case "barX":
+      return Plot.barX(m.x, {
+        x: m.x,
+        y: m.y,
+      });
+    case "dot":
+      return Plot.dot(m.x, {
+        x: m.x,
+        y: m.y,
+        z: m.z,
+        r: m.r,
+        fill: m.fill,
+        stroke: m.stroke,
+        symbol: m.symbol,
+      });
+    default:
+      console.log(m);
+      Base.assert(false, `unknown mark`);
   }
 }
 
