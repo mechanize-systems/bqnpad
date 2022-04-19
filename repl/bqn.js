@@ -727,9 +727,112 @@ let rand = (() => {
   return makens(["range", "deal", "subset"], [range, deal, subset]);
 })();
 
+let ns2obj = x => {
+  if (!x.ns) return null;
+  let names = getrev(x.ns.names);
+  let obj = {};
+  for (let k in names) {
+    let id = x.ns[names[k]];
+    if (id !== undefined) obj[k] = x[id];
+  }
+  return obj;
+};
+
+let p = {
+  obj: s => (v, t=[]) => {
+    if (v.ns) v = ns2obj(v);
+    else if (v == null || typeof v !== 'object' || Array.isArray(v))
+      throw new Error(`${t.join('.')}: expected a namespace`);
+    v = v.ns != null ? ns2obj(v) : v;
+    if (v==null) throw new Error(`${t.join('.')}: expected a namespace`);
+    if (typeof s === 'function') return s(v, t);
+    let o = {};
+    for (let k in s) o[k] = s[k](v[k], t.concat([k]));
+    return o;
+  },
+  str: (v, t=[]) => {
+    if (!isstr(v)) throw new Error(`${t.join('.')}: expected a string`);
+    return v.join('');
+  },
+  num: (v, t=[]) => {
+    if (typeof v !== 'number') throw new Error(`${t.join('.')}: expected a number`);
+    return v;
+  },
+  arr: s => (v, t=[]) => {
+    if (!Array.isArray(v)||v.ns) throw new Error(`${t.join('.')}: expected an array`);
+    if (s === p.any) return v;
+    return v.map((e, i) => s(e, t.concat([i])));
+  },
+  strnum: (v, t=[]) => {
+    if (isstr(v)) return v.join('');
+    if (typeof v === 'number') return v;
+    if (v==null) throw new Error(`${t.join('.')}: expected a string or a number`);
+  },
+  opt: s => (v, t=[]) => v == null ? undefined : s(v, t),
+  any: (v, t=[]) => {
+    if (v==null) throw new Error(`${t.join('.')}: missing value`);
+    return v;
+  }
+};
+
+let parr01fill = s => (v, t=[]) => {
+  if (!Array.isArray(v)||v.ns) throw new Error(`${t.join('.')}: expected an array`);
+  if (v.sh.length===0) return s(v[0], t);
+  return v.map((e, i) => s(e, t.concat([i])));
+};
+let pmarkdot = p.obj({
+  type: p.str,
+  x: p.any,
+  y: p.any,
+  z: p.opt(p.any),
+  r: p.opt(parr01fill(p.strnum)),
+  fill: p.opt(parr01fill(p.strnum)),
+  stroke: p.opt(parr01fill(p.strnum)),
+  symbol: p.opt(parr01fill(p.strnum)),
+});
+let pmarkbarx = p.obj({
+  type: p.str,
+  x: p.any,
+  y: p.any,
+});
+let pmarkbary = p.obj({
+  type: p.str,
+  x: p.any,
+  y: p.any,
+});
+let pmarkline = p.obj({
+  type: p.str,
+  x: p.any,
+  y: p.any,
+  z: p.opt(p.any),
+  stroke: p.opt(parr01fill(p.strnum)),
+  strokewidth: p.opt(parr01fill(p.strnum)),
+});
+let pmark = p.obj((v, t) => {
+  let type = p.str(v.type);
+  if (type === 'dot') return pmarkdot(v, t);
+  else if (type === 'line') return pmarkline(v, t);
+  else if (type === 'barx') return pmarkbarx(v, t);
+  else if (type === 'bary') return pmarkbary(v, t);
+  else throw new Error(`${t.join('.')}: unknown mark type: ${type}`);
+});
+let pfacet = p.obj({
+  data: p.any,
+  x: p.opt(p.any),
+  y: p.opt(p.any),
+});
+let pplot = p.obj({
+  marks: p.arr(pmark),
+  facet: p.opt(p.obj(pfacet)),
+})
+
 let plotns = (() => {
   let plot0 = (x, w) => {self.bqnPlot(x); return x;};
-  return makens(["plot0"], [plot0])
+  let plot = (x, w) => {
+    self.bqnPlot(pplot(x, ['𝕩']));
+    return x;
+  };
+  return makens(["plot0", "plot"], [plot0, plot])
 })();
 
 let jsffins = (() => {

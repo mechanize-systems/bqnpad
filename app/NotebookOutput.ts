@@ -8,10 +8,91 @@ import * as Editor from "@mechanize/editor";
 
 import type { CellData, CellState, NotebookREPL } from "./NotebookKernel";
 
+type Rendered = {
+  className: string;
+  effects: Block[];
+  result: Block;
+};
+
+type Block = {
+  element: HTMLElement;
+  height: number;
+};
+
+function renderOutput([result, effects]: REPL.REPLOutput): Rendered {
+  let createTextBlock = (text: string): Block => {
+    let element = document.createElement("div");
+    let lineCount = text === "" ? 0 : (text.match(/\n/g) ?? []).length + 1;
+    element.textContent = text;
+    return { element, height: lineCount * 28 };
+  };
+
+  let effectBlocks: Block[] = [];
+  if (effects.length > 0) {
+    for (let eff of effects) {
+      switch (eff.type) {
+        case "show":
+          effectBlocks.push(createTextBlock(eff.v));
+          break;
+        case "plot": {
+          effectBlocks.push({
+            element: plot(eff.v, { height: 28 * 10 }),
+            height: 10 * 28,
+          });
+          break;
+        }
+        default:
+          Base.never(eff);
+      }
+    }
+  }
+
+  let [textContent, className] = renderResult(result);
+  let resultBlock = createTextBlock(textContent);
+  return {
+    className,
+    effects: effectBlocks,
+    result: resultBlock,
+  };
+}
+
+function renderResult(res: REPL.REPLResult) {
+  if (res.type === "ok") {
+    return [res.ok ?? "", "CellOutput CellOutput--ok"] as const;
+  } else if (res.type === "error") {
+    return [res.error, "CellOutput CellOutput--error"] as const;
+  } else if (res.type === "notice") {
+    return [res.notice, "CellOutput CellOutput--ok"] as const;
+  } else Base.never(res);
+}
+
+// Keep rendered state in a WeakMap as on widget updates we are not allowed to
+// transfer state between prev and current widgets.
+let cached: WeakMap<
+  Base.Promise.Deferred<REPL.REPLOutput>,
+  Base.Promise.Deferred<Rendered>
+> = new WeakMap();
+
+function render0(deferred: Base.Promise.Deferred<REPL.REPLOutput>) {
+  let c = cached.get(deferred);
+  if (c == null) cached.set(deferred, (c = deferred.then(renderOutput)));
+  return c;
+}
+
+function render(cell: CellData): {
+  value: Rendered | null;
+  promise: Promise<Rendered> | null;
+} {
+  let c0 = render0(cell.deferred);
+  if (c0.isCompleted) return { value: c0.value, promise: null };
+  else if (cell.prevDeferred != null) {
+    let c1 = render0(cell.prevDeferred);
+    return { value: c1.isCompleted ? c1.value : null, promise: c0.promise };
+  } else return { value: null, promise: c0.promise };
+}
+
 export class Widget extends View.WidgetType {
-  _estimatedHeight: number = this.cell.data.showOutput ? -1 : 0;
-  rendered: DocumentFragment = document.createDocumentFragment();
-  className: string = "CellOutput";
+  rendered: { value: Rendered | null; promise: Promise<Rendered> | null };
   mounted: boolean = false;
 
   constructor(
@@ -20,62 +101,26 @@ export class Widget extends View.WidgetType {
     private readonly cell: Editor.Cells.Cell<CellData>,
   ) {
     super();
-    let { deferred, prevDeferred } = this.cell.data;
-    if (deferred.isCompleted) this.onResult(deferred.value);
-    else {
-      if (prevDeferred?.isCompleted) this.onResult(prevDeferred.value);
-      deferred.then(this.onResult);
-    }
+    this.rendered = render(this.cell.data);
+    if (this.rendered.promise != null)
+      this.rendered.promise = this.rendered.promise.then((value) => {
+        this.rendered = { value, promise: null };
+        if (this.mounted) this.view.current!.requestMeasure();
+        return value;
+      });
   }
-
-  onResult = ([result, effects]: REPL.REPLOutput) => {
-    if (!this.cell.data.showOutput && result.type !== "error") return;
-
-    let rendered = document.createDocumentFragment();
-    let lineCount = 0;
-    let appendText = (text: string) => {
-      let el = document.createElement("div");
-      lineCount += text === "" ? 0 : (text.match(/\n/g) ?? []).length + 1;
-      el.textContent = text;
-      rendered.appendChild(el);
-    };
-
-    let [textContent, className] = renderResult(result);
-    if (effects.length > 0) {
-      for (let eff of effects) {
-        switch (eff.type) {
-          case "show":
-            appendText(eff.v);
-            break;
-          case "plot": {
-            rendered.appendChild(plot(eff.v, { height: 28 * 10 }));
-            lineCount += 10;
-            break;
-          }
-          default:
-            Base.never(eff);
-        }
-      }
-    }
-    appendText(textContent);
-    let prevEstimatedHeight = this.estimatedHeight;
-    this.estimatedHeight = 28 * lineCount;
-    this.rendered = rendered;
-    this.className = className;
-    if (this.mounted && prevEstimatedHeight !== this.estimatedHeight)
-      this.view.current!.requestMeasure();
-  };
 
   get cellState(): CellState {
     return this.repl.state(this.cell);
   }
 
   override get estimatedHeight(): number {
-    return this._estimatedHeight;
-  }
-
-  override set estimatedHeight(value: number) {
-    this._estimatedHeight = value;
+    let { value } = this.rendered;
+    if (value != null) {
+      let h = this.cell.data.showOutput ? value.result.height : 0;
+      for (let b of value.effects) h += b.height;
+      return h;
+    } else return -1;
   }
 
   override destroy(_dom: HTMLElement): void {
@@ -84,9 +129,11 @@ export class Widget extends View.WidgetType {
 
   render(root: HTMLElement, output: HTMLElement, force: boolean) {
     this.mounted = true;
+
     root.dataset["cellId"] = String(this.cell.data.id);
     root.dataset["cellVersion"] = String(this.cell.version);
 
+    root.className = "CellOutput";
     root.style.setProperty(
       "--cell-status-color",
       cellStatusColor(this.cellState, "transparent"),
@@ -96,34 +143,25 @@ export class Widget extends View.WidgetType {
       cellStatusColor(this.cellState, "var(--app-border-ui)"),
     );
 
-    if (this.cellState === "dirty" || this.cellState === "computing") {
-      output.style.opacity = "0.3";
-    } else {
-      output.style.opacity = "1.0";
-    }
-    root.classList.add("CellOutput");
-    let update = () => {
-      root.className = this.className;
+    output.style.opacity =
+      this.cellState === "dirty" || this.cellState === "computing"
+        ? "0.3"
+        : "1.0";
+
+    let doRender = (rendered: Rendered) => {
+      root.className = rendered.className;
       root.style.height = `${this.estimatedHeight}px`;
       while (output.firstChild != null) output.removeChild(output.lastChild!);
-      output.append(this.rendered);
+      for (let e of rendered.effects) output.append(e.element.cloneNode(true));
+      if (this.cell.data.showOutput)
+        output.append(rendered.result.element.cloneNode(true));
     };
-    let render = (res: REPL.REPLOutput) => {
-      this.onResult(res);
-      update();
-    };
-    let renderFallback = () => {
-      if (this.cell.data.prevDeferred?.isCompleted) update();
-    };
-    if (this.cell.data.deferred.isCompleted) {
-      if (this.isValid(root) || force) render(this.cell.data.deferred.value);
-      else renderFallback();
-    } else {
-      renderFallback();
-      this.cell.data.deferred.then((result) => {
-        if (this.isValid(root)) render(result);
+
+    if (this.rendered.value != null) doRender(this.rendered.value);
+    if (this.rendered.promise != null)
+      this.rendered.promise.then((rendered) => {
+        if (this.isValid(root)) doRender(rendered);
       });
-    }
   }
 
   isValid(root: HTMLElement) {
@@ -188,14 +226,14 @@ function plotMark(m: any): any {
         y: m.y,
         z: m.z,
         stroke: m.stroke,
-        strokeWidth: m.strokeWidth,
+        strokeWidth: m.strokewidth,
       });
-    case "barY":
+    case "bary":
       return Plot.barY(m.x, {
         x: m.x,
         y: m.y,
       });
-    case "barX":
+    case "barx":
       return Plot.barX(m.x, {
         x: m.x,
         y: m.y,
@@ -211,7 +249,7 @@ function plotMark(m: any): any {
         symbol: m.symbol,
       });
     default:
-      console.log(m);
+      console.error(m);
       Base.assert(false, `unknown mark`);
   }
 }
@@ -227,14 +265,4 @@ export function cellStatusColor(
     : state === "computing"
     ? "var(--app-border-warn-ui)"
     : Base.never(state);
-}
-
-function renderResult(res: REPL.REPLResult) {
-  if (res.type === "ok") {
-    return [res.ok ?? "", "CellOutput CellOutput--ok"] as const;
-  } else if (res.type === "error") {
-    return [res.error, "CellOutput CellOutput--error"] as const;
-  } else if (res.type === "notice") {
-    return [res.notice, "CellOutput CellOutput--ok"] as const;
-  } else Base.never(res);
 }
