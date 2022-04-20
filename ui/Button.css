@@ -47,8 +47,10 @@ Button .icon-tabler {
 .ButtonGroup--toggle .Button {
   border-radius: 0;
   border: none;
+  border-top: 2px solid transparent;
   border-bottom: 2px solid var(--app-border-ui);
 }
 .ButtonGroup--toggle .Button--active {
+  border-top: 2px solid transparent;
   border-bottom: 2px solid var(--app-color-active);
 }
