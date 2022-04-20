@@ -876,7 +876,7 @@ let glyphCompletions: Autocomplete.Completion[] = glyphs.map((glyph) => {
 let glyphCompletion: Autocomplete.CompletionSource = (
   context: Autocomplete.CompletionContext,
 ) => {
-  if (context.matchBefore(/\u2022[A-Za-z]*/u) != null) return null;
+  if (context.matchBefore(/\u2022[A-Za-z\.]*/u) != null) return null;
   let re = /[A-Za-z]*/;
   let word = context.matchBefore(re);
   if (word == null || (word.from == word.to && !context.explicit)) return null;
@@ -898,31 +898,39 @@ type ValueType =
   | "namespace";
 
 type SysItem = { name: string; type: ValueType };
-type ListSys = () => Promise<SysItem[]>;
+type ListSys = (
+  ns: string | null,
+  state: State.EditorState,
+) => Promise<SysItem[]>;
 
 export let sysCompletion =
   (listSys: ListSys): Autocomplete.CompletionSource =>
   async (context: Autocomplete.CompletionContext) => {
-    let word = context.matchBefore(/\u2022[A-Za-z]*/u);
+    let word = context.matchBefore(/\u2022[A-Za-z0-9_\.]*/u);
     if (word == null || (word.from == word.to && !context.explicit))
       return null;
-    let items = await listSys();
-    let formatSys = (item: SysItem) => ({
-      label:
-        item.type === "function"
-          ? `•${capitalize(item.name)}`
-          : `•${item.name}`,
-    });
+    let ns: string | null = word.text.replace(/\.[A-Za-z0-9_]*$/, "");
+    if (ns === word.text) ns = null;
+    let items = await listSys(ns, context.state);
     return {
       from: word.from,
       filter: true,
-      options: items.map(formatSys),
+      options: items.map(formatSysItem),
       span: /\u2022[A-Za-z]*/u,
     };
   };
 
-function capitalize(v: string) {
-  return v[0]!.toUpperCase() + v.slice(1);
+function formatSysItem(item: SysItem) {
+  switch (item.type) {
+    case "function":
+      let name = item.name.replace(
+        /\.([^\.]+)$/,
+        (_, name) => "." + name[0].toUpperCase() + name.slice(1),
+      );
+      return { label: "•" + name };
+    default:
+      return { label: "•" + item.name };
+  }
 }
 
 /**
@@ -931,7 +939,7 @@ function capitalize(v: string) {
 export function bqn(cfg: { sysCompletion?: ListSys } = {}) {
   let completions = [glyphCompletion];
   if (cfg.sysCompletion != null)
-    completions.push(sysCompletion(cfg.sysCompletion));
+    completions.unshift(sysCompletion(cfg.sysCompletion));
   let extensions: State.Extension[] = [
     glyphInputMethod(),
     highlightLight,
