@@ -65,7 +65,7 @@ export function Workspace({
       "Live Preview is not support while using CBQN VM yet";
   }
 
-  let config = Editor.useStateField<WorkspaceConfig>(
+  let config = Editor.useReact2Editor<WorkspaceConfig>(
     editor,
     {
       enableLivePreview: enableLivePreview ?? false,
@@ -96,7 +96,7 @@ export function Workspace({
     );
 
   let [theme, themePref, setThemePref] = UI.useTheme();
-  let darkThemeExtension = Editor.useStateField(editor, theme === "dark", [
+  let darkThemeExtension = Editor.useReact2Editor(editor, theme === "dark", [
     theme,
   ]);
 

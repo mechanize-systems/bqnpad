@@ -19,7 +19,6 @@ export function useEditor<E extends HTMLElement>(
   initState: () => State.EditorState,
   deps: unknown[],
 ) {
-
   React.useLayoutEffect(() => {
     if (view.current == null)
       view.current = new View.EditorView({
@@ -37,11 +36,11 @@ export function useEditor<E extends HTMLElement>(
   }, [view]);
 }
 
-  //let onUpdateExtension = useStateCompartment(
-  //  view,
-  //  () => View.EditorView.updateListener.of((update) => onUpdate?.(update)),
-  //  [onUpdate],
-  //);
+//let onUpdateExtension = useStateCompartment(
+//  view,
+//  () => View.EditorView.updateListener.of((update) => onUpdate?.(update)),
+//  [onUpdate],
+//);
 
 /**
  * Produce a dynamically configured `State.Extension`.
@@ -68,13 +67,13 @@ export function useStateCompartment(
 }
 
 /**
- * Inject value into State as a field.
+ * Pass value from React to CodeMirror editor.
  */
-export function useStateField<T>(
+export function useReact2Editor<T>(
   view: View.EditorView | React.RefObject<View.EditorView | null>,
   value: T,
   deps: unknown[] = [value],
-) {
+): State.StateField<T> {
   let value0 = Base.React.useMemoOnce(() => value);
   let [field, effect] = React.useMemo(() => {
     let effect = State.StateEffect.define<T>();
@@ -91,9 +90,28 @@ export function useStateField<T>(
   }, [value0]);
   React.useEffect(() => {
     let v = view instanceof View.EditorView ? view : view.current;
-    v?.dispatch({ effects: [effect.of(value)] });
+    v?.dispatch({
+      effects: [effect.of(value)],
+      annotations: [State.Transaction.addToHistory.of(false)],
+    });
   }, [view, effect, ...deps]); // eslint-disable-line
   return field;
+}
+
+/**
+ * Pass value from CodeMirror editor to React.
+ */
+export function useEditor2React<T>(
+  initValue: T,
+  f: (state: State.EditorState) => T,
+  deps: unknown[] = [],
+): readonly [T, State.Extension] {
+  let [v, setv] = React.useState<T>(initValue);
+  let extension = React.useMemo(
+    () => View.EditorView.updateListener.of((update) => setv(f(update.state))),
+    [setv, ...deps], // eslint-disable-line
+  );
+  return [v, extension] as const;
 }
 
 export abstract class ReactWidget extends View.WidgetType {

@@ -34,7 +34,7 @@ export default function Notebook() {
       cmd(view.current!);
     };
   let elem = React.useRef<null | HTMLDivElement>(null);
-  let darkThemeExtension = Editor.useStateField(view, theme === "dark", [
+  let darkThemeExtension = Editor.useReact2Editor(view, theme === "dark", [
     theme,
   ]);
 
@@ -53,7 +53,7 @@ export default function Notebook() {
   );
   React.useEffect(() => onUpdateFlush, [onUpdateFlush]);
 
-  let [{ undoDepth, redoDepth }, trackState] = Editor.useStateValue(
+  let [{ undoDepth, redoDepth }, trackState] = Editor.useEditor2React(
     { undoDepth: 0, redoDepth: 0 },
     (state) => ({
       undoDepth: History.undoDepth(state),
