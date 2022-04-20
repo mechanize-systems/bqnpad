@@ -24,6 +24,7 @@
 .Checkbox--disabled:hover {
   background-color: transparent;
   color: var(--app-color-dimmed);
+  opacity: 0.5;
 }
 .Checkbox > input {
   position: relative;

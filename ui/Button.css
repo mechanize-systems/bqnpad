@@ -36,6 +36,7 @@ Button .icon-tabler {
 .Button--disabled:active,
 .Button--disabled:hover {
   background-color: transparent;
+  opacity: 0.5;
   color: var(--app-color-dimmed);
 }
 
