@@ -775,10 +775,15 @@ let p = {
   }
 };
 
+let parrany = p.arr(p.any);
 let parr01fill = s => (v, t=[]) => {
-  if (!Array.isArray(v)||v.ns) throw new Error(`${t.join('.')}: expected an array`);
+  v = parrany(v);
   if (v.sh.length===0) return s(v[0], t);
   return v.map((e, i) => s(e, t.concat([i])));
+};
+let plabelarr = (v, t=[]) => {
+  v = parrany(v);
+  return v.map(e => isstr(e) ? e.join('') : e);
 };
 let pmarkdot = p.obj({
   type: p.str,
@@ -796,11 +801,11 @@ let pmarkframe = p.obj({
 let pmarkbarx = p.obj({
   type: p.str,
   x: p.any,
-  y: p.any,
+  y: plabelarr,
 });
 let pmarkbary = p.obj({
   type: p.str,
-  x: p.any,
+  x: plabelarr,
   y: p.any,
 });
 let pmarkline = p.obj({
@@ -830,13 +835,52 @@ let pplot = p.obj({
   facet: p.opt(p.obj(pfacet)),
 })
 
+let bootplotns = bqn(`
+{𝕊plot:
+  Line←{
+    𝕊y: (↕∘⊑∘⌽≢)⊸𝕊y;
+    x𝕊y:
+      marks←{
+        1:   <{type⇐"line",x⇐x,y⇐y};
+        2:(↕∘≠{type⇐"line",x⇐x,y⇐𝕩,stroke⇐𝕨}˘⊢)y;
+        "•plot.Line: 𝕩 must be 0-rank or 1-rank array"!0
+      }=y
+      Plot {marks⇐{type⇐"frame"}∾marks},y
+  }
+  BarY←{x𝕊y:
+    marks←{type⇐"bary",x⇐x,y⇐y}
+    Plot {marks⇐{type⇐"frame"}∾marks}
+    x
+  }
+  BarX←{y𝕊x:
+    marks←{type⇐"barx",x⇐x,y⇐y}
+    Plot {marks⇐{type⇐"frame"}∾marks}
+    x
+  }
+  Dot←{
+    𝕊p:
+      marks←{
+          2‿·:    {type⇐"dot",x⇐0⊏p,y⇐1⊏p};
+        ·‿2‿·:(↕∘≠{type⇐"dot",x⇐0⊏𝕩,y⇐1⊏𝕩,stroke⇐𝕨,symbol⇐𝕨}˘⊢)p;
+        "•plot.Dot: 𝕩 must be 2‿· or ·‿2‿· shaped array"!0
+      }≢p
+      Plot {marks⇐{type⇐"frame"}∾marks}
+      p
+  }
+  Line‿BarY‿BarX‿Dot
+}
+`);
+
 let plotns = (() => {
-  let plot0 = (x, w) => {self.bqnPlot(x); return x;};
-  let plot = (x, w) => {
+  let plot = x => {
     self.bqnPlot(pplot(x, ['𝕩']));
     return x;
   };
-  return makens(["plot0", "plot"], [plot0, plot])
+  let [line, bary, barx, dot] = bootplotns(plot);
+  return makens(
+    ["plot", "line", "bary", "barx", "dot"],
+    [plot, line, bary, barx, dot]
+  )
 })();
 
 let sysvals = {
