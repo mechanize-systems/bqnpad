@@ -65,6 +65,9 @@ export class CBQNREPL implements REPL.IREPL {
   async listSys() {
     return [];
   }
+  async listNs(_ns: string) {
+    return [];
+  }
 
   eval(code: string): Promise<REPL.REPLOutput> {
     let res = this.CBQN().then((CBQN) => {
@@ -107,9 +110,7 @@ export class CBQNREPL implements REPL.IREPL {
     return res;
   }
 
-  async preview(
-    _code: string,
-  ): Promise<REPL.REPLOutput> {
+  async preview(_code: string): Promise<REPL.REPLOutput> {
     return [{ type: "notice", notice: "..." }, []];
   }
 }

@@ -23,10 +23,12 @@ export type Methods = {
   eval: REPL.IREPL["eval"];
   preview: REPL.IREPL["preview"];
   listSys: REPL.IREPL["listSys"];
+  listNs: REPL.IREPL["listNs"];
 };
 
 Base.Worker.defineWorker<Methods>({
   eval: (code: string) => repl.eval(code),
   preview: (code: string) => repl.preview(code),
   listSys: () => repl.listSys(),
+  listNs: (ns: string) => repl.listNs(ns),
 });

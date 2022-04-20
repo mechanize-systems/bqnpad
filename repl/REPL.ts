@@ -21,6 +21,7 @@ export interface IREPL {
   status: REPLStatus | null;
   onStatus: Base.EventEmitter<REPLStatus>;
   listSys(): Promise<ValueDesc[]>;
+  listNs(ns: string): Promise<ValueDesc[]>;
   eval(code: string): Promise<REPLOutput>;
   preview(code: string): Promise<REPLOutput>;
 }
@@ -95,8 +96,23 @@ export class REPL implements IREPL {
     });
   }
 
-  listSys() {
+  listSys(): Promise<ValueDesc[]> {
     let code = `{𝕩 ⋈⟜•Type¨ •BQN 1↓∾"‿•"⊸∾¨𝕩} •listSys`;
+    let res = this.BQN().then((BQN) => {
+      let value = BQN.repl(code) as any as [string[], number][];
+      return value.map(([name, type]) => ({
+        name: name.join(""),
+        type: valueTypes[type]!,
+      }));
+    });
+    this._ready = res;
+    return res;
+  }
+
+  listNs(ns: string): Promise<ValueDesc[]> {
+    let code =
+      `{𝕩 ⋈⟜•Type¨ •BQN 1↓∾"‿•"⊸∾¨𝕩} {(<1↓𝕩∾'.')∾¨•ns.Keys•BQN𝕩}` +
+      JSON.stringify(ns);
     let res = this.BQN().then((BQN) => {
       let value = BQN.repl(code) as any as [string[], number][];
       return value.map(([name, type]) => ({

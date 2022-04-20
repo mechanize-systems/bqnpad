@@ -33,6 +33,12 @@ export class REPLWebWorkerClient implements IREPL {
     return res.value;
   }
 
+  async listNs(ns: string) {
+    let res = await this.bqnWorker.submit("listNs", [ns]);
+    if (res.type === "error") throw res.error;
+    return res.value;
+  }
+
   async eval(code: string) {
     this.inflghtInc();
     let res = await this.bqnWorker.submit("eval", [code]);
