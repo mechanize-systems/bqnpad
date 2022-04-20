@@ -178,7 +178,7 @@ let runCurrentAndInsertCellAfter: View.Command = (view) => {
 };
 
 export class NotebookREPL {
-  private repl: REPL.IREPL;
+  public repl: REPL.IREPL;
   private versions: Map<number, number> = new Map();
   constructor(replType: REPL.REPLType) {
     this.repl = REPL.makeREPL(replType);

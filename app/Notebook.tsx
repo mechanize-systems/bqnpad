@@ -65,6 +65,11 @@ export default function Notebook() {
     elem,
     view,
     () => {
+      let sysCompletion = (ns: string | null, state: State.EditorState) => {
+        let repl = NotebookKernel.NotebookREPL.get(state).repl;
+        if (ns != null) return repl.listNs(ns);
+        else return repl.listSys();
+      };
       let [doc, cellSet] = NotebookKernel.decode(notebook.doc);
       let state = State.EditorState.create({
         doc,
@@ -75,7 +80,7 @@ export default function Notebook() {
           View.keymap.of(Commands.defaultKeymap),
           NotebookKernel.configure(),
           History.history(),
-          LangBQN.bqn(),
+          LangBQN.bqn({ sysCompletion }),
           Language.indentOnInput(),
           darkThemeExtension,
           View.EditorView.darkTheme.from(darkThemeExtension),

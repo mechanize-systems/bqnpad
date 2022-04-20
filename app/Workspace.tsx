@@ -78,9 +78,12 @@ export function Workspace({
 
   let listSys = React.useMemo(() => {
     let sys: null | Promise<REPL.ValueDesc[]> = null;
-    return () => {
-      if (sys == null) sys = repl.listSys();
-      return sys;
+    return (ns: string | null) => {
+      if (ns != null) return repl.listNs(ns);
+      else {
+        if (sys == null) sys = repl.listSys();
+        return sys;
+      }
     };
   }, [repl]);
 

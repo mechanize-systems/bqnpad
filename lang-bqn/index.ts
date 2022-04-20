@@ -912,13 +912,21 @@ export let sysCompletion =
     let ns: string | null = word.text.replace(/\.[A-Za-z0-9_]*$/, "");
     if (ns === word.text) ns = null;
     let items = await listSys(ns, context.state);
+    let span =
+      ns == null
+        ? /\u2022[A-Za-z0-9_]*/u
+        : new RegExp(escapeRegex(ns) + ".[A-Za-z0-9_]*", "u");
     return {
       from: word.from,
       filter: true,
       options: items.map(formatSysItem),
-      span: /\u2022[A-Za-z]*/u,
+      span,
     };
   };
+
+function escapeRegex(v: string) {
+  return v.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
 
 function formatSysItem(item: SysItem) {
   switch (item.type) {

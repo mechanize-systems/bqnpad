@@ -119,7 +119,7 @@ export class REPL implements IREPL {
         name: name.join(""),
         type: valueTypes[type]!,
       }));
-    });
+    }).catch(() => []);
     this._ready = res;
     return res;
   }
