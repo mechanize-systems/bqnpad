@@ -756,7 +756,7 @@ class PlaceholderWidget extends View.WidgetType {
   }
 }
 
-function resultContent([result, logs]: REPL.REPLOutput): readonly [
+function resultContent([result, effects]: REPL.REPLOutput): readonly [
   string,
   string,
 ] {
@@ -768,6 +768,8 @@ function resultContent([result, logs]: REPL.REPLOutput): readonly [
   } else if (result.type === "notice") {
     output = result.notice;
   } else Base.never(result);
+  let logs: string[] = [];
+  for (let eff of effects) if (eff.type === "show") logs.push(eff.v);
   return [output.trim(), logs.join("\n").trim()] as const;
 }
 
