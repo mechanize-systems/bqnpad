@@ -1,6 +1,8 @@
 "use strict";
 // Virtual machine
 let has = x => x!==undefined;
+let isarr = x => Array.isArray(x) && !x.ns;
+let isns = x => Array.isArray(x) && x.ns;
 let isnum = x => typeof x === "number"
 let isfunc = x => typeof x === "function"
 let call = (f,x,w) => {
@@ -786,7 +788,7 @@ let plabelarr = (v, t=[]) => {
   return v.map(e => isstr(e) ? e.join('') : e);
 };
 let pmarkdot = p.obj({
-  type: p.str,
+  mark: p.str,
   x: p.any,
   y: p.any,
   z: p.opt(p.any),
@@ -796,44 +798,60 @@ let pmarkdot = p.obj({
   symbol: p.opt(parr01fill(p.strnum)),
 });
 let pmarkframe = p.obj({
-  type: p.str,
+  mark: p.str,
 });
 let pmarkbarx = p.obj({
-  type: p.str,
+  mark: p.str,
   x: p.any,
   y: plabelarr,
 });
 let pmarkbary = p.obj({
-  type: p.str,
+  mark: p.str,
   x: plabelarr,
   y: p.any,
 });
 let pmarkline = p.obj({
-  type: p.str,
+  mark: p.str,
   x: p.any,
   y: p.any,
   z: p.opt(p.any),
   stroke: p.opt(parr01fill(p.strnum)),
   strokewidth: p.opt(parr01fill(p.strnum)),
 });
-let pmark = p.obj((v, t) => {
-  let type = p.str(v.type);
-  if (type === 'dot') return pmarkdot(v, t);
-  else if (type === 'line') return pmarkline(v, t);
-  else if (type === 'barx') return pmarkbarx(v, t);
-  else if (type === 'bary') return pmarkbary(v, t);
-  else if (type === 'frame') return pmarkframe(v, t);
-  else throw new Error(`${t.join('.')}: unknown mark type: ${type}`);
+let pmark = p.obj((v, t=[]) => {
+  let mark = p.str(v.mark);
+  if (mark === 'dot') return pmarkdot(v, t);
+  else if (mark === 'line') return pmarkline(v, t);
+  else if (mark === 'barx') return pmarkbarx(v, t);
+  else if (mark === 'bary') return pmarkbary(v, t);
+  else if (mark === 'frame') return pmarkframe(v, t);
+  else throw new Error(`${t.join('.')}: unknown mark: ${mark}`);
 });
+let pmarks0 = p.arr(pmark);
+let pmarks = (v,t=[]) => {
+  if (!isarr(v)) return [pmark(v,t)];
+  return pmarks0(v,t);
+};
 let pfacet = p.obj({
   data: p.any,
   x: p.opt(p.any),
   y: p.opt(p.any),
 });
-let pplot = p.obj({
-  marks: p.arr(pmark),
+let pplot0 = p.obj({
+  marks: pmarks,
   facet: p.opt(p.obj(pfacet)),
 })
+let pplot = (v,t=[]) => {
+  if (isarr(v)) {
+    let marks = pmarks(v,t);
+    return {marks};
+  }
+  if (isns(v) && nsget(v)('mark')) {
+    let mark = pmark(v,t);
+    return {marks:[mark,]};
+  }
+  return pplot0(v,t);
+};
 
 let bootplotns = bqn(`
 {𝕊plot:
@@ -841,30 +859,30 @@ let bootplotns = bqn(`
     𝕊y: (↕∘⊑∘⌽≢)⊸𝕊y;
     x𝕊y:
       marks←{
-        1:   <{type⇐"line",x⇐x,y⇐y};
-        2:(↕∘≠{type⇐"line",x⇐x,y⇐𝕩,stroke⇐𝕨}˘⊢)y;
+        1:   <{mark⇐"line",x⇐x,y⇐y};
+        2:(↕∘≠{mark⇐"line",x⇐x,y⇐𝕩,stroke⇐𝕨}˘⊢)y;
         "•plot.Line: 𝕩 must be 0-rank or 1-rank array"!0
       }=y
-      Plot {marks⇐{type⇐"frame"}∾marks},y
+      Plot {marks⇐{mark⇐"frame"}∾marks},y
   }
   BarY←{x𝕊y:
-    marks←{type⇐"bary",x⇐x,y⇐y}
-    Plot {marks⇐{type⇐"frame"}∾marks}
+    marks←{mark⇐"bary",x⇐x,y⇐y}
+    Plot {marks⇐{mark⇐"frame"}∾marks}
     x
   }
   BarX←{y𝕊x:
-    marks←{type⇐"barx",x⇐x,y⇐y}
-    Plot {marks⇐{type⇐"frame"}∾marks}
+    marks←{mark⇐"barx",x⇐x,y⇐y}
+    Plot {marks⇐{mark⇐"frame"}∾marks}
     x
   }
   Dot←{
     𝕊p:
       marks←{
-          2‿·:    {type⇐"dot",x⇐0⊏p,y⇐1⊏p};
-        ·‿2‿·:(↕∘≠{type⇐"dot",x⇐0⊏𝕩,y⇐1⊏𝕩,stroke⇐𝕨,symbol⇐𝕨}˘⊢)p;
+          2‿·:    {mark⇐"dot",x⇐0⊏p,y⇐1⊏p};
+        ·‿2‿·:(↕∘≠{mark⇐"dot",x⇐0⊏𝕩,y⇐1⊏𝕩,stroke⇐𝕨,symbol⇐𝕨}˘⊢)p;
         "•plot.Dot: 𝕩 must be 2‿· or ·‿2‿· shaped array"!0
       }≢p
-      Plot {marks⇐{type⇐"frame"}∾marks}
+      Plot {marks⇐{mark⇐"frame"}∾marks}
       p
   }
   Line‿BarY‿BarX‿Dot

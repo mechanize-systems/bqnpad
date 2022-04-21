@@ -224,7 +224,7 @@ function plot(v: any, options: PlotOptions): HTMLElement {
 }
 
 function plotMark(m: any): any {
-  switch (m.type) {
+  switch (m.mark) {
     case "line":
       return Plot.line(m.x, {
         x: m.x,
