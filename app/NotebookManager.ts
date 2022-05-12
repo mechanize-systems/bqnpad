@@ -43,7 +43,7 @@ export function makeLocalStorageManager(): NotebookManager {
       let p = load.get(id);
       if (p == null) {
         p = Base.Promise.suspendable(() =>
-          read(key(id), () => ({ meta: { id }, doc: "" })),
+          read(key(id), () => ({ meta: { id }, doc: INITIAL_DOC })),
         )();
         load.set(id, p);
       }
@@ -59,3 +59,23 @@ export function makeLocalStorageManager(): NotebookManager {
     },
   };
 }
+
+const INITIAL_DOC = `
+Dist←{√+´2⋆˜𝕨-𝕩} # Let's define Euclidian Distance, how it works?
+###
+4‿4-3‿2 # 𝕨-𝕩 is obviously subtraction
+###
+2⋆˜4 # 2⋆˜𝕩 computes square of 𝕩, same as 𝕩⋆2 but 𝕗˜ reverses agruments of 𝕗
+###
++´1‿2‿3‿4 # +´𝕩 computes sum of the 𝕩 vector, 𝕗´ is a fold with 𝕗
+###
+2‿2 Dist 3‿3 # finally we compute Euclidian Distance
+###
+# Now let's do some plots, first prepare some data
+x←0.1×↕250
+cos←•math.Cos x
+sin←•math.Sin x
+###
+# Use •plot namespace and specifically •plot.Line to plot some trig functions
+x •plot.Line (1.5×cos)∾sin∾cos≍sin×cos,
+`.trim();
