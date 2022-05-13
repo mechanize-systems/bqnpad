@@ -2,8 +2,8 @@
 init:
 	git submodule init
 	git submodule update
-	(cd emsdk && ./emsdk install latest)
-	(cd emsdk && ./emsdk activate latest)
+	(cd repl/emsdk && ./emsdk install latest)
+	(cd repl/emsdk && ./emsdk activate latest)
 	pnpm install
 	make all
 
