@@ -14,7 +14,7 @@ RUN pnpm install --offline
 RUN pnpm build
 
 FROM node:16.13.2-bullseye-slim AS runtime
-RUN npm install -g pnpm@6.32.3
+RUN npm install -g pnpm@7.13.4
 
 WORKDIR /app
 
