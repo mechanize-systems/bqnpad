@@ -3,9 +3,11 @@
   "version": "0.0.1",
   "description": "BQN grammar for Lezer",
   "main": "index.js",
+  "module": "index.js",
   "types": "index.d.ts",
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
+  "type": "module",
   "devDependencies": {
     "@lezer/generator": "^1.0.0"
   },

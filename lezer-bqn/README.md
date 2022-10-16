@@ -1,3 +1,5 @@
-# @bqnpad/grammar
+# lezer-bqn
 
-Lezer grammar for BQN. This will be released as a separate package soon.
+Lezer grammar for [BQN][BQN].
+
+[BQN]: https://mlochbaum.github.io/BQN/index.html

@@ -9,6 +9,10 @@ clean:
 test:
 	pnpm mocha test/test-bqn-grammar.mjs
 
+.PHONY: publish
+publish: build
+	npm publish
+
 bqn.grammar.js bqn.grammar.terms.js: bqn.grammar ../pnpm-lock.yaml
-	pnpm lezer-generator $(<) --names --cjs --output $(@)
+	pnpm lezer-generator $(<) --names --output $(@)
 
