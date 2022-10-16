@@ -1,7 +1,7 @@
 FROM node:16.13.2-bullseye-slim AS build
 RUN apt-get update -y
 RUN apt-get install -y watchman make
-RUN npm install -g pnpm@6.32.3
+RUN npm install -g pnpm@7.13.4
 
 WORKDIR /app
 
