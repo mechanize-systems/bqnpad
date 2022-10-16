@@ -11,7 +11,7 @@ test:
 
 .PHONY: publish
 publish: build
-	npm publish
+	pnpm publish
 
 bqn.grammar.js bqn.grammar.terms.js: bqn.grammar ../pnpm-lock.yaml
 	pnpm lezer-generator $(<) --names --output $(@)

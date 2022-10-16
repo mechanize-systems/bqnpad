@@ -8,4 +8,4 @@ clean:
 
 .PHONY: publish
 publish: build
-	npm publish
+	pnpm publish
