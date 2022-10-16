@@ -14,7 +14,7 @@ lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js:
 	$(MAKE) -C lezer-bqn $(@:lezer-bqn/%=%)
 
 repl/CBQN/BQN.wasm:
-	bash -c '(source ./repl/emsdk/emsdk_env.sh && make -C repl/CBQN emcc-o3)'
+	bash -c '(source ./repl/emsdk/emsdk_env.sh && make lf="-s ENVIRONMENT=worker -s FILESYSTEM=0 -s MODULARIZE=1" -C repl/CBQN emcc-o3)'
 
 .PHONY: start
 start:

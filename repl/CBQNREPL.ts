@@ -27,8 +27,11 @@ async function loadCBQN(): Promise<CBQN> {
       stderr.push(msg);
     },
   });
+  let runLine = mod.cwrap("cbqn_runLine", null, ["string", "int"]);
   return {
-    eval: mod.cwrap("cbqn_runLine", null, ["string"]),
+    eval: (src: string) => {
+      return runLine(src, src.length);
+    },
     consumeStdout: () => {
       let s = stdout;
       stdout = [];
