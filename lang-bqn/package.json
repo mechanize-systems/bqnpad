@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "CodeMirror 6 integration for BQN",
   "main": "index",
+  "module": "index",
   "types": "index.d.ts",
+  "type": "module",
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
   "dependencies": {
