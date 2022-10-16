@@ -52,6 +52,7 @@ simpleAtom {
   | LIST { "⟨" exprM? "⟩" }
   | BLOCK { "{" exprM? "}" }
   | PAREN { "(" exprM? ")" }
+  | ARRAY { "[" exprM? "]" }
 }
 
 name {
