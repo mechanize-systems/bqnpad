@@ -2,16 +2,17 @@
  * Editor support for BQN.
  */
 import * as Autocomplete from "@codemirror/autocomplete";
-import { HighlightStyle, Tag, styleTags } from "@codemirror/highlight";
-import * as Highlight from "@codemirror/highlight";
 import {
+  HighlightStyle,
   LRLanguage,
   LanguageSupport,
   delimitedIndent,
   indentNodeProp,
+  syntaxHighlighting,
 } from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
+import { Tag, highlightTree, styleTags } from "@lezer/highlight";
 import { parser } from "lezer-bqn";
 
 let tags = {
@@ -827,7 +828,7 @@ export function highlight(highlight: HighlightStyle, textContent: string) {
   };
   let tree = language.parser.parse(textContent);
   let pos = 0;
-  Highlight.highlightTree(tree, highlight.match, (from, to, classes) => {
+  highlightTree(tree, highlight, (from, to, classes) => {
     if (from > pos) callback(textContent.slice(pos, from), null);
     callback(textContent.slice(from, to), classes);
     pos = to;
@@ -950,8 +951,8 @@ export function bqn(cfg: { sysCompletion?: ListSys } = {}) {
     completions.unshift(sysCompletion(cfg.sysCompletion));
   let extensions: State.Extension[] = [
     glyphInputMethod(),
-    highlightLight,
-    highlightDark,
+    syntaxHighlighting(highlightLight),
+    syntaxHighlighting(highlightDark),
     Autocomplete.autocompletion({
       override: completions,
       activateOnTyping: false,

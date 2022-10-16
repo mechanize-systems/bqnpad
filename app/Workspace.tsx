@@ -1,9 +1,7 @@
 /// <reference types="react-dom/next" />
 /// <reference types="react/next" />
 import * as Autocomplete from "@codemirror/autocomplete";
-import * as CloseBrackets from "@codemirror/closebrackets";
 import * as Commands from "@codemirror/commands";
-import * as History from "@codemirror/history";
 import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
@@ -109,7 +107,7 @@ export function Workspace({
       { key: "Shift-Enter", run: workspace.commands.addCell },
       { key: "Enter", run: workspace.commands.reuseCell },
       { key: "Tab", run: Autocomplete.startCompletion },
-      ...CloseBrackets.closeBracketsKeymap,
+      ...Autocomplete.closeBracketsKeymap,
     ];
   }, [workspace]);
 
@@ -164,16 +162,16 @@ export function Workspace({
       State.EditorState.create({
         doc: doc0,
         extensions: [
-          History.history(),
+          Commands.history(),
           workspace.extension,
           View.keymap.of(keybindings),
-          View.keymap.of(History.historyKeymap),
+          View.keymap.of(Commands.historyKeymap),
           View.keymap.of(Commands.defaultKeymap),
           LangBQN.bqn({ sysCompletion: listSys }),
           Language.indentOnInput(),
           darkThemeExtension,
           View.EditorView.darkTheme.from(darkThemeExtension),
-          CloseBrackets.closeBrackets(),
+          Autocomplete.closeBrackets(),
           Editor.scrollMarginBottom(150),
           onUpdateExtension,
         ],
@@ -198,16 +196,16 @@ export function Workspace({
           status === "idle"
             ? "VM idle"
             : status === "running"
-            ? "VM computing"
-            : "What?"
+              ? "VM computing"
+              : "What?"
         }
         style={{
           color:
             status === "idle"
               ? "#3aa548"
               : status === "running"
-              ? "#998819"
-              : "currentColor",
+                ? "#998819"
+                : "currentColor",
         }}
       >
         {status === "idle" && <icons.IconCircleCheck />}
@@ -340,13 +338,13 @@ function workspace(
     config0 instanceof State.StateField
       ? config0
       : State.StateField.define({
-          create() {
-            return config0;
-          },
-          update(config) {
-            return config;
-          },
-        });
+        create() {
+          return config0;
+        },
+        update(config) {
+          return config;
+        },
+      });
 
   let fromWorkspaceCell0 = (
     cell: Workspace0.WorkspaceCell0,
@@ -478,7 +476,7 @@ function workspace(
       let { disableSessionBanner } = state.field(config);
       if (disableSessionBanner) return View.Decoration.none;
 
-      let ranges: View.Range<View.Decoration>[] = [];
+      let ranges: State.Range<View.Decoration>[] = [];
 
       let add = (
         session: Workspace0.Session0,
@@ -618,7 +616,7 @@ function workspace(
     });
     // TODO: Below we reset history state to initial as we cannot back in time
     // after we've eval'ed some code.
-    let history = view.state.field(History.historyField) as any;
+    let history = view.state.field(Commands.historyField) as any;
     history.done = [];
     history.undone = [];
     history.prevTime = 0;
@@ -882,7 +880,7 @@ abstract class BaseOutputWidget extends View.WidgetType {
   private _resultContent: readonly [string, string] | null = null;
   private _numberOfLines: number | null = null;
 
-  onResultUpdate(): void {}
+  onResultUpdate(): void { }
 
   get result() {
     return this._result!;
@@ -926,8 +924,8 @@ class CellOutputWidget extends BaseOutputWidget {
     this.result = this.cell.result?.isCompleted
       ? this.cell.result.value
       : this.cell.resultPreview != null
-      ? this.cell.resultPreview
-      : [{ type: "notice", notice: "..." }, [] as REPL.REPLEffect[]];
+        ? this.cell.resultPreview
+        : [{ type: "notice", notice: "..." }, [] as REPL.REPLEffect[]];
   }
 
   override onResultUpdate(): void {
@@ -960,8 +958,8 @@ class CellOutputWidget extends BaseOutputWidget {
     this.result = this.cell.result?.isCompleted
       ? this.cell.result.value
       : this.cell.resultPreview != null
-      ? this.cell.resultPreview
-      : [{ type: "notice", notice: "..." }, []];
+        ? this.cell.resultPreview
+        : [{ type: "notice", notice: "..." }, []];
     this.render();
     this.root!.appendChild(this.logsView.root);
     this.root!.appendChild(this.outputView.root);
@@ -1004,8 +1002,8 @@ class PreviewOutputWidget extends BaseOutputWidget {
     this.result = this.cell.result?.isCompleted
       ? this.cell.result.value
       : this.cell.resultPreview
-      ? this.cell.resultPreview
-      : [{ type: "notice", notice: "..." }, []];
+        ? this.cell.resultPreview
+        : [{ type: "notice", notice: "..." }, []];
   }
 
   override onResultUpdate(): void {

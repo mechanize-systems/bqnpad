@@ -10,6 +10,9 @@ init:
 .PHONY: all
 all: lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js repl/CBQN/BQN.wasm
 
+lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js:
+	$(MAKE) -C lezer-bqn $(@:lezer-bqn/%=%)
+
 repl/CBQN/BQN.wasm:
 	bash -c '(source ./repl/emsdk/emsdk_env.sh && make -C repl/CBQN emcc-o3)'
 
@@ -31,15 +34,12 @@ fmt:
 
 .PHONY: clean
 clean:
-	rm -f bqn.grammar.js bqn.grammar.terms.js
+	$(MAKE) -C lezer-bqn clean
 	rm -rf node_modules/.cache/asap/
 
 .PHONY: test
 test:
 	mocha lezer-bqn/test/test-bqn-grammar.mjs
-
-lezer-bqn/bqn.grammar.js lezer-bqn/bqn.grammar.terms.js: lezer-bqn/bqn.grammar
-	pnpm lezer-generator $(<) --names --cjs --output $(@)
 
 .PHONY: deploy
 deploy:

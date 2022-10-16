@@ -1,7 +1,5 @@
 import * as Autocomplete from "@codemirror/autocomplete";
-import * as CloseBrackets from "@codemirror/closebrackets";
 import * as Commands from "@codemirror/commands";
-import * as History from "@codemirror/history";
 import * as Language from "@codemirror/language";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
@@ -56,8 +54,8 @@ export default function Notebook() {
   let [{ undoDepth, redoDepth }, trackState] = Editor.useEditor2React(
     { undoDepth: 0, redoDepth: 0 },
     (state) => ({
-      undoDepth: History.undoDepth(state),
-      redoDepth: History.redoDepth(state),
+      undoDepth: Commands.undoDepth(state),
+      redoDepth: Commands.redoDepth(state),
     }),
   );
 
@@ -76,15 +74,15 @@ export default function Notebook() {
         extensions: [
           View.keymap.of(NotebookKernel.keymap),
           View.keymap.of([{ key: "Tab", run: Autocomplete.startCompletion }]),
-          View.keymap.of(History.historyKeymap),
+          View.keymap.of(Commands.historyKeymap),
           View.keymap.of(Commands.defaultKeymap),
           NotebookKernel.configure(),
-          History.history(),
+          Commands.history(),
           LangBQN.bqn({ sysCompletion }),
           Language.indentOnInput(),
           darkThemeExtension,
           View.EditorView.darkTheme.from(darkThemeExtension),
-          CloseBrackets.closeBrackets(),
+          Autocomplete.closeBrackets(),
           Editor.scrollMarginBottom(150),
           View.EditorView.updateListener.of(onUpdate),
           trackState,
@@ -115,14 +113,14 @@ export default function Notebook() {
                 <UI.Button
                   disabled={undoDepth === 0}
                   title="Undo (Mod-z)"
-                  onMouseDown={runCommand(History.undo)}
+                  onMouseDown={runCommand(Commands.undo)}
                 >
                   <icons.IconArrowBackUp />
                 </UI.Button>
                 <UI.Button
                   disabled={redoDepth === 0}
                   title="Redo (Mod-Shift-z) "
-                  onMouseDown={runCommand(History.redo)}
+                  onMouseDown={runCommand(Commands.redo)}
                 >
                   <icons.IconArrowForwardUp />
                 </UI.Button>

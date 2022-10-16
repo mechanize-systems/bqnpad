@@ -1,4 +1,4 @@
-lockfileVersion: 5.3
+lockfileVersion: 5.4
 
 overrides:
   react: 18.0.0
@@ -9,17 +9,12 @@ importers:
   .:
     specifiers:
       '@bqnpad/repl': workspace:*
-      '@codemirror/autocomplete': ^0.19.0
-      '@codemirror/closebrackets': ^0.19.1
-      '@codemirror/collab': ^0.19.0
-      '@codemirror/commands': ^0.19.8
-      '@codemirror/fold': ^0.19.3
-      '@codemirror/highlight': ^0.19.8
-      '@codemirror/history': ^0.19.2
-      '@codemirror/language': ^0.19.8
-      '@codemirror/state': ^0.19.9
-      '@codemirror/text': ^0.19.6
-      '@codemirror/view': ^0.19.48
+      '@codemirror/autocomplete': ^6
+      '@codemirror/collab': ^6
+      '@codemirror/commands': ^6
+      '@codemirror/language': ^6
+      '@codemirror/state': ^6
+      '@codemirror/view': ^6
       '@github/stable-socket': ^1.1.0
       '@lezer/common': ^0.15.11
       '@lezer/generator': ^0.15.4
@@ -54,23 +49,18 @@ importers:
       typescript-language-server: ^0.9.7
       ws: ^8.5.0
     dependencies:
-      '@codemirror/collab': 0.19.0
-      '@codemirror/state': 0.19.9
+      '@codemirror/collab': 6.0.0
+      '@codemirror/state': 6.1.2
       '@mechanize/asap': 0.0.8
       '@observablehq/plot': 0.4.3
       debug: 4.3.4
       ws: 8.5.0
     devDependencies:
       '@bqnpad/repl': link:repl
-      '@codemirror/autocomplete': 0.19.15
-      '@codemirror/closebrackets': 0.19.1
-      '@codemirror/commands': 0.19.8
-      '@codemirror/fold': 0.19.3
-      '@codemirror/highlight': 0.19.8
-      '@codemirror/history': 0.19.2
-      '@codemirror/language': 0.19.8
-      '@codemirror/text': 0.19.6
-      '@codemirror/view': 0.19.48
+      '@codemirror/autocomplete': 6.3.0_wexih7u53rronqz75khnd5p7z4
+      '@codemirror/commands': 6.1.2
+      '@codemirror/language': 6.2.1
+      '@codemirror/view': 6.3.1
       '@github/stable-socket': 1.1.0
       '@lezer/common': 0.15.12
       '@lezer/generator': 0.15.4
@@ -78,15 +68,15 @@ importers:
       '@mechanize/base': link:base
       '@mechanize/editor': link:editor
       '@mechanize/ui': link:ui
-      '@tabler/icons': 1.63.0_react-dom@18.0.0+react@18.0.0
+      '@tabler/icons': 1.63.0_zpnidt7m3osuk7shl3s4oenomq
       '@trivago/prettier-plugin-sort-imports': 3.2.0_prettier@2.6.0
       '@tsconfig/strictest': 1.0.0
       '@types/debug': 4.1.7
       '@types/react': 17.0.41
       '@types/react-dom': 17.0.14
       '@types/ws': 8.5.3
-      '@typescript-eslint/eslint-plugin': 5.16.0_3fed250b11519414a4c7d52468dd6bf5
-      '@typescript-eslint/parser': 5.16.0_eslint@8.11.0+typescript@4.6.2
+      '@typescript-eslint/eslint-plugin': 5.16.0_h7wskcyrkgkbjjgh2usgrxll6u
+      '@typescript-eslint/parser': 5.16.0_ynv3edxl3ah44xwgrna2g2yine
       classnames: 2.3.1
       eslint: 8.11.0
       eslint-plugin-react-hooks: 4.3.0_eslint@8.11.0
@@ -125,50 +115,52 @@ importers:
 
   editor:
     specifiers:
-      '@codemirror/autocomplete': ^0.19.0
-      '@codemirror/closebrackets': ^0.19.1
-      '@codemirror/commands': ^0.19.8
-      '@codemirror/fold': ^0.19.3
-      '@codemirror/highlight': ^0.19.8
-      '@codemirror/history': ^0.19.2
-      '@codemirror/language': ^0.19.8
-      '@codemirror/rangeset': ^0.19.0
-      '@codemirror/text': ^0.19.6
-      '@codemirror/view': ^0.19.48
+      '@codemirror/autocomplete': ^6
+      '@codemirror/commands': ^6
+      '@codemirror/language': ^6
+      '@codemirror/state': ^6
+      '@codemirror/view': ^6
+      '@lezer/highlight': ^1.1.1
       '@mechanize/base': workspace:*
       react: 18.0.0
       react-dom: 18.0.0
     dependencies:
-      '@codemirror/autocomplete': 0.19.15
-      '@codemirror/closebrackets': 0.19.1
-      '@codemirror/commands': 0.19.8
-      '@codemirror/fold': 0.19.3
-      '@codemirror/highlight': 0.19.8
-      '@codemirror/history': 0.19.2
-      '@codemirror/language': 0.19.8
-      '@codemirror/rangeset': 0.19.9
-      '@codemirror/text': 0.19.6
-      '@codemirror/view': 0.19.48
+      '@codemirror/autocomplete': 6.3.0_wexih7u53rronqz75khnd5p7z4
+      '@codemirror/commands': 6.1.2
+      '@codemirror/language': 6.2.1
+      '@codemirror/state': 6.1.2
+      '@codemirror/view': 6.3.1
+      '@lezer/highlight': 1.1.1
       '@mechanize/base': link:../base
       react: 18.0.0
       react-dom: 18.0.0_react@18.0.0
 
   lang-bqn:
     specifiers:
-      lezer-bqn: workspace:*
+      '@codemirror/autocomplete': ^6.3.0
+      '@codemirror/language': ^6.2.1
+      '@codemirror/state': ^6.1.2
+      '@codemirror/view': ^6.3.1
+      '@lezer/highlight': ^1.1.1
+      lezer-bqn: workspace:0.0.1
     dependencies:
+      '@codemirror/autocomplete': 6.3.0_wexih7u53rronqz75khnd5p7z4
+      '@codemirror/language': 6.2.1
+      '@codemirror/state': 6.1.2
+      '@codemirror/view': 6.3.1
+      '@lezer/highlight': 1.1.1
       lezer-bqn: link:../lezer-bqn
 
   lezer-bqn:
     specifiers:
-      '@lezer/common': ^0.15.0
-      '@lezer/generator': ^0.15.0
-      '@lezer/lr': ^0.15.0
+      '@lezer/common': ^1.0.0
+      '@lezer/generator': ^1.0.0
+      '@lezer/lr': ^1.0.0
     dependencies:
-      '@lezer/common': 0.15.12
-      '@lezer/lr': 0.15.8
+      '@lezer/common': 1.0.1
+      '@lezer/lr': 1.2.3
     devDependencies:
-      '@lezer/generator': 0.15.4
+      '@lezer/generator': 1.1.1
 
   repl:
     specifiers:
@@ -357,12 +349,16 @@ packages:
     resolution: {integrity: sha512-oG0ej7efjEXxb4UgE+klVx+3j4MVo+A2vCzm7OUN4CLo6WhQ+vSOD2yJ8m7B+DghObxtLxt3EfgMWpq+AsWehQ==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+    dependencies:
+      '@babel/types': 7.17.0
     dev: true
 
   /@babel/parser/7.17.8:
     resolution: {integrity: sha512-BoHhDJrJXqcg+ZL16Xv39H9n+AqJ4pcDrQBGZN+wHxIysrLZ3/ECwCBUch/1zUNhnsXULcONU3Ei5Hmkfk6kiQ==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+    dependencies:
+      '@babel/types': 7.17.0
     dev: true
 
   /@babel/template/7.16.7:
@@ -424,117 +420,51 @@ packages:
       to-fast-properties: 2.0.0
     dev: true
 
-  /@codemirror/autocomplete/0.19.15:
-    resolution: {integrity: sha512-GQWzvvuXxNUyaEk+5gawbAD8s51/v2Chb++nx0e2eGWrphWk42isBtzOMdc3DxrxrZtPZ55q2ldNp+6G8KJLIQ==}
+  /@codemirror/autocomplete/6.3.0_wexih7u53rronqz75khnd5p7z4:
+    resolution: {integrity: sha512-4jEvh3AjJZTDKazd10J6ZsCIqaYxDMCeua5ouQxY8hlFIml+nr7le0SgBhT3SIytFBmdzPK3AUhXGuW3T79nVg==}
+    peerDependencies:
+      '@codemirror/language': ^6.0.0
+      '@codemirror/state': ^6.0.0
+      '@codemirror/view': ^6.0.0
     dependencies:
-      '@codemirror/language': 0.19.8
-      '@codemirror/state': 0.19.9
-      '@codemirror/text': 0.19.6
-      '@codemirror/tooltip': 0.19.16
-      '@codemirror/view': 0.19.48
-      '@lezer/common': 0.15.12
+      '@codemirror/language': 6.2.1
+      '@codemirror/state': 6.1.2
+      '@codemirror/view': 6.3.1
+      '@lezer/common': 1.0.1
 
-  /@codemirror/closebrackets/0.19.1:
-    resolution: {integrity: sha512-ZiLXT6u+VuBK5QnfBbt/Vmfd9Pg6449wn1DIOWFZHUOldg5eFn3VGGjYY2XWuHQz5WuK+7dXamV2KE885O1gyA==}
+  /@codemirror/collab/6.0.0:
+    resolution: {integrity: sha512-3/OIW8wswOr1t+IKmhwhWj1Mnx5NtwEkW8BFa2i1+lvnVId5dGGQFosp2IPin1oCym1Gn/dEbweXtGrIiJNkwA==}
     dependencies:
-      '@codemirror/language': 0.19.8
-      '@codemirror/rangeset': 0.19.9
-      '@codemirror/state': 0.19.9
-      '@codemirror/text': 0.19.6
-      '@codemirror/view': 0.19.48
-
-  /@codemirror/collab/0.19.0:
-    resolution: {integrity: sha512-pyrEXLLkby82y9wzfanEQGl3V3DX/pIuA97Js7gVEbPAqhvse5iXKNyp1Yr37afhkl2TUeoZyUSFTtcimgdI6g==}
-    dependencies:
-      '@codemirror/state': 0.19.9
+      '@codemirror/state': 6.1.2
     dev: false
 
-  /@codemirror/commands/0.19.8:
-    resolution: {integrity: sha512-65LIMSGUGGpY3oH6mzV46YWRrgao6NmfJ+AuC7jNz3K5NPnH6GCV1H5I6SwOFyVbkiygGyd0EFwrWqywTBD1aw==}
+  /@codemirror/commands/6.1.2:
+    resolution: {integrity: sha512-sO3jdX1s0pam6lIdeSJLMN3DQ6mPEbM4yLvyKkdqtmd/UDwhXA5+AwFJ89rRXm6vTeOXBsE5cAmlos/t7MJdgg==}
     dependencies:
-      '@codemirror/language': 0.19.8
-      '@codemirror/matchbrackets': 0.19.4
-      '@codemirror/state': 0.19.9
-      '@codemirror/text': 0.19.6
-      '@codemirror/view': 0.19.48
-      '@lezer/common': 0.15.12
+      '@codemirror/language': 6.2.1
+      '@codemirror/state': 6.1.2
+      '@codemirror/view': 6.3.1
+      '@lezer/common': 1.0.1
 
-  /@codemirror/fold/0.19.3:
-    resolution: {integrity: sha512-8hT+Eq2G68mL0yPRvSD2ewhnLQAX6sbUJmtGVKFcj8oAXtfpYCX8LIcfXsuI19Qs7gZkOSpqZvn+KKj8IhZoAw==}
+  /@codemirror/language/6.2.1:
+    resolution: {integrity: sha512-MC3svxuvIj0MRpFlGHxLS6vPyIdbTr2KKPEW46kCoCXw2ktb4NTkpkPBI/lSP/FoNXLCBJ0mrnUi1OoZxtpW1Q==}
     dependencies:
-      '@codemirror/gutter': 0.19.9
-      '@codemirror/language': 0.19.8
-      '@codemirror/rangeset': 0.19.9
-      '@codemirror/state': 0.19.9
-      '@codemirror/view': 0.19.48
-
-  /@codemirror/gutter/0.19.9:
-    resolution: {integrity: sha512-PFrtmilahin1g6uL27aG5tM/rqR9DZzZYZsIrCXA5Uc2OFTFqx4owuhoU9hqfYxHp5ovfvBwQ+txFzqS4vog6Q==}
-    dependencies:
-      '@codemirror/rangeset': 0.19.9
-      '@codemirror/state': 0.19.9
-      '@codemirror/view': 0.19.48
-
-  /@codemirror/highlight/0.19.8:
-    resolution: {integrity: sha512-v/lzuHjrYR8MN2mEJcUD6fHSTXXli9C1XGYpr+ElV6fLBIUhMTNKR3qThp611xuWfXfwDxeL7ppcbkM/MzPV3A==}
-    dependencies:
-      '@codemirror/language': 0.19.8
-      '@codemirror/rangeset': 0.19.9
-      '@codemirror/state': 0.19.9
-      '@codemirror/view': 0.19.48
-      '@lezer/common': 0.15.12
+      '@codemirror/state': 6.1.2
+      '@codemirror/view': 6.3.1
+      '@lezer/common': 1.0.1
+      '@lezer/highlight': 1.1.1
+      '@lezer/lr': 1.2.3
       style-mod: 4.0.0
 
-  /@codemirror/history/0.19.2:
-    resolution: {integrity: sha512-unhP4t3N2smzmHoo/Yio6ueWi+il8gm9VKrvi6wlcdGH5fOfVDNkmjHQ495SiR+EdOG35+3iNebSPYww0vN7ow==}
-    dependencies:
-      '@codemirror/state': 0.19.9
-      '@codemirror/view': 0.19.48
+  /@codemirror/state/6.1.2:
+    resolution: {integrity: sha512-Mxff85Hp5va+zuj+H748KbubXjrinX/k28lj43H14T2D0+4kuvEFIEIO7hCEcvBT8ubZyIelt9yGOjj2MWOEQA==}
 
-  /@codemirror/language/0.19.8:
-    resolution: {integrity: sha512-KhRne8qmzSKkaw+qhkwgNsPKxmThlyeJ3umfc33B9kJzVP7xhTkwX2MEPl0almM3brxMi+lPYx7gCPOy1gHsWw==}
+  /@codemirror/view/6.3.1:
+    resolution: {integrity: sha512-NKPBphoV9W2Q6tKXk+ge4q5EhMOOC0rpwdGS80/slNSfsVqkN4gwXIEqSprXJFlf9aUKZU7WhPvqRBMNH+hJkQ==}
     dependencies:
-      '@codemirror/state': 0.19.9
-      '@codemirror/text': 0.19.6
-      '@codemirror/view': 0.19.48
-      '@lezer/common': 0.15.12
-      '@lezer/lr': 0.15.8
-
-  /@codemirror/matchbrackets/0.19.4:
-    resolution: {integrity: sha512-VFkaOKPNudAA5sGP1zikRHCEKU0hjYmkKpr04pybUpQvfTvNJXlReCyP0rvH/1iEwAGPL990ZTT+QrLdu4MeEA==}
-    dependencies:
-      '@codemirror/language': 0.19.8
-      '@codemirror/state': 0.19.9
-      '@codemirror/view': 0.19.48
-      '@lezer/common': 0.15.12
-
-  /@codemirror/rangeset/0.19.9:
-    resolution: {integrity: sha512-V8YUuOvK+ew87Xem+71nKcqu1SXd5QROMRLMS/ljT5/3MCxtgrRie1Cvild0G/Z2f1fpWxzX78V0U4jjXBorBQ==}
-    dependencies:
-      '@codemirror/state': 0.19.9
-
-  /@codemirror/state/0.19.9:
-    resolution: {integrity: sha512-psOzDolKTZkx4CgUqhBQ8T8gBc0xN5z4gzed109aF6x7D7umpDRoimacI/O6d9UGuyl4eYuDCZmDFr2Rq7aGOw==}
-    dependencies:
-      '@codemirror/text': 0.19.6
-
-  /@codemirror/text/0.19.6:
-    resolution: {integrity: sha512-T9jnREMIygx+TPC1bOuepz18maGq/92q2a+n4qTqObKwvNMg+8cMTslb8yxeEDEq7S3kpgGWxgO1UWbQRij0dA==}
-
-  /@codemirror/tooltip/0.19.16:
-    resolution: {integrity: sha512-zxKDHryUV5/RS45AQL+wOeN+i7/l81wK56OMnUPoTSzCWNITfxHn7BToDsjtrRKbzHqUxKYmBnn/4hPjpZ4WJQ==}
-    dependencies:
-      '@codemirror/state': 0.19.9
-      '@codemirror/view': 0.19.48
-
-  /@codemirror/view/0.19.48:
-    resolution: {integrity: sha512-0eg7D2Nz4S8/caetCTz61rK0tkHI17V/d15Jy0kLOT8dTLGGNJUponDnW28h2B6bERmPlVHKh8MJIr5OCp1nGw==}
-    dependencies:
-      '@codemirror/rangeset': 0.19.9
-      '@codemirror/state': 0.19.9
-      '@codemirror/text': 0.19.6
+      '@codemirror/state': 6.1.2
       style-mod: 4.0.0
-      w3c-keyname: 2.2.4
+      w3c-keyname: 2.2.6
 
   /@eslint/eslintrc/1.2.1:
     resolution: {integrity: sha512-bxvbYnBPN1Gibwyp6NrpnFzA3YtRL3BBAyEAFVIpNTm2Rn4Vy87GA5M4aSn3InRrlsbX5N0GW7XIx+U4SAEKdQ==}
@@ -574,6 +504,10 @@ packages:
 
   /@lezer/common/0.15.12:
     resolution: {integrity: sha512-edfwCxNLnzq5pBA/yaIhwJ3U3Kz8VAUOTRg0hhxaizaI1N+qxV7EXDv/kLCkLeq2RzSFvxexlaj5Mzfn2kY0Ig==}
+    dev: true
+
+  /@lezer/common/1.0.1:
+    resolution: {integrity: sha512-8TR5++Q/F//tpDsLd5zkrvEX5xxeemafEaek7mUp7Y+bI8cKQXdSqhzTOBaOogETcMOVr0pT3BBPXp13477ciw==}
 
   /@lezer/generator/0.15.4:
     resolution: {integrity: sha512-9bBwU2TzKMBQ6OCEDevuMNWGOBKlkq5YIGEhjrz9pb3MLb+oYYR4dVFZ7ehwLcDoSecsSA7PdlAy0thJO5pt2w==}
@@ -583,10 +517,29 @@ packages:
       '@lezer/lr': 0.15.8
     dev: true
 
+  /@lezer/generator/1.1.1:
+    resolution: {integrity: sha512-GrB5EwOn09yf5YfDk6TcspHcF7PQZP83665moY5VmOURwCmNOx+Qit3mwp7W/EsGpqd4PPRioxNkYwYZii69cw==}
+    hasBin: true
+    dependencies:
+      '@lezer/common': 1.0.1
+      '@lezer/lr': 1.2.3
+    dev: true
+
+  /@lezer/highlight/1.1.1:
+    resolution: {integrity: sha512-duv9D23O9ghEDnnUDmxu+L8pJy4nYo4AbCOHIudUhscrLSazqeJeK1V50EU6ZufWF1zv0KJwu/frFRyZWXxHBQ==}
+    dependencies:
+      '@lezer/common': 1.0.1
+
   /@lezer/lr/0.15.8:
     resolution: {integrity: sha512-bM6oE6VQZ6hIFxDNKk8bKPa14hqFrV07J/vHGOeiAbJReIaQXmkVb6xQu4MR+JBTLa5arGRyAAjJe1qaQt3Uvg==}
     dependencies:
       '@lezer/common': 0.15.12
+    dev: true
+
+  /@lezer/lr/1.2.3:
+    resolution: {integrity: sha512-qpB7rBzH8f6Mzjv2AVZRahcm+2Cf7nbIH++uXbvVOL1yIRvVWQ3HAM/saeBLCyz/togB7LGo76qdJYL1uKQlqA==}
+    dependencies:
+      '@lezer/common': 1.0.1
 
   /@mechanize/asap/0.0.8:
     resolution: {integrity: sha512-m4VcgHR1vAiviJm2dZzKjyOa3dbzeFDH4Lkb9PKln/gLtOOgnOHWR9eY8SOZc/Lpz0MtnWN5BTLedOIVms0O0Q==}
@@ -626,7 +579,7 @@ packages:
       isoformat: 0.2.1
     dev: false
 
-  /@tabler/icons/1.63.0_react-dom@18.0.0+react@18.0.0:
+  /@tabler/icons/1.63.0_zpnidt7m3osuk7shl3s4oenomq:
     resolution: {integrity: sha512-CrtwngpsKcRBUBT5kbNKJS5UDJkexK4povE/5FOJv1EmNdFLN+cFMfkd2wy55zKSiTMZTNnSV9HYIZgvc6g23A==}
     peerDependencies:
       react: ^16.x || 17.x
@@ -708,7 +661,7 @@ packages:
       '@types/node': 17.0.21
     dev: true
 
-  /@typescript-eslint/eslint-plugin/5.16.0_3fed250b11519414a4c7d52468dd6bf5:
+  /@typescript-eslint/eslint-plugin/5.16.0_h7wskcyrkgkbjjgh2usgrxll6u:
     resolution: {integrity: sha512-SJoba1edXvQRMmNI505Uo4XmGbxCK9ARQpkvOd00anxzri9RNQk0DDCxD+LIl+jYhkzOJiOMMKYEHnHEODjdCw==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -719,10 +672,10 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/parser': 5.16.0_eslint@8.11.0+typescript@4.6.2
+      '@typescript-eslint/parser': 5.16.0_ynv3edxl3ah44xwgrna2g2yine
       '@typescript-eslint/scope-manager': 5.16.0
-      '@typescript-eslint/type-utils': 5.16.0_eslint@8.11.0+typescript@4.6.2
-      '@typescript-eslint/utils': 5.16.0_eslint@8.11.0+typescript@4.6.2
+      '@typescript-eslint/type-utils': 5.16.0_ynv3edxl3ah44xwgrna2g2yine
+      '@typescript-eslint/utils': 5.16.0_ynv3edxl3ah44xwgrna2g2yine
       debug: 4.3.4
       eslint: 8.11.0
       functional-red-black-tree: 1.0.1
@@ -735,7 +688,7 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/parser/5.16.0_eslint@8.11.0+typescript@4.6.2:
+  /@typescript-eslint/parser/5.16.0_ynv3edxl3ah44xwgrna2g2yine:
     resolution: {integrity: sha512-fkDq86F0zl8FicnJtdXakFs4lnuebH6ZADDw6CYQv0UZeIjHvmEw87m9/29nk2Dv5Lmdp0zQ3zDQhiMWQf/GbA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -763,7 +716,7 @@ packages:
       '@typescript-eslint/visitor-keys': 5.16.0
     dev: true
 
-  /@typescript-eslint/type-utils/5.16.0_eslint@8.11.0+typescript@4.6.2:
+  /@typescript-eslint/type-utils/5.16.0_ynv3edxl3ah44xwgrna2g2yine:
     resolution: {integrity: sha512-SKygICv54CCRl1Vq5ewwQUJV/8padIWvPgCxlWPGO/OgQLCijY9G7lDu6H+mqfQtbzDNlVjzVWQmeqbLMBLEwQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -773,7 +726,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/utils': 5.16.0_eslint@8.11.0+typescript@4.6.2
+      '@typescript-eslint/utils': 5.16.0_ynv3edxl3ah44xwgrna2g2yine
       debug: 4.3.4
       eslint: 8.11.0
       tsutils: 3.21.0_typescript@4.6.2
@@ -808,7 +761,7 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/utils/5.16.0_eslint@8.11.0+typescript@4.6.2:
+  /@typescript-eslint/utils/5.16.0_ynv3edxl3ah44xwgrna2g2yine:
     resolution: {integrity: sha512-iYej2ER6AwmejLWMWzJIHy3nPJeGDuCqf8Jnb+jAQVoPpmWzwQOfa9hWVB8GIQE5gsCv/rfN4T+AYb/V06WseQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -2625,6 +2578,7 @@ packages:
       pkg-up: 3.1.0
       semver: 7.3.5
       tempy: 1.0.1
+      vscode-jsonrpc: 5.0.1
       vscode-languageserver: 7.0.0
       vscode-languageserver-protocol: 3.16.0
       vscode-languageserver-textdocument: 1.0.4
@@ -2660,6 +2614,11 @@ packages:
     resolution: {integrity: sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==}
     dev: true
 
+  /vscode-jsonrpc/5.0.1:
+    resolution: {integrity: sha512-JvONPptw3GAQGXlVV2utDcHx0BiY34FupW/kI6mZ5x06ER5DdPG/tXWMVHjTNULF5uKPOUUD0SaXg5QaubJL0A==}
+    engines: {node: '>=8.0.0 || >=10.0.0'}
+    dev: true
+
   /vscode-jsonrpc/6.0.0:
     resolution: {integrity: sha512-wnJA4BnEjOSyFMvjZdpiOwhSq9uDoK8e/kpRJDTaMYzwlkrhG1fwDIZI94CLsLzlCK5cIbMMtFlJlfR57Lavmg==}
     engines: {node: '>=8.0.0 || >=10.0.0'}
@@ -2691,8 +2650,8 @@ packages:
     resolution: {integrity: sha512-EcswR2S8bpR7fD0YPeS7r2xXExrScVMxg4MedACaWHEtx9ftCF/qHG1xGkolzTPcEmjTavCQgbVzHUIdTMzFGA==}
     dev: true
 
-  /w3c-keyname/2.2.4:
-    resolution: {integrity: sha512-tOhfEwEzFLJzf6d1ZPkYfGj+FWhIpBux9ppoP3rlclw3Z0BZv3N7b7030Z1kYth+6rDuAsXUFr+d0VE6Ed1ikw==}
+  /w3c-keyname/2.2.6:
+    resolution: {integrity: sha512-f+fciywl1SJEniZHD6H+kUO8gOnwIr7f4ijKA6+ZvJFjeGi1r4PDLl53Ayud9O/rk64RqgoQine0feoeOU0kXg==}
 
   /which/2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}

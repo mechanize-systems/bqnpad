@@ -7,14 +7,14 @@
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
   "devDependencies": {
-    "@lezer/generator": "^0.15.0"
+    "@lezer/generator": "^1.0.0"
   },
   "dependencies": {
-    "@lezer/lr": "^0.15.0",
-    "@lezer/common": "^0.15.0"
+    "@lezer/lr": "^1.0.0",
+    "@lezer/common": "^1.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mechanize-systems/lezer-bqn.git"
+    "url": "https://github.com/mechanize-systems/bqnpad.git"
   }
 }

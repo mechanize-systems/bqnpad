@@ -7,10 +7,15 @@
   "author": "Andrey Popp <me@andreypopp.com>",
   "license": "MIT",
   "dependencies": {
-    "lezer-bqn": "workspace:*"
+    "@codemirror/autocomplete": "^6.3.0",
+    "@codemirror/language": "^6.2.1",
+    "@codemirror/state": "^6.1.2",
+    "@codemirror/view": "^6.3.1",
+    "@lezer/highlight": "^1.1.1",
+    "lezer-bqn": "workspace:0.0.1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mechanize-systems/lang-bqn.git"
+    "url": "https://github.com/mechanize-systems/bqnpad.git"
   }
 }

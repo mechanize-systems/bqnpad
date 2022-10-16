@@ -6,8 +6,7 @@
  * Cells are non overlapping regions which cover the entire document. Each
  * region is an isolated subdocument.
  */
-import * as History from "@codemirror/history";
-import * as RangeSet from "@codemirror/rangeset";
+import * as Commands from "@codemirror/commands";
 import * as State from "@codemirror/state";
 import * as View from "@codemirror/view";
 
@@ -74,7 +73,7 @@ export class DocBuilder<T> {
   }
   finish() {
     let doc = State.Text.empty;
-    let cellSet = new RangeSet.RangeSetBuilder<Cell<T>>();
+    let cellSet = new State.RangeSetBuilder<Cell<T>>();
     for (let i = 0; i < this.items.length; i++) {
       let isLast = i === this.items.length - 1;
       let { code, cell } = this.items[i]!;
@@ -96,20 +95,20 @@ export type CellsConfig<T> = {
   onCellCreate: () => T;
 };
 
-export class Cell<T = any> extends RangeSet.RangeValue {
+export class Cell<T = any> extends State.RangeValue {
   constructor(public readonly data: T, public readonly version: number) {
     super();
   }
 }
 
-export type CellSet<T> = RangeSet.RangeSet<Cell<T>>;
-export type CellRange<T> = RangeSet.Range<Cell<T>>;
+export type CellSet<T> = State.RangeSet<Cell<T>>;
+export type CellRange<T> = State.Range<Cell<T>>;
 
 const USER_EVENT_CELLS_STRUCTURE = "cells.structure";
 
 export function configure<T extends object>(cfg: CellsConfig<T>) {
   let {
-    cellSet: cellSet0 = RangeSet.RangeSet.empty,
+    cellSet: cellSet0 = State.RangeSet.empty,
     onCellCreate,
     onCellSet,
   } = cfg;
@@ -203,7 +202,7 @@ export function configure<T extends object>(cfg: CellsConfig<T>) {
 
     let touched = false;
 
-    function rebuild(it: RangeSet.RangeCursor<Cell>, from: number) {
+    function rebuild(it: State.RangeCursor<Cell>, from: number) {
       let cell = it.value!;
       let cellData = updated.get(cell.data) ?? cell.data;
       touched = touched || touchesCellRange(tr, from, it.to);
@@ -213,7 +212,7 @@ export function configure<T extends object>(cfg: CellsConfig<T>) {
     }
 
     // rebuild cellset
-    let b = new RangeSet.RangeSetBuilder<Cell<T>>();
+    let b = new State.RangeSetBuilder<Cell<T>>();
     let cells: [cell: Cell<T>, to: number][] = [];
     let from = 0;
     for (let it = cells1.iter(); it.value != null; it.next()) {
@@ -254,14 +253,14 @@ export function configure<T extends object>(cfg: CellsConfig<T>) {
       }),
       annotations: cellsStructureChanged
         ? [
-            History.isolateHistory.of("full"),
-            State.Transaction.userEvent.of(USER_EVENT_CELLS_STRUCTURE),
-          ]
+          Commands.isolateHistory.of("full"),
+          State.Transaction.userEvent.of(USER_EVENT_CELLS_STRUCTURE),
+        ]
         : undefined,
     };
   });
 
-  let cellsHistory = History.invertedEffects.of((tr) => {
+  let cellsHistory = Commands.invertedEffects.of((tr) => {
     for (let e of tr.effects)
       if (e.is(replaceCells))
         return [
@@ -296,7 +295,7 @@ export function configure<T extends object>(cfg: CellsConfig<T>) {
   let query: Cells<T>["query"] = {
     cells(state: State.EditorState): CellSet<T> {
       let from = 0;
-      let b = new RangeSet.RangeSetBuilder<Cell<T>>();
+      let b = new State.RangeSetBuilder<Cell<T>>();
       for (let it = query0.cells(state).iter(); it.value != null; it.next()) {
         b.add(
           Math.min(from, state.doc.length),
@@ -483,7 +482,7 @@ export function configure<T extends object>(cfg: CellsConfig<T>) {
   function setCellSet(state: State.EditorState, cellSet: CellSet<T>) {
     return state.update({
       effects: replaceCells.of({
-        prev: RangeSet.RangeSet.empty,
+        prev: State.RangeSet.empty,
         next: cellSet,
         init: true,
       }),
@@ -562,7 +561,7 @@ export function cellsFocusDecoration(
       if (it.from <= cursor && cursor <= it.to) {
         let s = doc.lineAt(it.from);
         let e = doc.lineAt(it.to);
-        let b = new RangeSet.RangeSetBuilder<View.Decoration>();
+        let b = new State.RangeSetBuilder<View.Decoration>();
         while (s.number <= e.number) {
           b.add(s.from, s.from, View.Decoration.line(decorationSpec));
           if (s.number === doc.lines) break;
@@ -604,7 +603,7 @@ export function cellsLineDecoration<T extends object>(
     let doc = view.state.doc;
     let cs = cells.query.cells(view.state);
     if (cs.size === 0) return View.Decoration.none;
-    let b = new RangeSet.RangeSetBuilder<View.Decoration>();
+    let b = new State.RangeSetBuilder<View.Decoration>();
     for (let it = cs.iter(); it.value != null; it.next()) {
       Base.assert(it.from <= it.to);
       let s = doc.lineAt(it.from);
@@ -637,7 +636,7 @@ export function cellsLineDecoration<T extends object>(
 }
 
 export type DecorateCell<T> = (
-  builder: RangeSet.RangeSetBuilder<View.Decoration>,
+  builder: State.RangeSetBuilder<View.Decoration>,
   range: CellRange<T>,
   state: State.EditorState,
 ) => void;
@@ -652,7 +651,7 @@ export function cellsWidgetDecoration<T extends object>(
   function compute(state: State.EditorState) {
     let cs = cells.query.cells(state);
     if (cs.size === 0) return View.Decoration.none;
-    let b = new RangeSet.RangeSetBuilder<View.Decoration>();
+    let b = new State.RangeSetBuilder<View.Decoration>();
     for (let it = cs.iter(); it.value != null; it.next())
       decorate(b, it.value.range(it.from, it.to), state);
     return b.finish();

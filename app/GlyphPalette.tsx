@@ -15,10 +15,7 @@ export function GlyphPalette({
   let hi = theme === "dark" ? LangBQN.highlightDark : LangBQN.highlightLight;
   let chars = React.useMemo(() => {
     return LangBQN.glyphs.map((glyph) => {
-      let className =
-        glyph.tag != null
-          ? hi.match(glyph.tag, null as any) ?? undefined
-          : undefined;
+      let className = hi.style([glyph.tag]) ?? undefined;
       let title =
         glyph.title + "\n\n" + (glyph.key ? `\\-${glyph.key}` : glyph.glyph);
       return (

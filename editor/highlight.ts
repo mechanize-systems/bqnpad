@@ -1,10 +1,10 @@
-import * as Highlight from "@codemirror/highlight";
 import type * as Language from "@codemirror/language";
+import { highlightTree } from "@lezer/highlight";
 
 export function highlight(
   textContent: string,
   language: Language.Language,
-  highlight: Highlight.HighlightStyle,
+  highlight: Language.HighlightStyle,
 ) {
   let chunks: string[] = [];
   let callback = (
@@ -17,7 +17,7 @@ export function highlight(
   };
   const tree = language.parser.parse(textContent);
   let pos = 0;
-  Highlight.highlightTree(tree, highlight.match, (from, to, classes) => {
+  highlightTree(tree, highlight, (from, to, classes) => {
     from > pos && callback(textContent.slice(pos, from), null, pos, from);
     callback(textContent.slice(from, to), classes, from, to);
     pos = to;
