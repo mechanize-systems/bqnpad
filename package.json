@@ -8,7 +8,7 @@
     "start": "asap serve --env production"
   },
   "author": "Andrey Popp <me@andreypopp.com>",
-  "license": "MIT",
+  "license": "AGPLv3",
   "devDependencies": {
     "@bqnpad/repl": "workspace:*",
     "@codemirror/autocomplete": "^6",
