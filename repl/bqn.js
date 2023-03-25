@@ -663,6 +663,12 @@ let primitives = dynsys(state => {
   return list(gl.map((g,i) => list([g,rt[i]])));
 });
 
+let parsefloat = (x,w) => {
+  let n = req1str("•ParseFloat",x,w);
+  if (! /^-?(\.[0-9]+|[0-9]+\.?[0-9]*)([eE][-+]?[0-9]+)?$/.test(n)) throw Error("•ParseFloat: invalid float format");
+  return parseFloat(n);
+}
+
 let mathfn = f => {
   f.prim=null; let p=runtime[61](f,0); // ⚇
   return f!==Math.atan2 && f!==Math.hypot
@@ -920,7 +926,7 @@ let plotns = (() => {
 let sysvals = {
   bqn:dynsys_copy(makebqnfn("•BQN",r=>run(...r))), rebqn, primitives,
   type, glyph, decompose, fmt:fmt1, repr, currenterror, unixtime,
-  js:dojs, math:mathns, ns:nsns, rand,
+  js:dojs, parsefloat, math:mathns, ns:nsns, rand,
   listsys: dynsys(_ => list(Object.keys(sysvals).sort().map(str))),
   show: (x,w) => { self.bqnShow(unstr(fmt1(x)));return x; },
   plot: plotns,
