@@ -27,10 +27,12 @@ async function loadCBQN(): Promise<CBQN> {
       stderr.push(msg);
     },
   });
-  let runLine = mod.cwrap("cbqn_runLine", null, ["string", "int"]);
+  let runLine = mod.cwrap("cbqn_runLine", null, ["array", "int"]);
+  let encoder = new TextEncoder();
   return {
     eval: (src: string) => {
-      return runLine(src, src.length);
+      let utf8src = encoder.encode(src + "\0");
+      return runLine(utf8src, utf8src.length - 1);
     },
     consumeStdout: () => {
       let s = stdout;
